@@ -1,0 +1,77 @@
+#+TITLE: Experiment 047: Ocular Patdown - Racket Optics Library
+#+AUTHOR: RacketCon 2025
+#+DATE: October 4-5, 2025
+
+* Overview
+
+This experiment explores the [[https://docs.racket-lang.org/ocular-patdown/index.html][ocular-patdown]] library by Mike Delmonaco - a production-ready optics library for Racket that provides lenses, traversals, isomorphisms, and prisms for deep immutable updates.
+
+* Library Information
+
+- *Author*: Mike Delmonaco (mdelmonacochs@gmail.com)
+- *Purpose*: Optics for deep immutable updates and accesses within structures
+- *Status*: Experimental but functional
+- *Documentation*: https://docs.racket-lang.org/ocular-patdown/
+
+* Key Components
+
+** Lenses
+- First-class getter and setter for specific focus within target
+- Immutable updates to parts of structures
+- Composable for deeply nested data
+
+** Traversals
+- Focus on zero or multiple elements
+- Similar to map and fold operations
+- Compose with lenses for complex patterns
+
+** Isomorphisms
+- Represent equivalent data representations
+- Conversion between types/structures
+- Act as data adapters
+
+** Prisms
+- Pattern-based access
+- Handle optional/variant data
+
+* Installation
+
+#+begin_src bash
+raco pkg install ocular-patdown
+#+end_src
+
+* Files
+
+- ~basic-usage.rkt~ :: Introduction to ocular-patdown API
+- ~comparison.rkt~ :: Compare our implementation with ocular-patdown
+- ~advanced-patterns.rkt~ :: Advanced optics patterns
+- ~delmonaco-examples.rkt~ :: Examples from Mike's talk
+
+* Relationship to RacketCon Talk
+
+This library is directly related to Mike Delmonaco's RacketCon 2025 talk:
+- *Time*: Saturday, 10:45am EDT
+- *Topic*: Deep Immutable Updates
+- *Speaker*: Mike Delmonaco
+
+Our experiments 041-046 explored the concepts; this experiment uses the production library.
+
+* Key Concepts
+
+** Separation of Concerns
+- *Where*: Optic specifies location
+- *What*: Function specifies transformation
+
+** Composition
+- Optics compose naturally
+- Build complex paths from simple parts
+
+** Immutability
+- All updates return new structures
+- Original data unchanged
+
+* References
+
+- [[https://docs.racket-lang.org/ocular-patdown/index.html][Ocular Patdown Documentation]]
+- [[https://docs.racket-lang.org/ocular-patdown/optics-guide.html][Optics Guide]]
+- Our experiments: 041 (deep updates), 043 (lenses), 045 (functional lenses), 046 (patterns)

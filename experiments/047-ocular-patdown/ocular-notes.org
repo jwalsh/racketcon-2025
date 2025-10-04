@@ -1,0 +1,146 @@
+#+TITLE: Ocular Patdown: Notes and Observations
+#+AUTHOR: RacketCon 2025
+#+DATE: October 4-5, 2025
+
+* Library Overview
+
+** Author
+Mike Delmonaco (mdelmonacochs@gmail.com)
+
+** Purpose
+#+begin_quote
+A library for optics useful for performing deep immutable updates and accesses within structures
+#+end_quote
+
+** Status
+- Experimental library
+- Production-ready features
+- Does not require advanced optics knowledge for basic use
+
+* Documentation Structure
+
+** Main Sections
+1. Optics Guide - conceptual introduction
+2. Optics Reference - API documentation
+3. Specific optic modules:
+   - Lenses
+   - Traversals
+   - Isomorphisms
+   - Prisms
+   - Pattern-based Updating
+
+* Key Principles from Guide
+
+** Separation of Where and What
+- Optics specify *where* in the data structure
+- Functions specify *what* to do at that location
+- Clean separation of concerns
+
+** Composability
+- Optics compose naturally
+- Build complex access patterns from simple parts
+- Lens ∘ Lens = Lens
+- Lens ∘ Traversal = Traversal
+
+** First-Class Abstractions
+- Lenses are first-class values
+- Can be stored, passed, returned
+- Reusable across different structures
+
+* Optic Types
+
+** Lenses
+- Exactly 1 focus
+- Always succeeds
+- getter + setter
+- Example: accessing x-coordinate of point
+
+** Traversals
+- 0 to N foci
+- Like map/fold over multiple elements
+- Can fail (0 elements)
+- Example: all elements in list
+
+** Isomorphisms
+- Bidirectional conversion
+- Equivalent representations
+- to ∘ from = identity
+- from ∘ to = identity
+- Example: Celsius ↔ Fahrenheit
+
+** Prisms
+- 0 or 1 focus
+- Partial access
+- Pattern matching
+- Example: Maybe/Optional values
+
+* Relationship to Our Experiments
+
+** Experiment 041: Deep Immutable Updates
+- Problem statement matches library purpose
+- update-in concept similar to library's update form
+
+** Experiment 043: Lens-Based Updates
+- Our lens implementation mirrors library structure
+- struct lens (getter setter) is same concept
+
+** Experiment 045: Functional Lenses
+- Laws we verified are standard lens laws
+- Optics hierarchy matches library's taxonomy
+
+** Experiment 046: Pattern Matching
+- Pattern-based updating is a library feature
+- Our dupdate DSL similar to library's update syntax
+
+* API Notes (from docs)
+
+** Core Operations
+- view: extract focus
+- set: update focus
+- over/modify: transform focus
+
+** Update Form
+Library provides special update syntax for convenient immutable updates.
+
+** Pattern Integration
+Library integrates with Racket's match patterns.
+
+* Questions to Explore
+
+1. How does library's update syntax compare to our dupdate?
+2. What's the performance of library vs our implementation?
+3. How are nested paths specified?
+4. Does library support dot notation?
+5. What's the binding strategy in update expressions?
+
+* Installation
+
+#+begin_src bash
+raco pkg install ocular-patdown
+#+end_src
+
+* Next Steps
+
+1. Install library
+2. Compare API with our implementation
+3. Run library examples
+4. Identify differences in approach
+5. Learn from library's design decisions
+6. Update our experiments with insights
+
+* Mike Delmonaco's Talk
+
+** Session Details
+- Time: Saturday, 10:45am EDT
+- Title: Deep Immutable Updates
+- Track: Language Features / DSL
+
+** Connection
+This library is the production implementation of concepts from the talk.
+Our experiments explored the theory; the library shows the practice.
+
+* Links
+
+- [[https://docs.racket-lang.org/ocular-patdown/index.html][Main Documentation]]
+- [[https://docs.racket-lang.org/ocular-patdown/optics-guide.html][Optics Guide]]
+- [[https://github.com/michaeldelmonaco/ocular-patdown][GitHub Repository (assumed)]]
