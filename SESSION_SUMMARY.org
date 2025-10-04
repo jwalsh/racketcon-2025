@@ -1,0 +1,372 @@
+#+TITLE: RacketCon 2025 - Session Summary
+#+AUTHOR: Claude & Jason Walsh
+#+DATE: Saturday, October 4th, 2025
+#+STARTUP: overview
+
+* Session Overview
+
+Complete review and enhancement of RacketCon 2025 experiments with testing infrastructure, documentation, and automation.
+
+* Experiments Reviewed
+
+** Track 1: Formal Verification & Rosette (000-008)
+
+| ID  | Experiment                    | Makefile | Status | Issue |
+|-----+-------------------------------+----------+--------+-------|
+| 000 | Racket & Rosette Setup        | ✅        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/1][#1]]    |
+| 001 | Rosette Fundamentals          | ✅        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/2][#2]]    |
+| 002 | Formal Methods Overview       | -        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/3][#3]]    |
+| 003 | Rosette vs Lean vs TLA+       | -        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/8][#8]]    |
+| 004 | DNS Tools (macOS/FreeBSD)     | -        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/9][#9]]    |
+| 005 | Cloudflare DNS Setup          | -        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/10][#10]]   |
+| 006 | Topaz-lang Exploration        | -        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/11][#11]]   |
+| 007 | Compositional OOP             | -        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/12][#12]]   |
+| 008 | Rosette String Limitations    | -        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/13][#13]]   |
+
+** Track 3: Pattern Matching & Lenses (041-048)
+
+| ID  | Experiment                    | Makefile | Status      | Issue    | Assignee |
+|-----+-------------------------------+----------+-------------+----------+----------|
+| 041 | Deep Immutable Updates        | -        | IN_PROGRESS | [[https://github.com/jwalsh/racketcon-2025/issues/15][#15]]      | @aygp-dr |
+| 043 | Lens-based Updates            | -        | IN_PROGRESS | [[https://github.com/jwalsh/racketcon-2025/issues/16][#16]]      | @dsp-dr  |
+| 045 | Functional Lenses             | ✅        | DONE        | [[https://github.com/jwalsh/racketcon-2025/issues/4][#4]]       | -        |
+| 046 | Pattern Matching              | ✅        | DONE        | [[https://github.com/jwalsh/racketcon-2025/issues/5][#5]]       | -        |
+| 047 | Ocular Patdown                | ✅        | DONE        | [[https://github.com/jwalsh/racketcon-2025/issues/6][#6]]       | -        |
+| 048 | Ruby Lenses                   | ✅        | DONE        | [[https://github.com/jwalsh/racketcon-2025/issues/7][#7]]       | -        |
+
+** Track 4: Data Formats (061-062)
+
+| ID  | Experiment                    | Makefile | Status | Issue |
+|-----+-------------------------------+----------+--------+-------|
+| 061 | Ion Format Basics             | ✅        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/14][#14]]   |
+| 062 | Ion Fusion                    | -        | NEW    | -     |
+
+** Track 5: Editor Integration (076-077)
+
+| ID  | Experiment                    | Makefile | Status | Issue |
+|-----+-------------------------------+----------+--------+-------|
+| 076 | Geiser Fundamentals           | ✅        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/18][#18]]   |
+| 077 | Geiser with Racket            | -        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/19][#19]]   |
+
+** Framework & Tutorials
+
+| ID  | Experiment                    | Makefile | Status | Issue |
+|-----+-------------------------------+----------+--------+-------|
+| 049 | Ocular Optics Guide           | -        | NEW    | -     |
+| 086 | Roulette Tutorial             | -        | NEW    | -     |
+| 141 | Rhombus Tutorial              | -        | NEW    | -     |
+| 142 | Here Strings                  | -        | NEW    | -     |
+| 999 | RHEA Framework                | ✅        | DONE   | [[https://github.com/jwalsh/racketcon-2025/issues/17][#17]]   |
+
+* Infrastructure Created
+
+** Makefiles (9 total)
+
+All Makefiles provide:
+- ~make help~ - Show available commands
+- ~make info~ - Display experiment information
+- ~make test~ - Run tests/examples
+- ~make clean~ - Remove generated files
+
+*** Experiment-Specific Targets
+
+**** 000-racket-setup
+#+begin_src bash
+make setup    # Install Rosette
+make test     # Verify installation
+#+end_src
+
+**** 001-rosette-fundamentals
+#+begin_src bash
+make check-rosette    # Verify Rosette installed
+make test             # Run all 4 examples
+#+end_src
+
+**** 045-functional-lenses
+#+begin_src bash
+make test        # Verify lens laws
+make quick       # Fast check
+make verify-laws # Comprehensive
+make benchmark   # Performance
+make repl        # Interactive
+#+end_src
+
+**** 046-pattern-matching
+#+begin_src bash
+make test   # Pattern matching examples
+#+end_src
+
+**** 047-ocular-patdown
+#+begin_src bash
+make test-lenses      # Lens examples
+make test-prisms      # Prism examples
+make test-traversals  # Traversal examples
+#+end_src
+
+**** 048-ruby-lenses
+#+begin_src bash
+make test-lens      # Ruby lens tests
+make test-traversal # Traversal tests
+#+end_src
+
+**** 061-ion-format-basics
+#+begin_src bash
+make view   # View Ion examples
+#+end_src
+
+**** 076-geiser-fundamentals
+#+begin_src bash
+make test    # Run Guile tests
+make emacs   # Launch Emacs with Geiser
+make install # Install Geiser packages
+#+end_src
+
+**** 999-rhea-framework
+#+begin_src bash
+racket rhea.rkt  # Racket version
+python3 rhea.py  # Python version
+guile rhea.scm   # Guile version
+#+end_src
+
+** Status Tracking Utilities
+
+*** Auto-generate Status Report
+
+#+begin_src bash
+cd scripts
+make update-status
+#+end_src
+
+Or manually:
+
+#+begin_src bash
+./scripts/update-status.sh
+#+end_src
+
+*** Implementation
+
+- ~process-issues.rkt~ - Parse GitHub JSON to org-mode
+- ~update-status.sh~ - Fetch from GitHub API and update
+- ~scripts/Makefile~ - Convenience targets
+
+*** Output
+
+Generates: [[file:EXPERIMENT_STATUS.org]]
+
+Includes:
+- Statistics (total, open, closed, with assignees)
+- Issue table with links
+- In-progress experiments
+- Links to Makefiles
+- Embedded test commands
+
+** RHEA Framework (3 languages)
+
+Scientific method framework implemented in:
+
+1. *Racket* (~experiments/999-rhea-framework/rhea.rkt~)
+   - Structs with gen:custom-write
+   - DSL macros: ~define-hypothesis~, ~run-experiment~
+   - syntax-parse for ergonomic syntax
+
+2. *Guile 3* (~experiments/999-rhea-framework/rhea.scm~)
+   - SRFI-9 records
+   - Pattern matching (ice-9 match)
+   - Functional API
+
+3. *Python 3.13* (~experiments/999-rhea-framework/rhea.py~)
+   - Dataclasses
+   - Pattern matching (3.10+)
+   - Type hints
+
+*** Three-Phase Structure
+
+1. *HYPOTHESIS*
+   - Research question
+   - Assumptions
+   - Predictions
+   - Success criteria
+
+2. *EXPERIMENT*
+   - Setup
+   - Procedure
+   - Data collection
+   - Replication
+
+3. *ANALYSIS*
+   - Statistical tests
+   - Interpretation
+   - Hypothesis refinement
+   - Next experiments
+
+* GitHub Integration
+
+** Issues Created (19 total)
+
+All experiments tracked with GitHub issues:
+- Complete RHEA framework metadata
+- Hypothesis, experiment, analysis sections
+- Validation results
+- Links to related experiments
+
+** Assignments
+
+In-progress experiments assigned:
+- Issue #15 → @aygp-dr (Experiment 041)
+- Issue #16 → @dsp-dr (Experiment 043)
+
+* New Experiments Added
+
+** 049: Ocular Optics Guide
+Complete tutorial on ocular-patdown library:
+- Introduction
+- Lenses
+- Traversals
+- Isomorphisms
+- Composition
+- Practical patterns
+- API reference
+
+** 062: Ion Fusion
+Deep dive into Amazon Ion format:
+- Type system
+- Binary vs text format
+- Comparison with JSON/EDN
+- Schema validation
+
+** 086: Roulette Tutorial
+Probabilistic programming with Roulette:
+- Discrete probability
+- Probability monad
+- Example implementations
+
+** 141: Rhombus Tutorial
+Introduction to Rhombus language:
+- Syntax differences from Racket
+- New features
+- Migration guide
+
+** 142: Here Strings
+Racket here-string syntax:
+- Basic syntax
+- Use cases
+- RHEA integration
+
+* Documentation Added
+
+** Getting Started Guides
+
+- [[file:experiments/045-functional-lenses/GETTING_STARTED.md]]
+- [[file:experiments/999-rhea-framework/SUMMARY.org]]
+- [[file:experiments/999-rhea-framework/EXPERIMENT_STATUS.md]]
+
+** Configuration Files
+
+- [[file:experiments/076-geiser-fundamentals/init-geiser.el]]
+- [[file:racketcon-2025-config.el]]
+
+** Code Examples
+
+- [[file:experiments/076-geiser-fundamentals/hello-geiser.scm]]
+- [[file:docs/here-string-examples.rkt]]
+- [[file:docs/at-expression-examples.rkt]]
+
+* Commits Summary
+
+#+begin_src bash :results output
+git log --oneline -15
+#+end_src
+
+#+RESULTS:
+| c71d976 | feat(status):       | replace markdown with org-mode status tracking           |
+| 00f744c | docs(experiments):  | add comprehensive experiment status tracking             |
+| 624e3a5 | feat(experiments):  | add Makefiles for experiments 000, 001, 048, 061        |
+| 0cdff58 | feat(experiments):  | add Makefiles and Geiser experiments                     |
+| c7bf925 | docs(045-lenses):   | add getting started guide                                |
+| 410eb98 | feat(045-lenses):   | add Makefile for testing and verification                |
+| dfcc20b | docs(rhea):         | add experiment assignment tracking                       |
+| 64a5d9d | feat(rhea):         | implement RHEA framework in Racket/Guile/Python          |
+| 9275d30 | feat(emacs):        | add comprehensive Emacs tooling for experiments          |
+| 068581f | feat(lenses):       | add Maybe prism implementation and t-shirt doc           |
+| c18865a | docs(sessions):     | add Sunday RacketCon sessions                            |
+
+* Statistics
+
+** By Status
+- Closed: 16 experiments
+- In Progress: 2 experiments
+- New: 5 experiments
+- Total: 23 experiments
+
+** By Infrastructure
+- With Makefiles: 9 experiments
+- Documentation only: 7 experiments
+- New tutorials: 5 experiments
+- Framework: 1 (RHEA)
+
+** By Track
+- Track 1 (Formal Methods): 9 experiments
+- Track 3 (Lenses/Patterns): 6 experiments
+- Track 4 (Data Formats): 2 experiments
+- Track 5 (Editor Integration): 2 experiments
+- Tutorials: 4 experiments
+
+* Quick Reference
+
+** Update Status Report
+
+#+begin_src bash
+cd scripts && make update-status
+#+end_src
+
+** Test All Experiments
+
+#+begin_src bash
+for exp in 000 001 045 046 047 048 061 076; do
+  cd experiments/${exp}-* && make test
+  cd ../..
+done
+#+end_src
+
+** Test Specific Track
+
+#+begin_src bash
+# Track 1: Rosette
+cd experiments/000-racket-setup && make setup && make test
+
+# Track 3: Lenses
+cd experiments/045-functional-lenses && make test
+
+# Track 5: Geiser
+cd experiments/076-geiser-fundamentals && make test
+#+end_src
+
+** View Status
+
+#+begin_src bash
+cat EXPERIMENT_STATUS.org
+#+end_src
+
+* Resources
+
+- [[file:EXPERIMENT_STATUS.org][Experiment Status]] (auto-generated from GitHub)
+- [[file:experiments/999-rhea-framework/README.org][RHEA Framework Documentation]]
+- [[file:experiments/999-rhea-framework/SUMMARY.org][RHEA Implementation Summary]]
+- [[file:scripts/Makefile][Status Utilities]]
+
+* Next Steps
+
+** For Assignees
+
+1. Review RHEA framework: [[file:experiments/999-rhea-framework/README.org]]
+2. Complete experiments #15 and #16
+3. Add Makefiles
+4. Update GitHub issues
+
+** Future Work
+
+- Add Makefiles to remaining experiments
+- Create tutorials for tracks 6-20
+- Expand RHEA framework features
+- Build experiment search/filter tools
+- Create visualization dashboard
