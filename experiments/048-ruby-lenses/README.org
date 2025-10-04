@@ -1,0 +1,108 @@
+#+TITLE: Experiment 048: Ruby Lenses - Port from Haskell/Racket
+#+AUTHOR: RacketCon 2025
+#+DATE: October 4-5, 2025
+
+* Overview
+
+This experiment ports the lens/optics concepts from Haskell and Racket to Ruby, creating a functional optics library for Ruby's object-oriented paradigm.
+
+* Goals
+
+1. Port core optics concepts to Ruby
+2. Implement lenses, prisms, traversals, and isos
+3. Demonstrate Ruby-idiomatic optics usage
+4. Compare OO vs FP approaches to the same problem
+
+* Motivation
+
+Ruby is:
+- Object-oriented but supports functional patterns
+- Has blocks/lambdas (first-class functions)
+- Immutability via ~freeze~ and immutable gems
+- Good candidate for optics port
+
+* Design Decisions
+
+** Immutability
+- Use ~Struct~ with ~freeze~ for immutable records
+- Or use gems like ~dry-struct~, ~values~
+- Copy-on-write semantics
+
+** Lens Implementation
+- Store getter and setter as procs/lambdas
+- Composition via method chaining or ~>>~ operator
+- Ruby-friendly API
+
+** Pattern Matching
+- Use Ruby 3.x pattern matching
+- Case/when with deconstruction
+- Or use ~dry-matcher~ gem
+
+* Files
+
+- ~lens.rb~ :: Core lens implementation
+- ~prism.rb~ :: Prism for optional data
+- ~traversal.rb~ :: Traversal for collections
+- ~iso.rb~ :: Isomorphism implementation
+- ~examples.rb~ :: Usage examples
+- ~specs/~ :: RSpec tests
+
+* Ruby Gems Ecosystem
+
+** Related Gems
+- ~dry-struct~ - Immutable structs
+- ~values~ - Value objects
+- ~hamster~ - Persistent data structures
+- ~dry-matcher~ - Pattern matching
+- ~kleisli~ - Functional abstractions
+
+** Our Approach
+Start with pure Ruby (no dependencies), then show gem integrations.
+
+* Installation
+
+#+begin_src bash
+# Pure Ruby (no gems)
+ruby lens.rb
+
+# With dependencies
+bundle install
+rspec
+#+end_src
+
+* Comparison
+
+** Haskell
+#+begin_src haskell
+person ^. address . city
+person & address . city .~ "Boston"
+#+end_src
+
+** Racket
+#+begin_src racket
+(lens-get city-lens person)
+(lens-set city-lens person "Boston")
+#+end_src
+
+** Ruby (proposed)
+#+begin_src ruby
+person.view(address.city)
+person.set(address.city, "Boston")
+# Or method chaining:
+address.city.view(person)
+address.city.set(person, "Boston")
+#+end_src
+
+* Next Steps
+
+After this experiment:
+1. Create standalone gem repository
+2. Publish to RubyGems
+3. Add documentation site
+4. Benchmark performance
+
+* Related Work
+
+- [[https://github.com/dry-rb][dry-rb]] ecosystem
+- [[https://github.com/influxdata/lens][influxdata/lens]] (Go implementation)
+- Functional Ruby patterns

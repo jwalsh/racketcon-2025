@@ -10,7 +10,7 @@
 ** 8:30am EDT
 Doors Open • Light breakfast served
 
-** 9:00am EDT Keynote: How Cloudflare Uses Racket and Rosette to Verify DNS Changes
+** DONE [#B] 9:00am EDT Keynote: How Cloudflare Uses Racket and Rosette to Verify DNS Changes
 James Larisch & Suleman Ahmad
 
 Since 2022, Cloudflare has used Racket and Rosette to prevent DNS-related bugs. Cloudflare engineers express desired DNS behavior as small programs called policies, written in a custom DSL called topaz-lang. Topaz-lang policies are executed in real-time on Cloudflare's global edge network in response to live DNS queries. But before deployment, all policies are checked for bugs using a verifier we wrote in Rosette, a solver-aided Racket #lang.
@@ -19,10 +19,9 @@ Since 2022, Cloudflare has used Racket and Rosette to prevent DNS-related bugs. 
 
 *Experiments*: [[file:experiments/000-racket-setup/][000]] [[file:experiments/001-rosette-fundamentals/][001]] [[file:experiments/006-topaz-lang-exploration/][006]] [[file:experiments/008-rosette-string-limitations/][008]]
 
-** 10:00am EDT
-Coffee Break
+** 10:00am EDT Coffee Break
 
-** 10:15am EDT Compositional Object Oriented Prototypes
+** DONE [#C] 10:15am EDT Compositional Object Oriented Prototypes
 François-René Rideau (Faré)
 
 We reconstruct a theory of object-orientation from first principles, as modularity and extensibility together. Mixin inheritance then appears as a natural embodiment of these joined principles expressed in the lambda-calculus. Further OO concepts such as prototypes, classes, single or multiple inheritance, multiple dispatch, method combinations and more naturally follow. Interestingly, many misconceptions about OO can also be dispelled, and we find that the simplest and most natural context for OO is pure lazy dynamic functional programming, without classes, and even without objects(!).
@@ -31,7 +30,7 @@ We reconstruct a theory of object-orientation from first principles, as modulari
 
 *Experiments*: [[file:experiments/007-compositional-oop/][007]]
 
-** 10:45am EDT A Match-Like DSL for Deep Immutable Updates
+** DONE [#A] 10:45am EDT A Match-Like DSL for Deep Immutable Updates
 Mike Delmonaco
 
 ~match~ is very convenient for deconstructing data and accessing values deep within a data structure, but it is not useful for making changes to that data structure. In this talk, I'll present a DSL that looks like ~match~, but allows you to perform immutable updates on the target value using pattern variables to specify where an update should occur. I'll also talk about optics, which are the abstraction powering these immutable updates.
@@ -40,10 +39,9 @@ Mike Delmonaco
 
 *Experiments*: [[file:experiments/041-deep-immutable-updates/][041]] [[file:experiments/043-lens-based-updates/][043]] [[file:experiments/045-functional-lenses/][045]]
 
-** 11:45am EDT
-Lunch (Provided)
+** 11:45am EDT Lunch (Provided)
 
-** 1:30pm EDT Ion Fusion
+** [#C] 1:30pm EDT Ion Fusion
 Todd Jonker
 
 Ion Fusion is a customizable programming language that unifies the semantics of persistent data and the code that manipulates it. Oriented around the Amazon Ion data format--the backbone of Amazon's retail systems and even consumer products--Fusion has been the brains of internal analytics, data processing, and workflow systems since 2013. This talk explores Ion Fusion's unique design goals and constraints, its roots in Scheme and Racket, and its vision of sustainable software evolution.
@@ -52,7 +50,7 @@ Ion Fusion is a customizable programming language that unifies the semantics of 
 
 *Experiments*: [[file:experiments/061-ion-format-basics/][061]] [[file:experiments/072-custom-lang-implementation/][072]]
 
-** 2:00pm EDT 'It Works': More Adventures with Racket and Emacs
+** [#A] 2:00pm EDT 'It Works': More Adventures with Racket and Emacs
 Greg Hendershott
 
 Evolution of the Emacs "racket-mode" package.
@@ -61,38 +59,36 @@ Evolution of the Emacs "racket-mode" package.
 
 *Experiments*: [[file:experiments/076-racket-mode-basics/][076]]
 
-** 2:30pm EDT Roulette for Racketeers
+** [#A] 2:30pm EDT Roulette for Racketeers
 Cameron Moy
 
 Discusses a new discrete probabilistic programming language.
 
 *Experiments*: [[file:experiments/086-discrete-probability/][086]] [[file:experiments/088-markov-chains/][088]]
 
-** 3:00pm EDT
-Break
+** 3:00pm EDT Break
 
-** 3:30pm EDT miniDusa: An Extensible Finite-Choice Logic Programming Language
+** [#C] 3:30pm EDT miniDusa: An Extensible Finite-Choice Logic Programming Language
 Ari Prakash & Zachary Eisbach
 
 *Experiments*: [[file:experiments/096-datalog-basics/][096]] [[file:experiments/100-relational-programming/][100]]
 
-** 4:00pm EDT Browsing (and serving) the Slow Internet with Racket
+** [#C] 4:00pm EDT Browsing (and serving) the Slow Internet with Racket
 Jonathan Simpson
 
 *Experiments*: [[file:experiments/111-gopher-protocol/][111]] [[file:experiments/118-gemini-protocol/][118]]
 
-** 4:30pm EDT PROG Rock: Listening to old Lisp code
+** [#C] 4:30pm EDT PROG Rock: Listening to old Lisp code
 Asher Olsen
 
 *Experiments*: [[file:experiments/126-music-theory/][126]] [[file:experiments/132-ast-sonification/][132]]
 
-** 6:00pm EDT
+** [#C] 6:00pm EDT
 Evening Social • Lord Hobo Brewery
 
 * Sunday, October 5th
 
-** 8:30am EDT
-Doors Open
+** 8:30am EDT Doors Open
 
 * Tags                                                             :noexport:
 
