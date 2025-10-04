@@ -1,0 +1,676 @@
+#+TITLE: Experiment 061: Amazon Ion Format Basics
+#+AUTHOR: Jason Walsh
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Exploring Amazon Ion, the data format at the heart of Amazon's retail systems and the foundation of Ion Fusion programming language presented by Todd Jonker at RacketCon 2025.
+
+*Related Session*: Saturday 1:30pm EDT - "Ion Fusion"
+
+* What is Amazon Ion?
+
+** Definition
+
+Amazon Ion is a richly-typed, self-describing, hierarchical data serialization format offering an interchangeable binary and text representation.
+
+** Key Characteristics
+
+1. *Rich Type System*
+   - All JSON types plus additional types
+   - Timestamps, decimals, symbols, blobs, clobs
+   - Type annotations for user-defined semantics
+
+2. *Self-Describing*
+   - Data includes type information
+   - No separate schema required (though schemas are supported)
+
+3. *Dual Representations*
+   - Text format (human-readable, like JSON)
+   - Binary format (compact, efficient)
+   - Semantically equivalent
+
+4. *Used at Amazon Scale*
+   - Retail systems backbone
+   - Consumer products (Alexa, Kindle)
+   - Analytics and data processing
+   - Since ~2012
+
+* Ion vs JSON
+
+** JSON Limitations
+
+#+begin_src json
+{
+  "name": "Alice",
+  "age": 30,
+  "balance": 1234.56,
+  "joined": "2024-01-15"
+}
+#+end_src
+
+Problems:
+- No native timestamp type
+- No decimal type (floating point precision issues)
+- No way to distinguish integers from floats
+- No type annotations
+- No binary data support
+
+** Ion Solution
+
+#+begin_src ion
+{
+  name: "Alice",
+  age: 30,
+  balance: 1234.56d0,           // Exact decimal
+  joined: 2024-01-15T00:00:00Z, // Native timestamp
+  metadata: user_record::{      // Type annotation
+    version: 1
+  }
+}
+#+end_src
+
+* Ion Type System
+
+** Scalar Types
+
+*** Null and Boolean
+
+#+begin_src ion
+null
+null.string     // Typed null
+true
+false
+#+end_src
+
+*** Numbers
+
+#+begin_src ion
+// Integers (arbitrary precision)
+42
+-17
+0xDEADBEEF     // Hex
+
+// Floats (IEEE-754)
+3.14e0
+-0.0e0
++inf
+
+// Decimals (exact)
+3.14d0
+123.456d0
+1d100          // 1 × 10^100
+#+end_src
+
+*** Timestamps
+
+#+begin_src ion
+// Various precisions
+2024T                           // Year
+2024-10T                        // Month
+2024-10-04T                     // Day
+2024-10-04T09:00:00Z           // UTC time
+2024-10-04T09:00:00-05:00      // Offset
+2024-10-04T09:00:00.123456Z    // Microseconds
+#+end_src
+
+*** Strings and Symbols
+
+#+begin_src ion
+// Strings (text data)
+"Hello, world!"
+"Multi-line\nstring"
+'''Multi-line
+string with
+preserved formatting'''
+
+// Symbols (identifiers, more efficient)
+'symbol_name'
+name          // Unquoted symbol
+#+end_src
+
+*** Binary Data
+
+#+begin_src ion
+// Blobs (binary large objects)
+{{aGVsbG8=}}         // Base64 encoded
+
+// Clobs (character large objects)
+{{"hello world"}}    // Text stored as bytes
+#+end_src
+
+** Container Types
+
+*** Lists
+
+#+begin_src ion
+[1, 2, 3]
+["mixed", types, 42]
+[
+  "nested",
+  [1, 2, 3],
+  {name: "value"}
+]
+#+end_src
+
+*** Structs (like objects/maps)
+
+#+begin_src ion
+{
+  name: "Alice",
+  age: 30
+}
+
+{
+  'field with spaces': "value",
+  "quoted_field": 123
+}
+
+// Duplicate field names allowed!
+{
+  x: 1,
+  x: 2,
+  x: 3
+}
+#+end_src
+
+*** S-expressions
+
+#+begin_src ion
+// Lisp-like expressions
+(+ 1 2)
+(cons 1 (cons 2 nil))
+(defun factorial (n)
+  (if (= n 0)
+      1
+      (* n (factorial (- n 1)))))
+#+end_src
+
+** Type Annotations
+
+#+begin_src ion
+// Single annotation
+user_record::{
+  id: 123,
+  name: "Alice"
+}
+
+// Multiple annotations
+'com.example.record'::'version_1'::{
+  data: "..."
+}
+
+// On any value
+age::30
+timestamp::2024-10-04T
+list::[1, 2, 3]
+#+end_src
+
+* Ion Text vs Binary
+
+** Text Format
+
+#+begin_src ion
+{
+  name: "Product",
+  price: 99.99d0,
+  in_stock: true,
+  tags: [retail, electronics]
+}
+#+end_src
+
+- Human-readable
+- Easy debugging
+- Larger size
+- Slower parsing
+
+** Binary Format
+
+- Compact representation
+- Fast parsing
+- Type-efficient encoding
+- Self-delimiting
+
+*** Binary Encoding Example
+
+#+begin_src scheme
+;; Conceptual representation
+;; (not actual bytes)
+
+struct {
+  field-id: 1, type: symbol, value: "name"
+  field-id: 1, type: string, value: "Product"
+  field-id: 2, type: symbol, value: "price"
+  field-id: 2, type: decimal, value: 99.99
+  field-id: 3, type: symbol, value: "in_stock"
+  field-id: 3, type: bool, value: true
+  field-id: 4, type: symbol, value: "tags"
+  field-id: 4, type: list, value: [...]
+}
+#+end_src
+
+* Ion in Racket
+
+** Reading Ion (Conceptual)
+
+#+begin_src racket
+#lang racket
+
+;; Hypothetical Ion reader for Racket
+
+(require ion-racket)  ; Not a real package
+
+;; Read Ion text
+(define data
+  (read-ion-text
+    "{name: \"Alice\", age: 30}"))
+
+;; Access fields
+(ion-ref data 'name)   ; => "Alice"
+(ion-ref data 'age)    ; => 30
+
+;; Read Ion binary
+(define bin-data
+  (read-ion-binary
+    (open-input-file "data.ion")))
+#+end_src
+
+** Writing Ion
+
+#+begin_src racket
+#lang racket
+
+;; Create Ion data
+(define record
+  (ion-struct
+    'name (ion-string "Alice")
+    'age (ion-int 30)
+    'balance (ion-decimal "1234.56")
+    'joined (ion-timestamp "2024-01-15")))
+
+;; Write as text
+(write-ion-text record)
+; => {name: "Alice", age: 30, balance: 1234.56d0, ...}
+
+;; Write as binary
+(write-ion-binary record (open-output-file "data.ion"))
+#+end_src
+
+** Type Annotations in Racket
+
+#+begin_src racket
+#lang racket
+
+;; Annotated values
+(define user
+  (ion-annotate
+    '(user_record version_1)
+    (ion-struct
+      'id (ion-int 123)
+      'name (ion-string "Alice"))))
+
+;; Get annotations
+(ion-annotations user)  ; => '(user_record version_1)
+
+;; Strip annotations
+(ion-value user)        ; => #<ion-struct ...>
+#+end_src
+
+* Ion Fusion: Language Design
+
+** Goals
+
+1. *Unify data and code*
+   - Data is code, code is data (Lisp philosophy)
+   - Persistent data format = program representation
+
+2. *Customizable*
+   - Extend language to domain needs
+   - Type annotations enable semantic extensions
+
+3. *Sustainable evolution*
+   - Change systems without breaking everything
+   - Versioning through annotations
+
+** Example: Data as Code
+
+#+begin_src ion
+// Ion Fusion program (conceptual)
+workflow::{
+  steps: [
+    {
+      id: extract,
+      type: s3_read,
+      bucket: "data-lake",
+      prefix: "raw/"
+    },
+    {
+      id: transform,
+      type: sql_query,
+      input: $extract,
+      query: '''
+        SELECT customer_id, SUM(amount)
+        FROM input
+        GROUP BY customer_id
+      '''
+    },
+    {
+      id: load,
+      type: s3_write,
+      input: $transform,
+      bucket: "processed",
+      key: "summary.ion"
+    }
+  ]
+}
+#+end_src
+
+** Fusion Features (Hypothetical)
+
+*** Variables and References
+
+#+begin_src ion
+let x = 42
+let y = x + 10
+let data = {value: x, computed: y}
+#+end_src
+
+*** Functions
+
+#+begin_src ion
+function add(a, b) {
+  a + b
+}
+
+function map_values(struct, fn) {
+  // Transform all values in struct
+  {for k, v in struct: k: fn(v)}
+}
+#+end_src
+
+*** Pattern Matching
+
+#+begin_src ion
+match record {
+  user::{id, name} => process_user(id, name),
+  product::{sku} => process_product(sku),
+  _ => error("Unknown record type")
+}
+#+end_src
+
+* Use Cases at Amazon
+
+** Data Processing Pipelines
+
+#+begin_src ion
+pipeline::{
+  source: kinesis_stream,
+  transformations: [
+    parse_json,
+    validate_schema,
+    enrich_with_metadata,
+    partition_by_date
+  ],
+  sink: s3_destination
+}
+#+end_src
+
+** Configuration Management
+
+#+begin_src ion
+// Environment-specific config
+prod::config::{
+  database: {
+    host: "prod-db.amazon.com",
+    replicas: 5,
+    backup_interval: 1h
+  },
+  cache: {
+    ttl: 3600,
+    max_size: 10GB
+  }
+}
+#+end_src
+
+** Analytics Queries
+
+#+begin_src ion
+// Declarative analytics
+query::{
+  from: sales_table,
+  where: date >= 2024-01-01T,
+  group_by: [product_category, region],
+  select: {
+    category: product_category,
+    region: region,
+    total_sales: sum(amount),
+    avg_price: avg(unit_price)
+  },
+  order_by: total_sales desc
+}
+#+end_src
+
+** Workflow Orchestration
+
+#+begin_src ion
+// Multi-step workflow
+workflow::{
+  schedule: cron("0 2 * * *"),  // Daily at 2am
+  steps: [
+    {name: "extract", type: extract_s3},
+    {name: "validate", type: data_quality_check},
+    {name: "transform", type: spark_job},
+    {name: "load", type: redshift_copy}
+  ],
+  on_failure: {
+    retry: 3,
+    backoff: exponential,
+    alert: pagerduty
+  }
+}
+#+end_src
+
+* Scheme/Racket Connections
+
+** S-expressions
+
+Ion's S-expression support enables Lisp-like code:
+
+#+begin_src ion
+;; Ion S-expression
+(define (factorial n)
+  (if (= n 0)
+      1
+      (* n (factorial (- n 1)))))
+
+;; Could be executed by Ion Fusion interpreter
+#+end_src
+
+** Homoiconicity
+
+Like Lisp/Scheme, Ion blurs the line between data and code:
+
+#+begin_src racket
+#lang racket
+
+;; Racket
+'(+ 1 2)           ; Data (list)
+(eval '(+ 1 2))    ; Code (evaluates to 3)
+
+;; Ion Fusion (conceptual)
+(+ 1 2)            ; Could be data or code
+#+end_src
+
+** Extensibility
+
+Type annotations enable domain-specific extensions:
+
+#+begin_src ion
+;; Custom types via annotations
+datetime::2024-10-04T09:00:00Z
+currency::usd::99.99d0
+duration::seconds::3600
+
+;; Similar to Racket's extensible reader
+#lang my-custom-lang
+#+end_src
+
+* Comparison with Other Formats
+
+** Ion vs JSON
+
+| Feature | JSON | Ion |
+|---------+------+-----|
+| Timestamps | String | Native |
+| Decimals | Float (lossy) | Exact |
+| Binary | Base64 string | Native blobs |
+| Annotations | None | Built-in |
+| S-expressions | None | Native |
+| Comments | None | Supported |
+| Trailing commas | Error | Allowed |
+
+** Ion vs Protocol Buffers
+
+| Feature | Protobuf | Ion |
+|---------+----------+-----|
+| Schema | Required | Optional |
+| Text format | Limited | Full-featured |
+| Self-describing | No | Yes |
+| Evolution | Version fields | Annotations |
+| Extensibility | Limited | Very flexible |
+
+** Ion vs EDN (Extensible Data Notation)
+
+| Feature | EDN | Ion |
+|---------+-----+-----|
+| Timestamps | Tagged | Native |
+| Binary format | None | Efficient binary |
+| Decimals | BigDecimal | Native |
+| Used at scale | Clojure ecosystem | Amazon-wide |
+
+* Practical Examples
+
+** Converting JSON to Ion
+
+*** JSON
+#+begin_src json
+{
+  "user": {
+    "id": 12345,
+    "name": "Alice",
+    "balance": 1234.56,
+    "created": "2024-01-15T10:30:00Z"
+  }
+}
+#+end_src
+
+*** Ion (with improvements)
+#+begin_src ion
+user_v1::{
+  id: 12345,
+  name: "Alice",
+  balance: 1234.56d0,              // Exact decimal
+  created: 2024-01-15T10:30:00Z   // Native timestamp
+}
+#+end_src
+
+** Schema Evolution with Annotations
+
+#+begin_src ion
+// Version 1
+user_v1::{
+  id: 123,
+  name: "Alice"
+}
+
+// Version 2 (add field)
+user_v2::{
+  id: 123,
+  name: "Alice",
+  email: "alice@example.com"
+}
+
+// Reader can handle both versions
+match record {
+  user_v1::{id, name} => migrate_to_v2(id, name),
+  user_v2::{id, name, email} => use_directly(id, name, email)
+}
+#+end_src
+
+* Resources
+
+** Official Documentation
+- [[https://amazon-ion.github.io/ion-docs/][Amazon Ion Documentation]]
+- [[https://amazon-ion.github.io/ion-docs/guides/why.html][Why Ion?]]
+- [[https://amazon-ion.github.io/ion-docs/docs/spec.html][Ion Specification]]
+
+** Implementations
+- [[https://github.com/amazon-ion/ion-python][ion-python]]
+- [[https://github.com/amazon-ion/ion-java][ion-java]]
+- [[https://github.com/amazon-ion/ion-js][ion-js]]
+- [[https://github.com/amazon-ion/ion-c][ion-c]]
+
+** Tools
+- [[https://github.com/amazon-ion/ion-cli][ion-cli]] - Command-line tools
+- [[https://github.com/amazon-ion/ion-schema][ion-schema]] - Schema validation
+
+** Papers & Talks
+- Ion Fusion talk (RacketCon 2025)
+- [[https://www.youtube.com/results?search_query=amazon+ion+format][Amazon Ion presentations]]
+
+* Connection to Ion Fusion
+
+** Why Ion for a Programming Language?
+
+1. *Data-centric*: Most programs manipulate data
+2. *Rich types*: Better than JSON for real-world data
+3. *Annotations*: Enable semantic extension
+4. *Self-describing*: Programs are inspectable data
+5. *Binary + Text*: Efficient storage, easy debugging
+
+** Fusion's Vision
+
+#+begin_quote
+Sustainable software evolution through transparent, coherent languages
+- Todd Jonker
+#+end_quote
+
+Ion provides:
+- *Transparency*: Data format is human-readable
+- *Coherence*: Same format for data and code
+- *Sustainability*: Versioning via annotations enables evolution
+
+* Exercises
+
+** Exercise 1: Ion Types
+Write Ion representations for:
+- A calendar event with precise timestamp
+- A financial transaction with exact decimal amounts
+- A configuration file with multiple versions
+
+** Exercise 2: JSON to Ion
+Convert a complex JSON API response to Ion, improving type fidelity
+
+** Exercise 3: Schema Evolution
+Design a versioned data format using Ion annotations
+
+** Exercise 4: DSL Design
+Sketch a domain-specific language using Ion as the foundation
+
+* Next Steps
+
+1. Read Ion specification
+2. Experiment with ion-cli
+3. Compare Ion with other formats in your domain
+4. Consider Ion for configuration/data formats
+5. Explore Ion Fusion concepts (when available)
+6. Watch Todd Jonker's RacketCon talk
+
+* Key Takeaways
+
+1. *Ion is JSON++*: All JSON features plus rich types, annotations, binary format
+2. *Amazon scale*: Powers retail systems, proven at massive scale
+3. *Scheme roots*: S-expressions, homoiconicity, extensibility
+4. *Ion Fusion*: Language that unifies data and code semantics
+5. *Sustainable evolution*: Type annotations enable versioning and migration

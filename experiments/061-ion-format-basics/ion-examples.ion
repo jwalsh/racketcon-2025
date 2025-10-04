@@ -1,0 +1,462 @@
+// Amazon Ion Examples
+// Demonstrating the full type system and features
+
+// ============================================================================
+// Scalar Types
+// ============================================================================
+
+// Null values
+null
+null.string
+null.int
+null.timestamp
+
+// Booleans
+true
+false
+
+// Integers (arbitrary precision)
+0
+42
+-17
+0xDEADBEEF
+0b1010
+0o777
+
+// Floats (IEEE-754 binary64)
+0.0e0
+3.14e0
+-0.0e0
++inf
+-inf
+nan
+
+// Decimals (exact)
+0.
+0.0d0
+3.14d0
+-1.2d-3
+123456789.123456789d0
+
+// Timestamps
+2024T
+2024-10T
+2024-10-04T
+2024-10-04T09:00:00Z
+2024-10-04T09:00:00-05:00
+2024-10-04T09:00:00.123456Z
+
+// Strings
+"simple string"
+"string with\nescapes"
+"unicode: \u263A"
+'''Multi-line
+string with
+preserved
+formatting'''
+
+// Symbols (identifiers)
+'symbol'
+name
+$identifier
+
+// Blobs (binary data, base64)
+{{aGVsbG8gd29ybGQ=}}
+{{
+  VGhpcyBpcyBhIGxvbmdlciBibG9i
+  dGhhdCBzcGFucyBtdWx0aXBsZSBs
+  aW5lcyBmb3IgcmVhZGFiaWxpdHk=
+}}
+
+// Clobs (character large objects)
+{{"hello world"}}
+{{
+  "Multi-line
+  clob data"
+}}
+
+// ============================================================================
+// Container Types
+// ============================================================================
+
+// Lists
+[]
+[1, 2, 3]
+["mixed", types, 42, true]
+[
+  "nested",
+  [1, 2, 3],
+  {a: 1}
+]
+
+// Structs
+{}
+{a: 1}
+{
+  name: "Alice",
+  age: 30,
+  active: true
+}
+{
+  'field with spaces': "value",
+  "quoted_field": 123,
+  unquoted: 456
+}
+{
+  // Duplicate field names are allowed
+  x: 1,
+  x: 2,
+  x: 3
+}
+{
+  nested: {
+    deep: {
+      value: 42
+    }
+  }
+}
+
+// S-expressions
+()
+(+ 1 2)
+(cons 1 (cons 2 nil))
+(
+  defun factorial (n)
+  (if (= n 0)
+      1
+      (* n (factorial (- n 1)))))
+
+// ============================================================================
+// Type Annotations
+// ============================================================================
+
+// Single annotation
+user_record::{
+  id: 123,
+  name: "Alice"
+}
+
+// Multiple annotations
+'com.example'::'v1'::value
+
+// Annotations on various types
+timestamp::2024-10-04T
+version::1
+tagged::[1, 2, 3]
+metadata::{key: "value"}
+
+// Nested annotations
+outer::inner::{
+  data: wrapper::42
+}
+
+// ============================================================================
+// Real-World Examples
+// ============================================================================
+
+// E-commerce Order
+order_v2::{
+  order_id: "ORD-12345",
+  customer_id: 98765,
+  order_date: 2024-10-04T14:23:15Z,
+  status: pending,
+  items: [
+    {
+      sku: "WIDGET-001",
+      name: "Premium Widget",
+      quantity: 2,
+      unit_price: 29.99d0,
+      total: 59.98d0
+    },
+    {
+      sku: "GADGET-042",
+      name: "Super Gadget",
+      quantity: 1,
+      unit_price: 149.95d0,
+      total: 149.95d0
+    }
+  ],
+  subtotal: 209.93d0,
+  tax: 18.89d0,
+  shipping: 9.99d0,
+  total: 238.81d0,
+  shipping_address: {
+    street: "123 Main St",
+    city: "Seattle",
+    state: "WA",
+    zip: "98101",
+    country: "US"
+  },
+  payment: {
+    method: credit_card,
+    last_four: "1234",
+    authorized: 2024-10-04T14:23:20Z
+  }
+}
+
+// User Profile
+user_profile_v3::{
+  user_id: 12345,
+  username: "alice",
+  email: "alice@example.com",
+  created_at: 2023-01-15T10:30:00Z,
+  updated_at: 2024-10-04T09:15:00Z,
+  profile: {
+    first_name: "Alice",
+    last_name: "Smith",
+    date_of_birth: 1990-05-15T,
+    phone: "+1-206-555-0123"
+  },
+  preferences: {
+    language: en_US,
+    timezone: "America/Los_Angeles",
+    notifications: {
+      email: true,
+      sms: false,
+      push: true
+    }
+  },
+  metadata: {
+    source: web_signup,
+    referrer: "https://example.com/campaign",
+    experiments: [exp_123, exp_456]
+  }
+}
+
+// Configuration File
+app_config::prod::{
+  version: "2.1.0",
+  environment: production,
+
+  database: {
+    primary: {
+      host: "prod-db-01.example.com",
+      port: 5432,
+      database: "maindb",
+      max_connections: 100,
+      connection_timeout: 30
+    },
+    replicas: [
+      {host: "prod-db-02.example.com", port: 5432},
+      {host: "prod-db-03.example.com", port: 5432}
+    ]
+  },
+
+  cache: {
+    type: redis,
+    endpoints: [
+      "redis-01.example.com:6379",
+      "redis-02.example.com:6379",
+      "redis-03.example.com:6379"
+    ],
+    ttl: 3600,
+    max_memory: "10GB"
+  },
+
+  logging: {
+    level: info,
+    format: json,
+    destinations: [
+      {type: file, path: "/var/log/app/app.log"},
+      {type: cloudwatch, group: "/aws/app/prod"}
+    ]
+  },
+
+  features: {
+    new_checkout: true,
+    ai_recommendations: true,
+    beta_features: false
+  }
+}
+
+// Analytics Query
+analytics_query::{
+  query_id: "q_20241004_001",
+  created: 2024-10-04T09:00:00Z,
+
+  from: sales_table,
+
+  where: (
+    and
+    (>= date 2024-01-01T)
+    (<= date 2024-12-31T)
+    (= status completed)
+  ),
+
+  group_by: [product_category, region],
+
+  select: {
+    category: product_category,
+    region: region,
+    total_sales: (sum amount),
+    avg_price: (avg unit_price),
+    order_count: (count *)
+  },
+
+  order_by: [
+    {field: total_sales, direction: desc}
+  ],
+
+  limit: 100
+}
+
+// Workflow Definition
+workflow::etl_pipeline::{
+  name: "Daily Sales ETL",
+  version: 3,
+  schedule: {
+    type: cron,
+    expression: "0 2 * * *",  // Daily at 2am UTC
+    timezone: "UTC"
+  },
+
+  steps: [
+    {
+      id: extract,
+      type: s3_read,
+      config: {
+        bucket: "sales-data-lake",
+        prefix: "raw/",
+        file_pattern: "sales_*.json.gz"
+      },
+      retry: {
+        max_attempts: 3,
+        backoff: exponential
+      }
+    },
+    {
+      id: validate,
+      type: data_quality_check,
+      depends_on: extract,
+      config: {
+        schema: sales_schema_v3,
+        reject_on_error: false,
+        error_threshold: 0.01d0  // 1% error rate
+      }
+    },
+    {
+      id: transform,
+      type: spark_job,
+      depends_on: validate,
+      config: {
+        job_name: "sales_transformation",
+        executor_memory: "4g",
+        executor_cores: 2,
+        transformations: [
+          parse_json,
+          normalize_schema,
+          enrich_with_product_data,
+          calculate_metrics,
+          partition_by_date
+        ]
+      }
+    },
+    {
+      id: load,
+      type: redshift_copy,
+      depends_on: transform,
+      config: {
+        table: "fact_sales",
+        mode: append,
+        compress: true
+      }
+    }
+  ],
+
+  on_failure: {
+    retry_workflow: false,
+    notifications: [
+      {type: email, recipients: ["data-team@example.com"]},
+      {type: pagerduty, severity: high}
+    ]
+  },
+
+  monitoring: {
+    metrics: [execution_time, rows_processed, error_rate],
+    alerts: [
+      {
+        condition: (> execution_time 3600),
+        message: "ETL taking longer than 1 hour"
+      }
+    ]
+  }
+}
+
+// Machine Learning Model Metadata
+ml_model_v1::{
+  model_id: "rec_model_2024_q4",
+  created: 2024-10-01T00:00:00Z,
+  updated: 2024-10-04T08:00:00Z,
+
+  model_type: neural_network,
+  framework: pytorch,
+  version: "1.13.0",
+
+  hyperparameters: {
+    learning_rate: 0.001d0,
+    batch_size: 128,
+    epochs: 50,
+    hidden_layers: [512, 256, 128],
+    dropout: 0.2d0,
+    optimizer: adam
+  },
+
+  training: {
+    dataset: "training_set_2024_q3",
+    samples: 1000000,
+    validation_split: 0.2d0,
+    start_time: 2024-09-25T00:00:00Z,
+    end_time: 2024-09-26T12:30:00Z
+  },
+
+  performance: {
+    accuracy: 0.89d0,
+    precision: 0.87d0,
+    recall: 0.91d0,
+    f1_score: 0.89d0,
+    auc_roc: 0.94d0
+  },
+
+  deployment: {
+    endpoint: "https://api.example.com/ml/v1/recommendations",
+    status: active,
+    instances: 5,
+    max_latency_ms: 100
+  }
+}
+
+// Event Stream
+event::purchase::{
+  event_id: "evt_abc123def456",
+  timestamp: 2024-10-04T14:23:45.123456Z,
+  user_id: 98765,
+  session_id: "sess_xyz789",
+
+  type: purchase_completed,
+
+  properties: {
+    order_id: "ORD-54321",
+    items: [
+      {sku: "BOOK-001", price: 24.99d0},
+      {sku: "MUSIC-042", price: 9.99d0}
+    ],
+    total: 34.98d0,
+    payment_method: apple_pay
+  },
+
+  context: {
+    ip: "203.0.113.42",
+    user_agent: "Mozilla/5.0 ...",
+    referrer: "https://example.com/products",
+    device: {
+      type: mobile,
+      os: iOS,
+      os_version: "17.0"
+    },
+    location: {
+      country: "US",
+      region: "WA",
+      city: "Seattle"
+    }
+  }
+}
