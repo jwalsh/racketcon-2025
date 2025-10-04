@@ -1,0 +1,447 @@
+#+TITLE: Experiment 092: Continuation-Based Universe Forking
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Explore all possible execution paths using continuations to "fork the universe" and accumulate state at the end of computation - a technique for exhaustive state space exploration.
+
+* Goals
+
+1. Use continuations to fork execution into parallel universes
+2. Explore all possible choices non-deterministically
+3. Accumulate results from all execution paths
+4. Compare to Roulette's probabilistic exploration
+5. Implement backtracking and search algorithms
+6. Build a non-deterministic computation framework
+
+* Core Concept: Forking the Universe
+
+** Traditional Execution
+
+#+begin_src racket
+;; Traditional execution - one path
+(define x (if condition 'a 'b))
+;; x is either 'a OR 'b - one universe
+#+end_src
+
+** Universe Forking with Continuations
+
+#+begin_src racket
+;; Fork the universe - explore BOTH paths
+(define (choose . choices)
+  (call/cc
+   (lambda (k)
+     (for-each
+      (lambda (choice)
+        ;; Fork: save continuation for each choice
+        (k choice))
+      choices))))
+
+;; This explores ALL possibilities
+(define x (choose 'a 'b))
+;; Universe 1: x = 'a
+;; Universe 2: x = 'b
+#+end_src
+
+* Architecture
+
+#+begin_src
+┌─────────────────────────────────────────┐
+│         Initial Universe                │
+│                                         │
+│  call/cc captures continuation         │
+└─────────────────────────────────────────┘
+                    ↓
+            ┌───────┴───────┐
+            ↓               ↓
+    ┌───────────────┐ ┌───────────────┐
+    │  Universe A   │ │  Universe B   │
+    │  (choice 1)   │ │  (choice 2)   │
+    └───────────────┘ └───────────────┘
+            ↓               ↓
+    More choices?   More choices?
+            ↓               ↓
+    ┌───────────────┐ ┌───────────────┐
+    │  Final State  │ │  Final State  │
+    │  (accumulated)│ │  (accumulated)│
+    └───────────────┘ └───────────────┘
+                    ↓
+            Collect all results
+#+end_src
+
+* Connection to Continuations (Lisp in Small Pieces Chapter 3)
+
+From our [[file:../../docs/lisp-in-small-pieces-guide.org][Lisp in Small Pieces reading guide]]:
+
+** Chapter 3: Escape and Return
+
+- ~call/cc~ captures current continuation
+- Continuations represent "the rest of the computation"
+- Can invoke continuation multiple times
+- **Enables non-local control flow**
+
+** Universe Forking Uses call/cc To:
+
+1. *Capture* the continuation at choice point
+2. *Invoke* it multiple times with different values
+3. *Explore* all branches of execution
+4. *Accumulate* results from each path
+
+* Comparison: Continuations vs Roulette
+
+| Aspect | Continuations (Racket) | Roulette (Probabilistic) |
+|--------+------------------------|--------------------------|
+| *Exploration* | All paths equally | Weighted by probability |
+| *Accumulation* | Collect all results | Compute distribution |
+| *Backtracking* | Manual with call/cc | Automatic |
+| *Use case* | Exhaustive search | Statistical inference |
+| *Result* | List of outcomes | Probability distribution |
+
+* Implementation Patterns
+
+** Pattern 1: Basic Choose
+
+#+begin_src racket
+#lang racket
+
+(define choices '())
+
+(define (choose . options)
+  (call/cc
+   (lambda (k)
+     (for-each
+      (lambda (option)
+        (set! choices (cons k choices))
+        (k option))
+      options))))
+
+(define (fail)
+  (if (null? choices)
+      (error "No choices left")
+      (let ([k (car choices)])
+        (set! choices (cdr choices))
+        (k #f))))
+#+end_src
+
+** Pattern 2: Collecting All Results
+
+#+begin_src racket
+#lang racket
+
+(define results '())
+
+(define (amb-collect thunk)
+  (call/cc
+   (lambda (return)
+     (define (succeed value)
+       (set! results (cons value results))
+       (fail))
+
+     (define (fail)
+       (if (null? choices)
+           (return (reverse results))
+           (let ([k (car choices)])
+             (set! choices (cdr choices))
+             (k #f))))
+
+     (let ([result (thunk)])
+       (succeed result)))))
+#+end_src
+
+** Pattern 3: Backtracking Search
+
+#+begin_src racket
+#lang racket
+
+(define (backtrack)
+  (if (null? choice-stack)
+      'no-solution
+      (let ([k (car choice-stack)])
+        (set! choice-stack (cdr choice-stack))
+        (k 'backtrack))))
+
+(define (assert condition)
+  (unless condition
+    (backtrack)))
+#+end_src
+
+* File Structure
+
+#+begin_example
+092-continuation-forking/
+├── README.org                    # This file
+├── 01-basic-forking.rkt         # Basic universe forking
+├── 02-amb-operator.rkt          # Ambiguous operator (McCarthy)
+├── 03-backtracking.rkt          # Backtracking search
+├── 04-state-accumulation.rkt    # Accumulating results
+├── 05-n-queens.rkt              # N-Queens with forking
+├── 06-graph-search.rkt          # Graph exploration
+├── 07-vs-roulette.rkt           # Compare to Roulette
+└── TUTORIAL.org                 # Complete tutorial
+#+end_example
+
+* Examples
+
+** Example 1: Fork and Explore
+
+#+begin_src racket
+#lang racket
+
+(define universes '())
+
+(define (fork-universe . choices)
+  (call/cc
+   (lambda (k)
+     (for ([choice choices])
+       (set! universes (cons (cons k choice) universes)))
+     (let ([first (car choices)])
+       first))))
+
+;; Fork on two choices
+(define x (fork-universe 'red 'blue))
+(define y (fork-universe 'circle 'square))
+
+;; Result: 4 universes
+;; 1: x='red,   y='circle
+;; 2: x='red,   y='square
+;; 3: x='blue,  y='circle
+;; 4: x='blue,  y='square
+#+end_src
+
+** Example 2: Accumulate All Paths
+
+#+begin_src racket
+#lang racket
+
+(define (all-paths thunk)
+  (define results '())
+
+  (call/cc
+   (lambda (exit)
+     (define continuations '())
+
+     (define (choose . options)
+       (call/cc
+        (lambda (k)
+          (for ([opt (cdr options)])
+            (set! continuations (cons (cons k opt) continuations)))
+          (car options))))
+
+     (define (collect result)
+       (set! results (cons result results))
+       (if (null? continuations)
+           (exit (reverse results))
+           (let ([next (car continuations)])
+             (set! continuations (cdr continuations))
+             ((car next) (cdr next)))))
+
+     (collect (thunk)))))
+
+;; Use it
+(all-paths
+ (lambda ()
+   (list (choose 1 2 3)
+         (choose 'a 'b))))
+
+;; Returns all combinations:
+;; '((1 a) (1 b) (2 a) (2 b) (3 a) (3 b))
+#+end_src
+
+** Example 3: Constraint Satisfaction
+
+#+begin_src racket
+#lang racket
+
+(define (solve-puzzle)
+  (define x (choose 1 2 3 4))
+  (define y (choose 1 2 3 4))
+
+  ;; Constraint: x + y = 5
+  (assert (= (+ x y) 5))
+
+  ;; Solution
+  (list x y))
+
+;; Automatically backtracks and finds all:
+;; (1 4), (2 3), (3 2), (4 1)
+#+end_src
+
+* Practical Applications
+
+** 1. Exhaustive Testing
+
+#+begin_src racket
+;; Test all input combinations
+(define (test-all-inputs function)
+  (all-paths
+   (lambda ()
+     (define input1 (choose 0 1 2 -1))
+     (define input2 (choose 0 1 2 -1))
+     (list input1 input2 (function input1 input2)))))
+#+end_src
+
+** 2. Configuration Space Exploration
+
+#+begin_src racket
+;; Explore all configuration combinations
+(define (explore-configs)
+  (define db-type (choose 'postgres 'mysql 'sqlite))
+  (define cache-enabled (choose #t #f))
+  (define replicas (choose 1 3 5))
+
+  (list db-type cache-enabled replicas))
+
+;; Gets all 18 configurations
+#+end_src
+
+** 3. Deployment Scenario Testing
+
+#+begin_src racket
+;; Test all deployment scenarios
+(define (deployment-scenarios)
+  (define region (choose 'us-east 'us-west 'eu-west))
+  (define instance-type (choose 't2.micro 't2.small 't2.medium))
+  (define auto-scale (choose #t #f))
+
+  ;; Constraint: large region needs auto-scaling
+  (assert (or (not (eq? region 'us-east))
+              auto-scale))
+
+  (list region instance-type auto-scale))
+#+end_src
+
+* Continuation Forking vs Roulette
+
+** Continuation-based Exploration
+
+#+begin_src racket
+#lang racket
+
+;; Deterministic: explore ALL paths
+(define (coin-flip)
+  (choose 'heads 'tails))
+
+(define (two-flips)
+  (list (coin-flip) (coin-flip)))
+
+(all-paths two-flips)
+;; → '((heads heads) (heads tails) (tails heads) (tails tails))
+;; All 4 outcomes, no probabilities
+#+end_src
+
+** Roulette Exploration
+
+#+begin_src racket
+#lang roulette
+
+;; Probabilistic: weighted exploration
+(define (coin-flip)
+  (flip 0.5))
+
+(define (two-flips)
+  (list (coin-flip) (coin-flip)))
+
+(distribution-of (two-flips) '((#t #t) (#t #f) (#f #t) (#f #f)))
+;; → Each outcome with P=0.25
+;; Probabilities attached
+#+end_src
+
+** When to Use Each
+
+| Scenario | Use Continuations | Use Roulette |
+|----------+-------------------+--------------|
+| *All solutions* | ✓ Exhaustive | ✗ Sampling |
+| *Weighted outcomes* | ✗ No weights | ✓ Probabilities |
+| *Constraint solving* | ✓ Backtracking | ~ Can express |
+| *Statistical inference* | ✗ No inference | ✓ Exact/approx |
+| *Combinatorial search* | ✓ Complete | ~ Guided by prob |
+
+* Advanced Techniques
+
+** 1. Lazy Universe Exploration
+
+#+begin_src racket
+;; Generate universes on demand
+(define (lazy-universes thunk)
+  (generator ()
+    (call/cc ...)))  ; Yield each universe
+#+end_src
+
+** 2. Parallel Universe Execution
+
+#+begin_src racket
+;; Execute universes in parallel
+(define (parallel-universes thunk)
+  (define futures
+    (for/list ([path (all-paths thunk)])
+      (future (lambda () (compute path)))))
+
+  (map touch futures))
+#+end_src
+
+** 3. Universe Pruning
+
+#+begin_src racket
+;; Prune uninteresting universes early
+(define (prune condition)
+  (unless condition
+    (abandon-universe)))
+#+end_src
+
+* Connection to Chaos Engineering
+
+Using continuation forking for chaos testing:
+
+#+begin_src racket
+;; Explore all failure combinations
+(define (chaos-test)
+  ;; Fork universes for each failure point
+  (define db-fails (choose #t #f))
+  (define cache-fails (choose #t #f))
+  (define network-fails (choose #t #f))
+
+  ;; Test system in this failure scenario
+  (system-response db-fails cache-fails network-fails))
+
+;; Tests all 8 failure combinations
+(all-paths chaos-test)
+#+end_src
+
+* Questions for RacketCon Sessions
+
+** For Cameron's Roulette Talk (2:30pm):
+- Can Roulette integrate with continuation-based exploration?
+- Combine exact inference with exhaustive search?
+- Use continuations for custom inference algorithms?
+
+** For Greg's Racket-Mode Talk (2:00pm):
+- Debugging continuation-based code in racket-mode?
+- Visualizing universe forking?
+- Step debugger through continuations?
+
+* Resources
+
+** Continuation Theory
+
+- [[file:../../docs/lisp-in-small-pieces-guide.org][Lisp in Small Pieces - Chapter 3]]
+- "Continuations and Backtracking" (classic paper)
+- [[https://docs.racket-lang.org/reference/cont.html][Racket Continuations Reference]]
+
+** Non-deterministic Computing
+
+- McCarthy's AMB operator
+- Prolog-style backtracking
+- Logic programming in Scheme
+
+** Related Experiments
+
+- [[file:../089-roulette-deep-dive/README.org][Experiment 089: Roulette]] - Probabilistic exploration
+- [[file:../091-chaos-engineering/README.org][Experiment 091: Chaos Engineering]] - Failure scenarios
+
+* Status
+
+EXPERIMENT ready - Continuation-based universe forking for exhaustive exploration
+
+Fork → Explore → Accumulate → Compare to Roulette!
