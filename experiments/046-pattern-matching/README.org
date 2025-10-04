@@ -1,0 +1,42 @@
+#+TITLE: Experiment 046: Pattern Matching Fundamentals
+#+AUTHOR: RacketCon 2025
+#+DATE: October 4-5, 2025
+
+* Overview
+
+This experiment explores Racket's pattern matching - how ~match~ deconstructs data and binds variables in one step.
+
+* Pattern Types
+
+Pattern matching in Racket supports:
+
+- Literals: numbers, strings, symbols
+- Variables: bind to any value
+- Structures: deconstruct structs
+- Lists: match list patterns
+- Quasiquote: complex nested patterns
+
+* Files
+
+- ~patterns-basic.rkt~ :: Introduction to pattern syntax
+- ~patterns-lists.rkt~ :: List pattern matching
+- ~patterns-structs.rkt~ :: Struct patterns
+- ~patterns-nested.rkt~ :: Nested and complex patterns
+
+* Key Concepts
+
+Pattern matching provides:
+
+1. *Deconstruction*: Break data apart
+2. *Binding*: Assign variables
+3. *Dispatch*: Choose code path based on shape
+4. *Exhaustiveness*: Ensure all cases covered
+
+* Related Sessions
+
+Based on Mike Delmonaco's talk on deep immutable updates.
+
+* References
+
+- [[https://docs.racket-lang.org/reference/match.html][Racket Match Documentation]]
+- [[https://docs.racket-lang.org/guide/match.html][Racket Guide: Pattern Matching]]
