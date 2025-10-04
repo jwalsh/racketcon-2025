@@ -34,9 +34,11 @@ We reconstruct a theory of object-orientation from first principles, as modulari
 ** 10:45am EDT A Match-Like DSL for Deep Immutable Updates
 Mike Delmonaco
 
-Presents a DSL for immutable updates using pattern variables.
+~match~ is very convenient for deconstructing data and accessing values deep within a data structure, but it is not useful for making changes to that data structure. In this talk, I'll present a DSL that looks like ~match~, but allows you to perform immutable updates on the target value using pattern variables to specify where an update should occur. I'll also talk about optics, which are the abstraction powering these immutable updates.
 
-*Experiments*: [[file:experiments/041-deep-immutable-updates/][041]] [[file:experiments/043-lens-based-updates/][043]]
+*Bio*: Software Engineer at Amazon Web Services with hobby interest in Programming Languages and Racket. Enjoys rock climbing, video games, creating interactive math visualizations, programming language research, and teaching.
+
+*Experiments*: [[file:experiments/041-deep-immutable-updates/][041]] [[file:experiments/043-lens-based-updates/][043]] [[file:experiments/045-functional-lenses/][045]]
 
 ** 11:45am EDT
 Lunch (Provided)

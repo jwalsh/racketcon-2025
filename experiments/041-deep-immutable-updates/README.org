@@ -1,0 +1,498 @@
+#+TITLE: Experiment 041: Deep Immutable Updates
+#+AUTHOR: Jason Walsh
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Exploring immutable update patterns for nested data structures, motivated by Mike Delmonaco's match-like DSL for deep updates presented at RacketCon 2025.
+
+*Related Session*: Saturday 10:45am EDT - "A Match-Like DSL for Deep Immutable Updates"
+
+* The Problem: Updating Nested Immutable Data
+
+** Simple Example
+
+#+begin_src racket
+#lang racket
+
+;; Nested data structure
+(define person
+  (hash 'name "Alice"
+        'age 30
+        'address (hash 'street "123 Main St"
+                       'city "Seattle"
+                       'state "WA")))
+
+;; How do we update the city immutably?
+#+end_src
+
+** Naive Approach (Verbose and Error-Prone)
+
+#+begin_src racket
+#lang racket
+
+;; Update city manually
+(define (update-city person new-city)
+  (hash-set person 'address
+    (hash-set (hash-ref person 'address)
+              'city
+              new-city)))
+
+(update-city person "Portland")
+; => #hash((name . "Alice")
+;          (age . 30)
+;          (address . #hash((street . "123 Main St")
+;                          (city . "Portland")
+;                          (state . "WA"))))
+#+end_src
+
+** What We Want: Declarative Updates
+
+#+begin_src racket
+;; Hypothetical syntax
+(update person
+  [address city] := "Portland")
+
+;; Or match-like
+(match-update person
+  [(hash 'address (hash 'city c))
+   (hash 'address (hash 'city "Portland"))])
+#+end_src
+
+* Why This Is Hard
+
+** Deep Nesting
+
+#+begin_src racket
+#lang racket
+
+(define data
+  (hash 'company (hash 'departments
+    (list
+      (hash 'name "Engineering"
+            'employees
+              (list
+                (hash 'id 1 'name "Alice" 'salary 100000)
+                (hash 'id 2 'name "Bob" 'salary 95000)))
+      (hash 'name "Sales"
+            'employees
+              (list
+                (hash 'id 3 'name "Charlie" 'salary 80000)))))))
+
+;; Update Alice's salary - very verbose!
+(hash-update data 'company
+  (λ (company)
+    (hash-update company 'departments
+      (λ (depts)
+        (list-update depts 0
+          (λ (dept)
+            (hash-update dept 'employees
+              (λ (emps)
+                (list-update emps 0
+                  (λ (emp)
+                    (hash-set emp 'salary 110000)))))))))))
+#+end_src
+
+** Multiple Updates
+
+#+begin_src racket
+;; Update multiple fields
+;; - Increment age
+;; - Change city
+;; - Add phone number
+
+;; Manual approach requires careful threading
+(define person2
+  (hash-set
+    (hash-update
+      (hash-update person 'age add1)
+      'address
+      (λ (addr) (hash-set addr 'city "Portland")))
+    'phone "555-1234"))
+#+end_src
+
+** Conditional Updates
+
+#+begin_src racket
+;; Update only if condition holds
+(define (give-raise-if-eligible person)
+  (if (>= (hash-ref person 'salary) 100000)
+      person
+      (hash-update person 'salary (λ (s) (* s 1.1)))))
+#+end_src
+
+* Solution 1: Helper Functions
+
+** Path-Based Updates
+
+#+begin_src racket
+#lang racket
+
+;; Update value at path
+(define (update-in data path updater)
+  (match path
+    ['() (updater data)]
+    [(cons key rest)
+     (cond
+       [(hash? data)
+        (hash-set data key
+          (update-in (hash-ref data key) rest updater))]
+       [(list? data)
+        (list-set data key
+          (update-in (list-ref data key) rest updater))]
+       [else data])]))
+
+;; Usage
+(update-in person '(address city) (λ (_) "Portland"))
+#+end_src
+
+** Set-In Helper
+
+#+begin_src racket
+#lang racket
+
+;; Set value at path (no function needed)
+(define (set-in data path value)
+  (update-in data path (λ (_) value)))
+
+;; Usage
+(set-in person '(address city) "Portland")
+#+end_src
+
+** Get-In Helper
+
+#+begin_src racket
+#lang racket
+
+;; Get value at path
+(define (get-in data path [default #f])
+  (match path
+    ['() data]
+    [(cons key rest)
+     (cond
+       [(hash? data)
+        (get-in (hash-ref data key default) rest default)]
+       [(list? data)
+        (get-in (list-ref data key default) rest default)]
+       [else default])]))
+
+;; Usage
+(get-in person '(address city))  ; => "Seattle"
+#+end_src
+
+* Solution 2: Match-Like DSL
+
+** Conceptual Design
+
+#+begin_src racket
+#lang racket
+
+;; Hypothetical match-update syntax
+(match-update person
+  ;; Pattern with holes
+  [(hash 'name name
+         'age age
+         'address (hash 'city _))
+   ;; Replacement
+   (hash 'name name
+         'age (add1 age)
+         'address (hash 'city "Portland"))])
+#+end_src
+
+** Pattern Variables
+
+#+begin_src racket
+;; Use pattern vars to indicate update locations
+(match-update person
+  [(hash 'address (hash 'city c))
+   ; Only rebuild changed parts
+   c := "Portland"])
+#+end_src
+
+** Multiple Updates
+
+#+begin_src racket
+(match-update person
+  [(hash 'age a 'address (hash 'city c))
+   (values (a := (add1 a))
+           (c := "Portland"))])
+#+end_src
+
+* Solution 3: Optics (Lenses)
+
+** What Are Optics?
+
+Optics are composable getters and setters for nested data structures.
+
+** Types of Optics
+
+1. *Lens*: Focus on a single field
+2. *Prism*: Focus on a variant (optional field)
+3. *Traversal*: Focus on multiple elements
+4. *Iso*: Bidirectional transformation
+
+** Lens Example
+
+#+begin_src racket
+#lang racket
+
+;; Lens data structure
+(struct lens (get set) #:transparent)
+
+;; Create a lens for hash field
+(define (hash-lens key)
+  (lens
+    (λ (h) (hash-ref h key))
+    (λ (h v) (hash-set h key v))))
+
+;; Compose lenses
+(define (compose-lens l1 l2)
+  (lens
+    (λ (x) ((lens-get l2) ((lens-get l1) x)))
+    (λ (x v)
+      ((lens-set l1) x
+        ((lens-set l2) ((lens-get l1) x) v)))))
+
+;; Use lenses
+(define address-lens (hash-lens 'address))
+(define city-lens (hash-lens 'city))
+(define address-city-lens
+  (compose-lens address-lens city-lens))
+
+;; Get
+((lens-get address-city-lens) person)  ; => "Seattle"
+
+;; Set
+((lens-set address-city-lens) person "Portland")
+#+end_src
+
+** Lens Operators
+
+#+begin_src racket
+#lang racket
+
+;; View through lens
+(define (view lens data)
+  ((lens-get lens) data))
+
+;; Set through lens
+(define (set lens data value)
+  ((lens-set lens) data value))
+
+;; Modify through lens
+(define (over lens data fn)
+  ((lens-set lens) data
+    (fn ((lens-get lens) data))))
+
+;; Usage
+(view address-city-lens person)
+; => "Seattle"
+
+(set address-city-lens person "Portland")
+; => updated person
+
+(over address-city-lens person string-upcase)
+; => person with city "SEATTLE"
+#+end_src
+
+* Practical Implementation
+
+** Basic Update-In
+
+#+begin_src racket
+#lang racket
+
+(define (update-in data path fn)
+  (cond
+    [(null? path) (fn data)]
+    [(hash? data)
+     (define key (car path))
+     (hash-set data key
+       (update-in (hash-ref data key) (cdr path) fn))]
+    [(list? data)
+     (define idx (car path))
+     (list-set data idx
+       (update-in (list-ref data idx) (cdr path) fn))]
+    [(vector? data)
+     (define idx (car path))
+     (vector-set data idx
+       (update-in (vector-ref data idx) (cdr path) fn))]
+    [else data]))
+
+;; Examples
+(update-in person '(age) add1)
+(update-in person '(address city) (λ (_) "Portland"))
+#+end_src
+
+** Update Multiple Paths
+
+#+begin_src racket
+#lang racket
+
+(define (update-many data updates)
+  (for/fold ([result data])
+            ([update updates])
+    (match update
+      [(list path fn)
+       (update-in result path fn)])))
+
+;; Usage
+(update-many person
+  '([(age) ,add1]
+    [(address city) ,(λ (_) "Portland")]
+    [(phone) ,(λ (_) "555-1234")]))
+#+end_src
+
+** Conditional Updates
+
+#+begin_src racket
+#lang racket
+
+(define (update-when data path pred? fn)
+  (if (pred? (get-in data path))
+      (update-in data path fn)
+      data))
+
+;; Usage
+(update-when person '(age)
+  (λ (age) (< age 40))
+  add1)
+#+end_src
+
+* Comparison with Other Approaches
+
+** Mutable (Not Racket Style)
+
+#+begin_src javascript
+// JavaScript (mutable)
+person.address.city = "Portland";
+#+end_src
+
+** Clojure's assoc-in
+
+#+begin_src clojure
+;; Clojure
+(assoc-in person [:address :city] "Portland")
+#+end_src
+
+** Haskell Lenses
+
+#+begin_src haskell
+-- Haskell
+person & address . city .~ "Portland"
+person & address . city %~ toUpper
+#+end_src
+
+** Ramda (JavaScript)
+
+#+begin_src javascript
+// JavaScript with Ramda
+R.assocPath(['address', 'city'], 'Portland', person)
+R.over(
+  R.lensPath(['address', 'city']),
+  R.toUpper,
+  person
+)
+#+end_src
+
+* Advanced Patterns
+
+** List Updates
+
+#+begin_src racket
+#lang racket
+
+;; Update all list elements
+(define (map-in data path fn)
+  (update-in data path
+    (λ (list) (map fn list))))
+
+;; Update matching elements
+(define (filter-update data path pred? fn)
+  (update-in data path
+    (λ (list)
+      (for/list ([item list])
+        (if (pred? item)
+            (fn item)
+            item)))))
+
+;; Usage
+(map-in company '(departments)
+  (λ (dept) (hash-update dept 'name string-upcase)))
+
+(filter-update company '(departments 0 employees)
+  (λ (emp) (> (hash-ref emp 'salary) 90000))
+  (λ (emp) (hash-update emp 'salary (λ (s) (* s 1.1)))))
+#+end_src
+
+** Nested List Updates
+
+#+begin_src racket
+#lang racket
+
+;; Update nested structure
+(define company-update
+  (update-in company '(departments)
+    (λ (depts)
+      (for/list ([dept depts])
+        (hash-update dept 'employees
+          (λ (emps)
+            (for/list ([emp emps])
+              (if (> (hash-ref emp 'salary) 90000)
+                  (hash-update emp 'salary (λ (s) (* s 1.1)))
+                  emp))))))))
+#+end_src
+
+** Optional Fields (Prism-like)
+
+#+begin_src racket
+#lang racket
+
+;; Safe update (doesn't fail on missing keys)
+(define (update-in-safe data path fn [default #f])
+  (if (has-path? data path)
+      (update-in data path fn)
+      data))
+
+(define (has-path? data path)
+  (not (equal? default (get-in data path default))))
+#+end_src
+
+* Resources
+
+** Papers
+- [[https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial][A Little Lens Starter Tutorial]]
+- [[https://arxiv.org/abs/1103.2841][Lenses, Folds and Traversals (Kmett)]]
+- [[https://www.cs.ox.ac.uk/jeremy.gibbons/publications/poptics.pdf][Profunctor Optics (Pickering et al.)]]
+
+** Libraries
+- [[https://docs.racket-lang.org/lens/index.html][Racket Lens Library]]
+- [[https://github.com/clojure/core.incubator][Clojure assoc-in]]
+- [[https://ramdajs.com/][Ramda (JavaScript)]]
+
+** Related
+- [[file:../043-lens-based-updates/][Experiment 043: Lens-Based Updates]]
+- [[file:../045-functional-lenses/][Experiment 045: Functional Lenses Implementation]]
+
+* Exercises
+
+** Exercise 1: Implement update-in
+Write a complete ~update-in~ supporting hashes, lists, and vectors.
+
+** Exercise 2: Match-Update DSL
+Design a simple match-like syntax for updates.
+
+** Exercise 3: Lens Composition
+Implement lens composition and test with nested data.
+
+** Exercise 4: Traversal
+Implement a traversal that updates all matching elements.
+
+* Key Takeaways
+
+1. *Immutable updates are verbose* for nested data
+2. *Path-based helpers* (~update-in~) simplify common cases
+3. *Optics (lenses)* provide composable abstractions
+4. *Match-like DSL* can make updates more declarative
+5. *Pattern variables* specify update locations concisely
