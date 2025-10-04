@@ -1,0 +1,554 @@
+#+TITLE: Experiment 091: Probabilistic Chaos Engineering & System Failure Models
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Probabilistic modeling of system failures in build, deploy, and runtime using Roulette for chaos engineering and reliability analysis.
+
+* Goals
+
+1. Model build/deploy pipeline failures probabilistically
+2. Simulate chaos testing scenarios with exact inference
+3. Predict system reliability under various conditions
+4. Compute failure probabilities for complex distributed systems
+5. Design resilient deployment strategies
+6. Analyze cascading failure scenarios
+
+* Why Probabilistic Modeling for Chaos Engineering?
+
+** Traditional Chaos Engineering
+
+- Inject failures randomly
+- Observe system behavior
+- Learn from empirical results
+- No formal guarantees
+
+** Probabilistic Chaos Engineering (with Roulette)
+
+- Model failure scenarios formally
+- Compute exact failure probabilities
+- Predict outcomes before testing
+- Design for reliability targets
+- Verify SLA guarantees
+
+* System Failure Model Architecture
+
+#+begin_src
+┌─────────────────────────────────────────┐
+│         Build Pipeline                  │
+│                                         │
+│  • Code compilation                    │
+│  • Unit tests                          │
+│  • Integration tests                   │
+│  • Security scans                      │
+└─────────────────────────────────────────┘
+                    ↓ (P(success))
+┌─────────────────────────────────────────┐
+│         Deployment Pipeline             │
+│                                         │
+│  • Artifact creation                   │
+│  • Environment provisioning            │
+│  • Service deployment                  │
+│  • Health checks                       │
+└─────────────────────────────────────────┘
+                    ↓ (P(success))
+┌─────────────────────────────────────────┐
+│         Runtime System                  │
+│                                         │
+│  • Service instances (N replicas)      │
+│  • Load balancer                       │
+│  • Database cluster                    │
+│  • External dependencies               │
+└─────────────────────────────────────────┘
+                    ↓ (P(availability))
+┌─────────────────────────────────────────┐
+│         Chaos Scenarios                 │
+│                                         │
+│  • Network partitions                  │
+│  • Instance failures                   │
+│  • Resource exhaustion                 │
+│  • Cascading failures                  │
+└─────────────────────────────────────────┘
+#+end_src
+
+* File Structure
+
+#+begin_example
+091-chaos-engineering/
+├── README.org                    # This file
+├── 01-build-pipeline.rkt        # Build failure models
+├── 02-deploy-pipeline.rkt       # Deployment failure models
+├── 03-runtime-failures.rkt      # Runtime system failures
+├── 04-chaos-scenarios.rkt       # Chaos testing scenarios
+├── 05-cascading-failures.rkt    # Cascade analysis
+├── 06-reliability-design.rkt    # SLA-driven design
+└── TUTORIAL.org                 # Complete tutorial
+#+end_example
+
+* Key Concepts
+
+** 1. Failure Independence
+
+#+begin_src racket
+#lang roulette
+
+;; Independent failures
+(define (build-step success-rate)
+  (flip success-rate))
+
+;; Pipeline with independent steps
+(define (pipeline)
+  (and (build-step 0.99)  ; Compile: 99%
+       (build-step 0.95)  ; Test: 95%
+       (build-step 0.98))) ; Package: 98%
+
+;; P(entire pipeline succeeds)
+(probability (pipeline))  ; ≈ 0.923
+#+end_src
+
+** 2. Dependent Failures
+
+#+begin_src racket
+#lang roulette
+
+;; Correlated failures (shared dependency)
+(define (dependent-services)
+  (define db-up (flip 0.99))  ; Database availability
+
+  ;; Services depend on database
+  (define service-a (if db-up (flip 0.99) #f))
+  (define service-b (if db-up (flip 0.99) #f))
+
+  (and service-a service-b))
+
+;; Probability both services are up
+(probability (dependent-services))
+#+end_src
+
+** 3. Redundancy & Replication
+
+#+begin_src racket
+#lang roulette
+
+;; N replicas, k must be healthy
+(define (k-of-n-available n k instance-reliability)
+  (define instances
+    (for/list ([i n])
+      (if (flip instance-reliability) 1 0)))
+
+  (>= (apply + instances) k))
+
+;; 3 replicas, need 2 healthy (quorum)
+(probability (k-of-n-available 3 2 0.9))  ; ≈ 0.972
+#+end_src
+
+** 4. Cascading Failures
+
+#+begin_src racket
+#lang roulette
+
+;; Load increases when instances fail
+(define (cascading-failure)
+  (define healthy-count
+    (+ (if (flip 0.95) 1 0)  ; Instance 1
+       (if (flip 0.95) 1 0)  ; Instance 2
+       (if (flip 0.95) 1 0))) ; Instance 3
+
+  ;; If only 1 instance left, it's overloaded
+  (cond
+    [(= healthy-count 0) #f]  ; Total failure
+    [(= healthy-count 1) (flip 0.5)]  ; Overload
+    [else #t]))
+
+;; P(system survives cascade)
+(probability (cascading-failure))
+#+end_src
+
+* Chaos Engineering Scenarios
+
+** Network Partition (Split Brain)
+
+#+begin_src racket
+#lang roulette
+
+;; Simulate network partition
+(define (network-partition)
+  ;; Partition probability
+  (define partition (flip 0.01))
+
+  (if partition
+      ;; Split brain: each side thinks it's primary
+      (define side-a-leader (flip 0.5))
+      (define side-b-leader (flip 0.5))
+      ;; Inconsistent state if both elect leader
+      (not (and side-a-leader side-b-leader))
+      ;; No partition - normal operation
+      #t))
+
+;; P(system maintains consistency)
+(probability (network-partition))
+#+end_src
+
+** Pod Eviction (Kubernetes)
+
+#+begin_src racket
+#lang roulette
+
+;; Kubernetes pod eviction scenarios
+(define (pod-eviction-scenario replicas)
+  ;; Node pressure causes eviction
+  (define eviction-rate 0.05)
+
+  ;; Each pod might be evicted
+  (define running-pods
+    (for/list ([i replicas])
+      (not (flip eviction-rate))))
+
+  ;; Need at least 1 pod running
+  (ormap identity running-pods))
+
+;; P(service remains available with 3 replicas)
+(probability (pod-eviction-scenario 3))
+#+end_src
+
+** Circuit Breaker
+
+#+begin_src racket
+#lang roulette
+
+;; Circuit breaker pattern
+(define (circuit-breaker-system)
+  (define service-healthy (flip 0.8))
+
+  ;; Circuit opens after failures
+  (define circuit-state
+    (if service-healthy
+        'closed    ; Normal operation
+        'open))    ; Circuit trips
+
+  ;; Requests succeed only if circuit closed and service healthy
+  (and (equal? circuit-state 'closed) service-healthy))
+
+;; P(request succeeds)
+(probability (circuit-breaker-system))
+#+end_src
+
+* Build Pipeline Failure Model
+
+See [[file:01-build-pipeline.rkt][Build Pipeline Model]].
+
+Key scenarios:
+- Compilation failures
+- Test flakiness
+- Dependency resolution
+- Resource exhaustion
+- Parallel build failures
+
+* Deploy Pipeline Failure Model
+
+See [[file:02-deploy-pipeline.rkt][Deploy Pipeline Model]].
+
+Key scenarios:
+- Blue/green deployment
+- Canary releases
+- Rolling updates
+- Rollback procedures
+- Health check failures
+
+* Runtime System Model
+
+See [[file:03-runtime-failures.rkt][Runtime Failures Model]].
+
+Key scenarios:
+- Service instance failures
+- Database failover
+- Cache invalidation
+- Rate limiting
+- Timeout cascades
+
+* Real-World Examples
+
+** Example 1: Microservices Deployment
+
+#+begin_src racket
+#lang roulette
+
+;; Microservices deployment with dependencies
+(define (microservices-deploy)
+  ;; Deploy order: DB → API → Frontend
+  (define db-deployed (flip 0.95))
+
+  (define api-deployed
+    (if db-deployed
+        (flip 0.90)  ; API needs DB
+        #f))
+
+  (define frontend-deployed
+    (if api-deployed
+        (flip 0.98)  ; Frontend needs API
+        #f))
+
+  ;; All must be deployed
+  (and db-deployed api-deployed frontend-deployed))
+
+;; P(successful deployment)
+(probability (microservices-deploy))  ; ≈ 0.839
+#+end_src
+
+** Example 2: Multi-Region Failover
+
+#+begin_src racket
+#lang roulette
+
+;; Multi-region setup with failover
+(define (multi-region-availability)
+  ;; Primary region
+  (define primary-up (flip 0.999))  ; 3 nines
+
+  ;; Secondary region (for failover)
+  (define secondary-up (flip 0.99))  ; 2 nines
+
+  ;; Failover mechanism
+  (define failover-works (flip 0.95))
+
+  ;; System up if primary OR (secondary AND failover works)
+  (or primary-up
+      (and secondary-up failover-works)))
+
+;; P(system available)
+(probability (multi-region-availability))  ; ≈ 0.99952
+#+end_src
+
+** Example 3: Database Cluster Quorum
+
+#+begin_src racket
+#lang roulette
+
+;; Raft/Paxos-style quorum
+(define (database-quorum)
+  (define nodes
+    (list (flip 0.99)   ; Node 1
+          (flip 0.99)   ; Node 2
+          (flip 0.99)   ; Node 3
+          (flip 0.99)   ; Node 4
+          (flip 0.99))) ; Node 5
+
+  (define healthy-count
+    (length (filter identity nodes)))
+
+  ;; Need majority (3 of 5)
+  (>= healthy-count 3))
+
+;; P(quorum achieved)
+(probability (database-quorum))  ; ≈ 0.99999
+#+end_src
+
+* Reliability Metrics
+
+** MTBF (Mean Time Between Failures)
+
+#+begin_src racket
+#lang roulette
+
+;; Model time-to-failure distribution
+(define (time-to-failure max-time)
+  (define (fails-at time)
+    (if (= time max-time)
+        max-time
+        (if (flip 0.01)  ; 1% chance per hour
+            time
+            (fails-at (+ time 1)))))
+
+  (fails-at 0))
+
+;; Expected time to failure (MTBF)
+(define ttf-dist
+  (distribution-of (time-to-failure 200) (range 0 201)))
+
+(expected-value ttf-dist)  ; ≈ 100 hours
+#+end_src
+
+** Availability (SLA)
+
+#+begin_src racket
+#lang roulette
+
+;; Calculate availability from uptime
+(define (sla-compliance)
+  ;; Service reliability per request
+  (define request-succeeds (flip 0.999))
+
+  request-succeeds)
+
+;; 3 nines: 99.9% availability
+(probability (sla-compliance))  ; = 0.999
+
+;; Downtime per year
+;; 0.001 × 365.25 × 24 × 60 = 525.96 minutes ≈ 8.76 hours
+#+end_src
+
+** Error Budget
+
+#+begin_src racket
+#lang roulette
+
+;; Error budget consumption
+(define (error-budget-check total-requests error-budget)
+  (define failures
+    (for/sum ([i total-requests])
+      (if (flip 0.001) 1 0)))  ; 0.1% failure rate
+
+  ;; Stay within budget
+  (<= failures (* total-requests error-budget)))
+
+;; P(staying within 0.5% error budget)
+(probability (error-budget-check 1000 0.005))
+#+end_src
+
+* Chaos Testing Strategies
+
+** 1. Failure Injection Probabilities
+
+| Scenario | Probability | Impact |
+|----------+-------------+--------|
+| Pod crash | 0.01 | Medium |
+| Network delay | 0.05 | Low |
+| Network partition | 0.001 | High |
+| Disk full | 0.01 | High |
+| CPU spike | 0.1 | Medium |
+| Memory leak | 0.05 | High |
+| DNS failure | 0.001 | Critical |
+
+** 2. Blast Radius Analysis
+
+#+begin_src racket
+#lang roulette
+
+;; Blast radius of failures
+(define (blast-radius failure-point)
+  (case failure-point
+    ;; Database failure affects everything
+    [(database)
+     (define all-services-down
+       (and (flip 0.0)   ; API can't work
+            (flip 0.0))) ; Frontend can't work
+     #f]  ; Total failure
+
+    ;; Cache failure - degraded performance
+    [(cache)
+     (flip 0.7)]  ; 70% chance of surviving (slower)
+
+    ;; Single service failure
+    [(service)
+     (flip 0.95)]  ; Other services unaffected
+
+    [else #t]))
+
+;; P(system survives given failure point)
+(probability (blast-radius 'cache))
+#+end_src
+
+** 3. Game Days Simulation
+
+#+begin_src racket
+#lang roulette
+
+;; Simulate chaos game day
+(define (chaos-game-day)
+  ;; Inject multiple failures
+  (define network-partition (flip 0.1))
+  (define instance-failure (flip 0.2))
+  (define db-slow (flip 0.3))
+
+  ;; System must handle all gracefully
+  (and (if network-partition
+           (flip 0.9)  ; Partition tolerance
+           #t)
+       (if instance-failure
+           (flip 0.95) ; Instance redundancy
+           #t)
+       (if db-slow
+           (flip 0.8)  ; Query timeout handling
+           #t)))
+
+;; P(system survives game day)
+(probability (chaos-game-day))
+#+end_src
+
+* Design for Reliability
+
+** Retry Policies
+
+#+begin_src racket
+#lang roulette
+
+;; Exponential backoff retry
+(define (retry-with-backoff max-retries)
+  (define (attempt n)
+    (if (= n max-retries)
+        #f  ; Exhausted retries
+        (if (flip 0.7)  ; 70% success rate
+            #t
+            (attempt (+ n 1)))))
+
+  (attempt 0))
+
+;; P(success with 3 retries)
+(probability (retry-with-backoff 3))  ; ≈ 0.973
+#+end_src
+
+** Bulkhead Pattern
+
+#+begin_src racket
+#lang roulette
+
+;; Isolate failures with bulkheads
+(define (bulkhead-isolation)
+  ;; Critical path
+  (define critical-service (flip 0.99))
+
+  ;; Non-critical path (isolated)
+  (define analytics-service (flip 0.80))
+
+  ;; Critical succeeds regardless of analytics
+  critical-service)
+
+;; P(critical path succeeds)
+(probability (bulkhead-isolation))  ; = 0.99
+#+end_src
+
+* Questions for Cameron's Roulette Talk
+
+1. Can Roulette model continuous failure distributions (Weibull, exponential)?
+2. Scaling exact inference for large distributed systems?
+3. Integration with chaos engineering tools (Chaos Mesh, Litmus)?
+4. Real-time probabilistic monitoring?
+5. Formal verification of resilience properties?
+
+* Resources
+
+** Chaos Engineering
+
+- [[https://principlesofchaos.org/][Principles of Chaos Engineering]]
+- [[https://netflix.github.io/chaosmonkey/][Netflix Chaos Monkey]]
+- [[https://chaos-mesh.org/][Chaos Mesh]]
+- [[https://litmuschaos.io/][Litmus Chaos]]
+
+** Reliability Engineering
+
+- [[https://sre.google/books/][Google SRE Books]]
+- [[https://www.usenix.org/conference/srecon][SREcon Conference]]
+
+** Related Experiments
+
+- [[file:../089-roulette-deep-dive/README.org][Experiment 089: Roulette Deep Dive]]
+- [[file:../001-rosette-intro/README.org][Experiment 001: Rosette Intro]]
+
+* Status
+
+EXPERIMENT ready - Probabilistic chaos engineering and system failure modeling
+
+Build → Deploy → Runtime → Chaos
+All modeled with exact probabilistic inference!
