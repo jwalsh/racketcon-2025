@@ -1,66 +1,66 @@
-# Experiment 007: Compositional Object Oriented Prototypes
+* Experiment 007: Compositional Object Oriented Prototypes
 
-## Overview
+** Overview
 
 Exploring François-René Rideau's reconstruction of object-orientation from first principles as modularity and extensibility combined. This experiment demonstrates how OO emerges naturally from functional programming concepts.
 
-**Related to**: Saturday 10:15am EDT session at RacketCon 2025
+*Related to*: Saturday 10:15am EDT session at RacketCon 2025
 
-## Core Thesis
+** Core Thesis
 
-**Object-Orientation = Modularity + Extensibility**
+*Object-Orientation = Modularity + Extensibility*
 
-### Key Insights
+*** Key Insights
 
-1. **OO is not about classes**: The essence is compositional extension
-2. **Lambda calculus is sufficient**: No special OO features needed
-3. **Mixin inheritance is fundamental**: Natural embodiment of modularity + extensibility
-4. **Prototypes > Classes**: More fundamental and flexible
-5. **Pure FP is ideal**: Lazy, dynamic functional programming is the natural context
+1. *OO is not about classes*: The essence is compositional extension
+2. *Lambda calculus is sufficient*: No special OO features needed
+3. *Mixin inheritance is fundamental*: Natural embodiment of modularity + extensibility
+4. *Prototypes > Classes*: More fundamental and flexible
+5. *Pure FP is ideal*: Lazy, dynamic functional programming is the natural context
 
-## Historical Context
+** Historical Context
 
-### The OO vs FP Debate
+*** The OO vs FP Debate
 
 For decades, OO and FP were seen as opposing paradigms:
-- **OO**: Objects, classes, inheritance, mutation
-- **FP**: Functions, immutability, composition
+- *OO*: Objects, classes, inheritance, mutation
+- *FP*: Functions, immutability, composition
 
-### The Synthesis
+*** The Synthesis
 
-Rideau discovered through **Jsonnet** and **Nix** that:
+Rideau discovered through *Jsonnet* and *Nix* that:
 - OO patterns emerge naturally in pure functional languages
 - The essence is compositional extension, not classes
 - Mixins capture the true nature of OO
 
-## First Principles
+** First Principles
 
-### Modularity
+*** Modularity
 
-**Definition**: Ability to separate concerns into independent units
+*Definition*: Ability to separate concerns into independent units
 
-```racket
+#+begin_src racket
 #lang racket
 
 ;; Modular: each function is independent
 (define (add x y) (+ x y))
 (define (mul x y) (* x y))
-```
+#+end_src
 
-### Extensibility
+*** Extensibility
 
-**Definition**: Ability to extend behavior without modifying original code
+*Definition*: Ability to extend behavior without modifying original code
 
-```racket
+#+begin_src racket
 ;; Extensible: can add new behavior
 (define (extended-add x y)
   (displayln "Adding...")
   (+ x y))
-```
+#+end_src
 
-### Modularity + Extensibility
+*** Modularity + Extensibility
 
-```racket
+#+begin_src racket
 ;; Combine both: modular AND extensible
 (define (make-extensible f)
   (lambda (before after)
@@ -69,15 +69,15 @@ Rideau discovered through **Jsonnet** and **Nix** that:
       (define result (apply f args))
       (after result)
       result)))
-```
+#+end_src
 
-## Mixin Inheritance
+** Mixin Inheritance
 
-### What is a Mixin?
+*** What is a Mixin?
 
-A **mixin** is a function that takes a "superclass" and returns a "subclass":
+A *mixin* is a function that takes a "superclass" and returns a "subclass":
 
-```racket
+#+begin_src racket
 #lang racket
 
 ;; Mixin: takes behavior, returns extended behavior
@@ -100,11 +100,11 @@ A **mixin** is a function that takes a "superclass" and returns a "subclass":
 ; Input: 5
 ; Output: 10
 ; => 10
-```
+#+end_src
 
-### Mixin Composition
+*** Mixin Composition
 
-```racket
+#+begin_src racket
 ;; Multiple mixins
 (define (timing-mixin super)
   (lambda (x)
@@ -120,13 +120,13 @@ A **mixin** is a function that takes a "superclass" and returns a "subclass":
     (timing-mixin
      (lambda (f) f)))
    double))
-```
+#+end_src
 
-## Prototypes Without Objects
+** Prototypes Without Objects
 
-### Traditional Prototype (JavaScript-style)
+*** Traditional Prototype (JavaScript-style)
 
-```javascript
+#+begin_src javascript
 // JavaScript
 const animal = {
   speak: function() { return "..."; }
@@ -134,11 +134,11 @@ const animal = {
 
 const dog = Object.create(animal);
 dog.speak = function() { return "Woof!"; };
-```
+#+end_src
 
-### Functional Prototype (Racket)
+*** Functional Prototype (Racket)
 
-```racket
+#+begin_src racket
 #lang racket
 
 ;; Prototype as a hash table of functions
@@ -159,11 +159,11 @@ dog.speak = function() { return "Woof!"; };
 
 (define dog (make-prototype animal))
 (set-method! dog 'speak (lambda () "Woof!"))
-```
+#+end_src
 
-### Pure Functional Prototype
+*** Pure Functional Prototype
 
-```racket
+#+begin_src racket
 #lang racket
 
 ;; Immutable prototype
@@ -188,13 +188,13 @@ dog.speak = function() { return "Woof!"; };
    animal))
 
 ((proto-ref dog 'speak))  ; => "Woof!"
-```
+#+end_src
 
-## Lambda Calculus Encoding
+** Lambda Calculus Encoding
 
-### Objects as Records
+*** Objects as Records
 
-```racket
+#+begin_src racket
 #lang racket
 
 ;; Object = record of methods
@@ -212,11 +212,11 @@ dog.speak = function() { return "Woof!"; };
 (define p1 (make-point 0 0))
 (define p2 (make-point 3 4))
 ((p1 'distance) p2)  ; => 5.0
-```
+#+end_src
 
-### Mixin as Higher-Order Function
+*** Mixin as Higher-Order Function
 
-```racket
+#+begin_src racket
 ;; Mixin = function from object to object
 (define (colored-mixin color)
   (lambda (super)
@@ -232,11 +232,11 @@ dog.speak = function() { return "Woof!"; };
 
 (define cp (make-colored-point 0 0 'red))
 (cp 'get-color)  ; => 'red
-```
+#+end_src
 
-## Multiple Inheritance via Mixins
+** Multiple Inheritance via Mixins
 
-```racket
+#+begin_src racket
 #lang racket
 
 ;; Multiple mixins = multiple inheritance
@@ -263,13 +263,13 @@ dog.speak = function() { return "Woof!"; };
        (case msg
          [(state) state]))))
    msg))
-```
+#+end_src
 
-## Method Combinations
+** Method Combinations
 
-### Before/After/Around Methods (CLOS-style)
+*** Before/After/Around Methods (CLOS-style)
 
-```racket
+#+begin_src racket
 #lang racket
 
 (struct method-combo (before primary after) #:transparent)
@@ -303,13 +303,13 @@ dog.speak = function() { return "Woof!"; };
     (apply fn (list result)))
 
   result)
-```
+#+end_src
 
-## Inspiration from Jsonnet and Nix
+** Inspiration from Jsonnet and Nix
 
-### Jsonnet Example
+*** Jsonnet Example
 
-```jsonnet
+#+begin_src jsonnet
 // Jsonnet: composable configuration
 local base = {
   name: "base",
@@ -321,11 +321,11 @@ local extended = base + {
   extra: 20,
   total: super.value + self.extra
 };
-```
+#+end_src
 
-### Nix Example
+*** Nix Example
 
-```nix
+#+begin_src nix
 # Nix: composable packages
 let
   base = {
@@ -338,11 +338,11 @@ let
     features = base.features ++ [ "extra" ];
   };
 in extended
-```
+#+end_src
 
-### Racket Equivalent
+*** Racket Equivalent
 
-```racket
+#+begin_src racket
 #lang racket
 
 ;; Composable records
@@ -359,15 +359,15 @@ in extended
                        'extra 20
                        'total (+ (hash-ref base 'value)
                                 (hash-ref (hash 'extra 20) 'extra)))))
-```
+#+end_src
 
-## Key Misconceptions Dispelled
+** Key Misconceptions Dispelled
 
-### Misconception 1: OO Requires Classes
+*** Misconception 1: OO Requires Classes
 
-**Reality**: Prototypes are more fundamental
+*Reality*: Prototypes are more fundamental
 
-```racket
+#+begin_src racket
 ;; No classes needed!
 (define shape
   (make-proto
@@ -377,38 +377,38 @@ in extended
   (make-proto
    `((area . ,(lambda (self) (* pi r r))))
    shape))
-```
+#+end_src
 
-### Misconception 2: OO Requires Mutation
+*** Misconception 2: OO Requires Mutation
 
-**Reality**: Pure functional OO is possible and natural
+*Reality*: Pure functional OO is possible and natural
 
-```racket
+#+begin_src racket
 ;; Immutable objects
 (define (point-move p dx dy)
   (make-point (+ (p 'get-x) dx)
               (+ (p 'get-y) dy)))
-```
+#+end_src
 
-### Misconception 3: OO and FP are Incompatible
+*** Misconception 3: OO and FP are Incompatible
 
-**Reality**: OO emerges naturally from FP primitives
+*Reality*: OO emerges naturally from FP primitives
 
-## Practical Examples
+** Practical Examples
 
 See the accompanying files:
-- `mixins.rkt`: Mixin implementation and examples
-- `prototypes.rkt`: Prototype-based OO without classes
-- `method-combo.rkt`: CLOS-style method combinations
-- `jsonnet-style.rkt`: Jsonnet-inspired composition
+- ~mixins.rkt~: Mixin implementation and examples
+- ~prototypes.rkt~: Prototype-based OO without classes
+- ~method-combo.rkt~: CLOS-style method combinations
+- ~jsonnet-style.rkt~: Jsonnet-inspired composition
 
-## Connections to Other Concepts
+** Connections to Other Concepts
 
-### To Racket's Class System
+*** To Racket's Class System
 
 Racket has a built-in class system, but it's built on similar principles:
 
-```racket
+#+begin_src racket
 #lang racket
 
 (require racket/class)
@@ -420,58 +420,58 @@ Racket has a built-in class system, but it's built on similar principles:
     (define/override (method-name)
       (displayln "Calling method")
       (super method-name))))
-```
+#+end_src
 
-### To Common Lisp CLOS
+*** To Common Lisp CLOS
 
 CLOS method combinations inspired this approach:
 
-```racket
+#+begin_src racket
 ;; Similar to CLOS :before, :after, :around methods
 (define-method-combination standard
   :operator progn
   :identity-with-one-argument t)
-```
+#+end_src
 
-## Resources
+** Resources
 
-### Papers
+*** Papers
 - "A Monotonic Superclass Linearization for Dylan" (Barrett et al.)
 - "Traits: Composable Units of Behaviour" (Schärli et al.)
 - "Mixin-based Inheritance" (Bracha & Cook)
 
-### Implementations
-- [Gerbil Scheme](https://cons.io/) - Faré's Scheme with advanced OO
-- [Jsonnet](https://jsonnet.org/) - Configuration language that inspired this
-- [Nix](https://nixos.org/) - Functional package manager
+*** Implementations
+- [[https://cons.io/][Gerbil Scheme]] - Faré's Scheme with advanced OO
+- [[https://jsonnet.org/][Jsonnet]] - Configuration language that inspired this
+- [[https://nixos.org/][Nix]] - Functional package manager
 
-### Related Talks
+*** Related Talks
 - "The Essence of Object-Orientation" (William Cook)
 - "Prototypes vs Classes" (Antero Taivalsaari)
 
-## Exercises
+** Exercises
 
-### Exercise 1: Implement Mixins
+*** Exercise 1: Implement Mixins
 Create a mixin system from scratch using only lambda.
 
-### Exercise 2: Build Prototypes
+*** Exercise 2: Build Prototypes
 Implement prototype inheritance without mutation.
 
-### Exercise 3: Method Combinations
+*** Exercise 3: Method Combinations
 Create CLOS-style before/after/around methods.
 
-### Exercise 4: Compare to Classes
+*** Exercise 4: Compare to Classes
 Implement the same example with classes vs mixins.
 
-## Key Takeaways
+** Key Takeaways
 
-1. **OO = Modularity + Extensibility**: Core principle
-2. **Mixins are fundamental**: Natural encoding in lambda calculus
-3. **No special features needed**: Pure FP is sufficient
-4. **Prototypes > Classes**: More flexible and fundamental
-5. **Composition > Inheritance**: Mixins enable better composition
+1. *OO = Modularity + Extensibility*: Core principle
+2. *Mixins are fundamental*: Natural encoding in lambda calculus
+3. *No special features needed*: Pure FP is sufficient
+4. *Prototypes > Classes*: More flexible and fundamental
+5. *Composition > Inheritance*: Mixins enable better composition
 
-## Connection to RacketCon Session
+** Connection to RacketCon Session
 
 This experiment prepares you for Faré's talk on how:
 - OO concepts emerge from first principles

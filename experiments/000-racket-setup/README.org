@@ -1,50 +1,50 @@
-# Experiment 000: Racket and Rosette Setup
+* Experiment 000: Racket and Rosette Setup
 
-## Overview
+** Overview
 
 Initial setup for exploring Racket and Rosette, inspired by the RacketCon 2025 keynote on Cloudflare's use of Racket and Rosette for DNS verification.
 
-## Prerequisites
+** Prerequisites
 
 - Racket installed (https://racket-lang.org/)
 - raco package manager
 
-## Installation
+** Installation
 
-### Install Racket
+*** Install Racket
 
-```bash
+#+begin_src bash
 # macOS
 brew install --cask racket
 
 # Or download from https://download.racket-lang.org/
-```
+#+end_src
 
-### Install Rosette
+*** Install Rosette
 
-```bash
+#+begin_src bash
 raco pkg install rosette
-```
+#+end_src
 
-## Verify Installation
+** Verify Installation
 
-```racket
+#+begin_src racket
 #lang racket
 (require rosette)
 (displayln "Rosette is installed!")
-```
+#+end_src
 
-Save as `verify.rkt` and run:
+Save as ~verify.rkt~ and run:
 
-```bash
+#+begin_src bash
 racket verify.rkt
-```
+#+end_src
 
-## Basic Rosette Example
+** Basic Rosette Example
 
-Create `hello-rosette.rkt`:
+Create ~hello-rosette.rkt~:
 
-```racket
+#+begin_src racket
 #lang rosette
 
 (require rosette/lib/synthax)
@@ -58,23 +58,23 @@ Create `hello-rosette.rkt`:
  (assert (= (+ x y) (+ y x))))
 
 (displayln "Commutativity verified!")
-```
+#+end_src
 
 Run:
 
-```bash
+#+begin_src bash
 racket hello-rosette.rkt
-```
+#+end_src
 
-## Next Steps
+** Next Steps
 
 - Explore solver-aided programming concepts
 - Experiment with symbolic execution
 - Build simple DSLs using Racket's #lang feature
 - Study Cloudflare's topaz-lang approach
 
-## Resources
+** Resources
 
-- [Rosette Guide](https://docs.racket-lang.org/rosette-guide/)
-- [Rosette Paper](https://emina.github.io/rosette/)
-- [Racket Documentation](https://docs.racket-lang.org/)
+- [[https://docs.racket-lang.org/rosette-guide/][Rosette Guide]]
+- [[https://emina.github.io/rosette/][Rosette Paper]]
+- [[https://docs.racket-lang.org/][Racket Documentation]]

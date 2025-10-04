@@ -1,71 +1,71 @@
-# Experiment 003: Rosette vs Lean vs TLA+
+* Experiment 003: Rosette vs Lean vs TLA+
 
-## Overview
+** Overview
 
 Detailed comparison of three popular formal methods tools: Rosette (SMT-based), Lean (theorem prover), and TLA+ (model checker). Each excels in different scenarios.
 
-## Side-by-Side Comparison
+** Side-by-Side Comparison
 
-### Philosophy
+*** Philosophy
 
-**Rosette**
+*Rosette*
 - Solver-aided programming: verification as programming
 - Embedded in Racket, full language integration
 - "Correct code through symbolic execution"
 
-**Lean**
+*Lean*
 - Dependently-typed theorem proving
 - Mathematics-first, then programs
 - "Correct code through proofs"
 
-**TLA+**
+*TLA+*
 - Temporal logic specification
 - State machines and invariants
 - "Correct systems through model checking"
 
-### Workflow
+*** Workflow
 
-**Rosette**
-```racket
+*Rosette*
+#+begin_src racket
 #lang rosette
 (define-symbolic x integer?)
 (verify (assert (property x)))
-```
+#+end_src
 Write code, add symbolic values, verify inline.
 
-**Lean**
-```lean
+*Lean*
+#+begin_src lean
 theorem property (x : ℤ) : ... := by
   intro
   simp
   ...
-```
+#+end_src
 State theorem, construct proof, extract code.
 
-**TLA+**
-```tla
+*TLA+*
+#+begin_src tla
 THEOREM Property == ...
 PROOF ... QED
-```
+#+end_src
 Specify state machine, check with TLC model checker.
 
-## Feature Comparison
+** Feature Comparison
 
 | Feature | Rosette | Lean | TLA+ |
-|---------|---------|------|------|
-| **Automation** | High (SMT) | Low (manual proofs) | High (model checking) |
-| **Expressiveness** | Bounded verification | Full mathematics | Temporal properties |
-| **Learning Curve** | Medium (Racket + SMT) | Steep (type theory) | Medium (logic + spec) |
-| **Integration** | Racket programs | Standalone + extraction | Specification only |
-| **Synthesis** | Yes (built-in) | Limited | No |
-| **Debugging** | Counterexamples | Proof goals | Error traces |
-| **Scale** | Medium (bounded) | Large (compositional) | Small-Medium (states) |
+|---------+---------+------+------|
+| *Automation* | High (SMT) | Low (manual proofs) | High (model checking) |
+| *Expressiveness* | Bounded verification | Full mathematics | Temporal properties |
+| *Learning Curve* | Medium (Racket + SMT) | Steep (type theory) | Medium (logic + spec) |
+| *Integration* | Racket programs | Standalone + extraction | Specification only |
+| *Synthesis* | Yes (built-in) | Limited | No |
+| *Debugging* | Counterexamples | Proof goals | Error traces |
+| *Scale* | Medium (bounded) | Large (compositional) | Small-Medium (states) |
 
-## Example: Verifying a Max Function
+** Example: Verifying a Max Function
 
-### Rosette
+*** Rosette
 
-```racket
+#+begin_src racket
 #lang rosette
 
 (define-symbolic x y integer?)
@@ -79,14 +79,14 @@ Specify state machine, check with TLC model checker.
          (>= (max2 x y) y)
          (or (= (max2 x y) x)
              (= (max2 x y) y)))))
-```
+#+end_src
 
-**Pros**: Concise, automatic, finds counterexamples
-**Cons**: Bounded to SMT-decidable logic
+*Pros*: Concise, automatic, finds counterexamples
+*Cons*: Bounded to SMT-decidable logic
 
-### Lean
+*** Lean
 
-```lean
+#+begin_src lean
 def max2 (a b : Int) : Int :=
   if a ≥ b then a else b
 
@@ -105,14 +105,14 @@ theorem max2_ge_right (a b : Int) : max2 a b ≥ b := by
 theorem max2_is_one (a b : Int) : max2 a b = a ∨ max2 a b = b := by
   unfold max2
   split <;> simp
-```
+#+end_src
 
-**Pros**: Proven for all integers, reusable proofs
-**Cons**: Manual proof construction, verbose
+*Pros*: Proven for all integers, reusable proofs
+*Cons*: Manual proof construction, verbose
 
-### TLA+
+*** TLA+
 
-```tla
+#+begin_src tla
 ---- MODULE Max ----
 EXTENDS Integers
 
@@ -126,16 +126,16 @@ MaxCorrect ==
 
 THEOREM MaxCorrect
 ====
-```
+#+end_src
 
-**Pros**: Clear specification, model checker validates
-**Cons**: Not executable code, finite models only
+*Pros*: Clear specification, model checker validates
+*Cons*: Not executable code, finite models only
 
-## Example: Distributed System (Two-Phase Commit)
+** Example: Distributed System (Two-Phase Commit)
 
-### Rosette
+*** Rosette
 
-```racket
+#+begin_src racket
 #lang rosette
 
 (struct state (phase votes committed) #:transparent)
@@ -156,14 +156,14 @@ THEOREM MaxCorrect
   (assert
     (=> (state-committed (coordinator-step s))
         (and vote1 vote2))))
-```
+#+end_src
 
-**Good for**: Quick prototyping, bounded verification
-**Limited**: State space size, temporal properties
+*Good for*: Quick prototyping, bounded verification
+*Limited*: State space size, temporal properties
 
-### TLA+ (Best Choice)
+*** TLA+ (Best Choice)
 
-```tla
+#+begin_src tla
 ---- MODULE TwoPhaseCommit ----
 VARIABLES phase, votes, committed
 
@@ -183,14 +183,14 @@ SafetyInvariant ==
 
 THEOREM SafetyInvariant
 ====
-```
+#+end_src
 
-**Good for**: Protocol design, temporal reasoning
-**Industry use**: AWS, Microsoft, MongoDB
+*Good for*: Protocol design, temporal reasoning
+*Industry use*: AWS, Microsoft, MongoDB
 
-### Lean
+*** Lean
 
-```lean
+#+begin_src lean
 structure State where
   phase : String
   votes : List Bool
@@ -213,14 +213,14 @@ theorem safety (s : State) :
   unfold coordinatorStep at h_committed
   simp [h_phase] at h_committed
   split at h_committed <;> simp_all
-```
+#+end_src
 
-**Good for**: Deep correctness proofs
-**Overkill for**: Protocol design exploration
+*Good for*: Deep correctness proofs
+*Overkill for*: Protocol design exploration
 
-## When to Choose Each
+** When to Choose Each
 
-### Choose Rosette When:
+*** Choose Rosette When:
 - ✅ Building verified DSLs
 - ✅ Synthesizing code from specs
 - ✅ Symbolic execution of programs
@@ -228,7 +228,7 @@ theorem safety (s : State) :
 - ❌ Need infinite-state verification
 - ❌ Complex mathematical proofs
 
-### Choose Lean When:
+*** Choose Lean When:
 - ✅ Mathematical formalization
 - ✅ Verified compiler/interpreter
 - ✅ Deep correctness guarantees
@@ -236,7 +236,7 @@ theorem safety (s : State) :
 - ❌ Quick iteration on designs
 - ❌ Automated verification needed
 
-### Choose TLA+ When:
+*** Choose TLA+ When:
 - ✅ Distributed protocols
 - ✅ Concurrent algorithms
 - ✅ System-level design
@@ -244,45 +244,45 @@ theorem safety (s : State) :
 - ❌ Need executable code
 - ❌ Complex data structures
 
-## Real-World Examples
+** Real-World Examples
 
-### Rosette
-- **Cloudflare**: DNS policy verification (topaz-lang)
-- **Neutrons**: Network verification
-- **Ferrite**: Synthesis of numerical code
+*** Rosette
+- *Cloudflare*: DNS policy verification (topaz-lang)
+- *Neutrons*: Network verification
+- *Ferrite*: Synthesis of numerical code
 
-### Lean
-- **Mathlib**: Comprehensive math library
-- **Lean 4 compiler**: Self-hosting verified compiler
-- **Duper**: Automated theorem proving
+*** Lean
+- *Mathlib*: Comprehensive math library
+- *Lean 4 compiler*: Self-hosting verified compiler
+- *Duper*: Automated theorem proving
 
-### TLA+
-- **AWS**: S3, DynamoDB, EBS protocols
-- **Microsoft**: Azure Cosmos DB
-- **MongoDB**: Replication protocol
+*** TLA+
+- *AWS*: S3, DynamoDB, EBS protocols
+- *Microsoft*: Azure Cosmos DB
+- *MongoDB*: Replication protocol
 
-## Learning Resources
+** Learning Resources
 
-### Rosette
-- [Rosette Guide](https://docs.racket-lang.org/rosette-guide/)
-- [ONWARD! 2013 Paper](https://homes.cs.washington.edu/~emina/pubs/rosette.onward13.pdf)
-- [Cloudflare Blog](https://blog.cloudflare.com/tag/rosette/)
+*** Rosette
+- [[https://docs.racket-lang.org/rosette-guide/][Rosette Guide]]
+- [[https://homes.cs.washington.edu/~emina/pubs/rosette.onward13.pdf][ONWARD! 2013 Paper]]
+- [[https://blog.cloudflare.com/tag/rosette/][Cloudflare Blog]]
 
-### Lean
-- [Theorem Proving in Lean 4](https://leanprover.github.io/theorem_proving_in_lean4/)
-- [Mathematics in Lean](https://leanprover-community.github.io/mathematics_in_lean/)
-- [Lean Zulip Chat](https://leanprover.zulipchat.com/)
+*** Lean
+- [[https://leanprover.github.io/theorem_proving_in_lean4/][Theorem Proving in Lean 4]]
+- [[https://leanprover-community.github.io/mathematics_in_lean/][Mathematics in Lean]]
+- [[https://leanprover.zulipchat.com/][Lean Zulip Chat]]
 
-### TLA+
-- [Learn TLA+](https://learntla.com/)
-- [Practical TLA+](https://www.apress.com/gp/book/9781484238288)
-- [TLA+ Examples](https://github.com/tlaplus/Examples)
+*** TLA+
+- [[https://learntla.com/][Learn TLA+]]
+- [[https://www.apress.com/gp/book/9781484238288][Practical TLA+]]
+- [[https://github.com/tlaplus/Examples][TLA+ Examples]]
 
-## Conclusion
+** Conclusion
 
-**Rosette**: Best for solver-aided programming and DSLs
-**Lean**: Best for mathematical proofs and verified software
-**TLA+**: Best for distributed systems and protocols
+*Rosette*: Best for solver-aided programming and DSLs
+*Lean*: Best for mathematical proofs and verified software
+*TLA+*: Best for distributed systems and protocols
 
 For Cloudflare's DNS use case, Rosette was the right choice:
 - Needed DSL integration (topaz-lang)

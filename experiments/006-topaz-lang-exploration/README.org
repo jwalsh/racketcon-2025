@@ -1,49 +1,49 @@
-# Experiment 006: Topaz-lang Exploration
+* Experiment 006: Topaz-lang Exploration
 
-## Overview
+** Overview
 
 Understanding Cloudflare's topaz-lang DSL for DNS policy verification. This experiment explores how Rosette enables formal verification of DNS behavior at scale.
 
-**Reference**: [Topaz Policy Engine Design](https://blog.cloudflare.com/topaz-policy-engine-design/)
+*Reference*: [[https://blog.cloudflare.com/topaz-policy-engine-design/][Topaz Policy Engine Design]]
 
-## What is Topaz?
+** What is Topaz?
 
 Topaz is Cloudflare's policy engine for managing DNS behavior across 100+ million domains. It consists of:
 
-1. **topaz-lang**: A custom DSL for expressing DNS policies
-2. **Verifier**: Written in Rosette, checks policies for bugs before deployment
-3. **Runtime**: Executes policies on Cloudflare's edge network in real-time
+1. *topaz-lang*: A custom DSL for expressing DNS policies
+2. *Verifier*: Written in Rosette, checks policies for bugs before deployment
+3. *Runtime*: Executes policies on Cloudflare's edge network in real-time
 
-## The Challenge
+** The Challenge
 
-### DNS at Cloudflare Scale
-- **Domains**: 100+ million
-- **Queries**: Trillions per day
-- **PoPs**: 300+ worldwide
-- **Latency requirement**: Milliseconds
+*** DNS at Cloudflare Scale
+- *Domains*: 100+ million
+- *Queries*: Trillions per day
+- *PoPs*: 300+ worldwide
+- *Latency requirement*: Milliseconds
 
-### Problems with Traditional Approach
+*** Problems with Traditional Approach
 - Manual configuration prone to errors
 - Testing doesn't catch all edge cases
 - One bug affects millions of domains
 - Difficult to reason about policy interactions
 
-## topaz-lang Design
+** topaz-lang Design
 
-### Language Characteristics
+*** Language Characteristics
 
-**Based on Scheme/Lisp**:
+*Based on Scheme/Lisp*:
 - S-expression syntax
 - Dynamically typed
 - Functional style
 
-**Simplified for Verification**:
+*Simplified for Verification*:
 - Not Turing complete (enables decidability)
 - Each expression evaluates to exactly one value
 - Limited to SMT-decidable operations
 
-**Type System**:
-```scheme
+*Type System*:
+#+begin_src scheme
 ; Basic types
 (define ttl 3600)           ; Integer
 (define enabled #t)         ; Boolean
@@ -53,39 +53,39 @@ Topaz is Cloudflare's policy engine for managing DNS behavior across 100+ millio
 (define addr (ipv4 "192.0.2.1"))
 (define addr6 (ipv6 "2001:db8::1"))
 (define time (ttl 3600))
-```
+#+end_src
 
-### Policy Structure
+*** Policy Structure
 
 Each policy has three components:
 
-**1. Match Function**: When should this policy execute?
-```scheme
+*1. Match Function*: When should this policy execute?
+#+begin_src scheme
 (define (match-function query-name query-type)
   (and (string-suffix? query-name ".example.com")
        (= query-type A)))
-```
+#+end_src
 
-**2. Response Function**: What IPs to return?
-```scheme
+*2. Response Function*: What IPs to return?
+#+begin_src scheme
 (define (response-function)
   (list (ipv4 "192.0.2.1")
         (ipv4 "192.0.2.2")))
-```
+#+end_src
 
-**3. Configuration**: Parameterize behavior
-```scheme
+*3. Configuration*: Parameterize behavior
+#+begin_src scheme
 (define config
   '((primary-ip "192.0.2.1")
     (backup-ip "192.0.2.2")
     (ttl 300)))
-```
+#+end_src
 
-## Example Policies
+** Example Policies
 
-### Simple A Record
+*** Simple A Record
 
-```scheme
+#+begin_src scheme
 ; Match any query for api.example.com
 (define (match query)
   (= (query-name query) "api.example.com"))
@@ -96,11 +96,11 @@ Each policy has three components:
 
 ; TTL configuration
 (define config '((ttl 3600)))
-```
+#+end_src
 
-### Geo-based Routing
+*** Geo-based Routing
 
-```scheme
+#+begin_src scheme
 ; Match queries from specific region
 (define (match query)
   (and (= (query-name query) "www.example.com")
@@ -110,11 +110,11 @@ Each policy has three components:
 (define (response)
   (list (ipv4 "192.0.2.10")
         (ipv4 "192.0.2.11")))
-```
+#+end_src
 
-### Failover Policy
+*** Failover Policy
 
-```scheme
+#+begin_src scheme
 ; Configuration with health check
 (define config
   '((primary-pool ("192.0.2.1" "192.0.2.2"))
@@ -130,15 +130,15 @@ Each policy has three components:
   (if (all-healthy? (config-get 'primary-pool))
       (map ipv4 (config-get 'primary-pool))
       (map ipv4 (config-get 'backup-pool))))
-```
+#+end_src
 
-## Verification with Rosette
+** Verification with Rosette
 
-### Three Key Properties
+*** Three Key Properties
 
-**1. Satisfiability**: Can this policy ever match?
+*1. Satisfiability*: Can this policy ever match?
 
-```racket
+#+begin_src racket
 #lang rosette
 
 ; Verify policy can match at least one query
@@ -149,11 +149,11 @@ Each policy has three components:
   (assert
     (exists ([qn string?] [qt integer?])
       (match-function qn qt))))
-```
+#+end_src
 
-**2. Reachability**: Can this policy be reached given previous policies?
+*2. Reachability*: Can this policy be reached given previous policies?
 
-```racket
+#+begin_src racket
 ; Given policies P1, P2, ..., Pn, can Pn+1 ever execute?
 (define-symbolic* query DNS-Query?)
 
@@ -164,11 +164,11 @@ Each policy has three components:
            (not (match-p2 q))
            ...
            (match-pn+1 q)))))
-```
+#+end_src
 
-**3. Conflict Detection**: Do exclusive policies overlap?
+*3. Conflict Detection*: Do exclusive policies overlap?
 
-```racket
+#+begin_src racket
 ; Policies marked as exclusive should not match same query
 (verify
   (assert
@@ -176,31 +176,31 @@ Each policy has three components:
       (exists ([q DNS-Query?])
         (and (match-policy-a q)
              (match-policy-b q))))))
-```
+#+end_src
 
-### Verification Workflow
+*** Verification Workflow
 
-```
+#+begin_example
 1. Engineer writes policy in topaz-lang
 2. Policy submitted to verification system
 3. Rosette translator converts to symbolic constraints
 4. Z3 SMT solver checks properties
 5. If verified: Deploy to edge
    If failed: Return counterexample to engineer
-```
+#+end_example
 
-### Performance Characteristics
+*** Performance Characteristics
 
 Based on Cloudflare's blog post:
-- **~6 seconds**: Verify 7 policies
-- **~300 seconds**: Verify 50 policies
-- **Scales**: Linear in number of policies
+- *~6 seconds*: Verify 7 policies
+- *~300 seconds*: Verify 50 policies
+- *Scales*: Linear in number of policies
 
-## Implementation Architecture
+** Implementation Architecture
 
-### Topaz System Components
+*** Topaz System Components
 
-```
+#+begin_example
 ┌─────────────────┐
 │ Engineer writes │
 │  topaz policy   │
@@ -223,11 +223,11 @@ Based on Cloudflare's blog post:
 │ Deploy to Edge  │
 │  (Verified ✓)   │
 └─────────────────┘
-```
+#+end_example
 
-### Rosette Verifier Structure
+*** Rosette Verifier Structure
 
-```racket
+#+begin_src racket
 #lang rosette
 
 ; 1. Define symbolic DNS query
@@ -263,113 +263,113 @@ Based on Cloudflare's blog post:
       (not (exists ([q DNS-Query?])
              (and (match-function policy-a q)
                   (match-function policy-b q)))))))
-```
+#+end_src
 
-## Limitations and Trade-offs
+** Limitations and Trade-offs
 
-### What topaz-lang Can Do
+*** What topaz-lang Can Do
 ✅ Integer/bitVector operations
 ✅ Boolean logic
 ✅ IP address matching
 ✅ List operations (bounded)
 ✅ Conditional logic
 
-### What topaz-lang Cannot Do
+*** What topaz-lang Cannot Do
 ❌ Complex string manipulation
 ❌ Unbounded loops
 ❌ External API calls
 ❌ Arbitrary recursion
 ❌ Side effects
 
-### Why These Limitations?
+*** Why These Limitations?
 
-**Decidability**: SMT solvers need decidable logic
-**Performance**: Verification must complete in seconds
-**Safety**: Limited operations reduce attack surface
+*Decidability*: SMT solvers need decidable logic
+*Performance*: Verification must complete in seconds
+*Safety*: Limited operations reduce attack surface
 
-## Recreating topaz-lang Concepts
+** Recreating topaz-lang Concepts
 
-### Mini topaz-lang in Rosette
+*** Mini topaz-lang in Rosette
 
-See `mini-topaz.rkt` for a simplified implementation demonstrating:
+See ~mini-topaz.rkt~ for a simplified implementation demonstrating:
 - Policy structure
 - Symbolic DNS queries
 - Verification predicates
 - Counterexample generation
 
-## Real-World Impact
+** Real-World Impact
 
-### Before Topaz
+*** Before Topaz
 - Manual DNS configuration
 - Testing on subset of queries
 - Bugs found in production
 - Difficult to reason about interactions
 
-### After Topaz
+*** After Topaz
 - Policies verified before deployment
 - Bugs caught automatically
 - Confidence in correctness
 - Clear policy interactions
 
-### Bugs Prevented
+*** Bugs Prevented
 
 From Cloudflare's experience:
-1. **Unsatisfiable policies**: Can never match any query
-2. **Unreachable policies**: Shadowed by earlier policies
-3. **Conflicting exclusives**: Multiple exclusive policies match same query
-4. **Type errors**: IP address format mismatches
+1. *Unsatisfiable policies*: Can never match any query
+2. *Unreachable policies*: Shadowed by earlier policies
+3. *Conflicting exclusives*: Multiple exclusive policies match same query
+4. *Type errors*: IP address format mismatches
 
-## Learning Path
+** Learning Path
 
-### 1. Understand DNS Basics
-- See `experiments/004-dns-tools-macos-freebsd`
+*** 1. Understand DNS Basics
+- See ~experiments/004-dns-tools-macos-freebsd~
 
-### 2. Learn Rosette Fundamentals
-- See `experiments/001-rosette-fundamentals`
+*** 2. Learn Rosette Fundamentals
+- See ~experiments/001-rosette-fundamentals~
 
-### 3. Study Verification
-- See `experiments/002-formal-methods-overview`
+*** 3. Study Verification
+- See ~experiments/002-formal-methods-overview~
 
-### 4. Build Mini DSL
+*** 4. Build Mini DSL
 - Implement simplified topaz-lang
 - Add verification checks
 - Test with sample policies
 
-### 5. Read Cloudflare Blog Posts
-- [Topaz Policy Engine](https://blog.cloudflare.com/topaz-policy-engine-design/)
-- [DNS Architecture](https://blog.cloudflare.com/dns-architecture/)
+*** 5. Read Cloudflare Blog Posts
+- [[https://blog.cloudflare.com/topaz-policy-engine-design/][Topaz Policy Engine]]
+- [[https://blog.cloudflare.com/dns-architecture/][DNS Architecture]]
 
-## Exercises
+** Exercises
 
-### Exercise 1: Satisfiability
+*** Exercise 1: Satisfiability
 Write a policy that can never match and verify it's unsatisfiable.
 
-### Exercise 2: Reachability
+*** Exercise 2: Reachability
 Create two policies where the second is unreachable.
 
-### Exercise 3: Conflicts
+*** Exercise 3: Conflicts
 Create two "exclusive" policies that conflict.
 
-### Exercise 4: Mini Verifier
+*** Exercise 4: Mini Verifier
 Implement a simple verifier for a subset of topaz-lang.
 
-## Resources
+** Resources
 
-### Papers
+*** Papers
 - "Growing Solver-Aided Languages with Rosette" (Torlak & Bodik)
 - Rosette documentation
 
-### Code Examples
-- `mini-topaz.rkt`: Simplified topaz-lang
-- `verifier.rkt`: Basic verification examples
-- `policies.rkt`: Example DNS policies
+*** Code Examples
+- ~mini-topaz.rkt~: Simplified topaz-lang
+- ~verifier.rkt~: Basic verification examples
+- ~policies.rkt~: Example DNS policies
 
-### External Links
-- [Cloudflare Blog](https://blog.cloudflare.com/tag/dns/)
-- [Rosette Guide](https://docs.racket-lang.org/rosette-guide/)
-- [Z3 SMT Solver](https://github.com/Z3Prover/z3)
+*** External Links
+- [[https://blog.cloudflare.com/tag/dns/][Cloudflare Blog]]
+- [[https://docs.racket-lang.org/rosette-guide/][Rosette Guide]]
+- [[https://github.com/Z3Prover/z3][Z3 SMT Solver]]
 
-## Next Steps
+** Next Steps
 
 1. Read the Cloudflare blog post in detail
 2. Experiment with Rosette verification

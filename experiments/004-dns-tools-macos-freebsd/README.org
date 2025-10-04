@@ -1,16 +1,16 @@
-# Experiment 004: DNS Tools on macOS and FreeBSD
+* Experiment 004: DNS Tools on macOS and FreeBSD
 
-## Overview
+** Overview
 
 Understanding DNS tools and debugging techniques on macOS and FreeBSD. Essential foundation for understanding Cloudflare's DNS challenges at scale.
 
-## Core DNS Tools
+** Core DNS Tools
 
-### 1. dig (Domain Information Groper)
+*** 1. dig (Domain Information Groper)
 
-**macOS/FreeBSD**: Pre-installed
+*macOS/FreeBSD*: Pre-installed
 
-```bash
+#+begin_src bash
 # Basic query
 dig example.com
 
@@ -31,13 +31,13 @@ dig +trace example.com
 
 # Reverse DNS lookup
 dig -x 1.1.1.1
-```
+#+end_src
 
-### 2. host
+*** 2. host
 
-**macOS/FreeBSD**: Pre-installed
+*macOS/FreeBSD*: Pre-installed
 
-```bash
+#+begin_src bash
 # Simple lookup
 host example.com
 
@@ -49,11 +49,11 @@ host example.com 1.1.1.1
 
 # All records
 host -a example.com
-```
+#+end_src
 
-### 3. nslookup (Legacy but still useful)
+*** 3. nslookup (Legacy but still useful)
 
-```bash
+#+begin_src bash
 # Interactive mode
 nslookup
 > server 1.1.1.1
@@ -63,14 +63,14 @@ nslookup
 # Non-interactive
 nslookup example.com
 nslookup example.com 1.1.1.1
-```
+#+end_src
 
-### 4. drill (Modern dig alternative)
+*** 4. drill (Modern dig alternative)
 
-**FreeBSD**: `pkg install ldns`
-**macOS**: `brew install ldns`
+*FreeBSD*: ~pkg install ldns~
+*macOS*: ~brew install ldns~
 
-```bash
+#+begin_src bash
 # Similar to dig
 drill example.com
 drill example.com @1.1.1.1
@@ -80,33 +80,33 @@ drill -S example.com
 
 # Trace
 drill -T example.com
-```
+#+end_src
 
-### 5. kdig (Knot DNS dig)
+*** 5. kdig (Knot DNS dig)
 
-**FreeBSD**: `pkg install knot-utils`
-**macOS**: `brew install knot`
+*FreeBSD*: ~pkg install knot-utils~
+*macOS*: ~brew install knot~
 
-```bash
+#+begin_src bash
 # Enhanced dig
 kdig example.com
 
 # Show timing
 kdig +stats example.com
-```
+#+end_src
 
-## System DNS Configuration
+** System DNS Configuration
 
-### macOS
+*** macOS
 
-**View current DNS servers**:
-```bash
+*View current DNS servers*:
+#+begin_src bash
 scutil --dns
 networksetup -getdnsservers Wi-Fi
-```
+#+end_src
 
-**Set DNS servers**:
-```bash
+*Set DNS servers*:
+#+begin_src bash
 # Using Cloudflare
 networksetup -setdnsservers Wi-Fi 1.1.1.1 1.0.0.1
 
@@ -115,25 +115,25 @@ networksetup -setdnsservers Wi-Fi 8.8.8.8 8.8.4.4
 
 # Using DHCP
 networksetup -setdnsservers Wi-Fi Empty
-```
+#+end_src
 
-**Flush DNS cache**:
-```bash
+*Flush DNS cache*:
+#+begin_src bash
 sudo dscacheutil -flushcache
 sudo killall -HUP mDNSResponder
-```
+#+end_src
 
-**View DNS cache** (macOS 10.12+):
-```bash
+*View DNS cache* (macOS 10.12+):
+#+begin_src bash
 sudo killall -INFO mDNSResponder
 sudo log collect --last 1m --output dns.logarchive
-```
+#+end_src
 
-### FreeBSD
+*** FreeBSD
 
-**Configuration**: `/etc/resolv.conf`
+*Configuration*: ~/etc/resolv.conf~
 
-```bash
+#+begin_src bash
 # View current settings
 cat /etc/resolv.conf
 
@@ -141,32 +141,32 @@ cat /etc/resolv.conf
 nameserver 1.1.1.1
 nameserver 1.0.0.1
 options edns0
-```
+#+end_src
 
-**Using resolvconf** (recommended):
-```bash
+*Using resolvconf* (recommended):
+#+begin_src bash
 # Edit /etc/resolvconf.conf
 name_servers="1.1.1.1 1.0.0.1"
 
 # Regenerate
 resolvconf -u
-```
+#+end_src
 
-**Local resolver (unbound)**:
-```bash
+*Local resolver (unbound)*:
+#+begin_src bash
 pkg install unbound
 
 # Edit /usr/local/etc/unbound/unbound.conf
 service unbound enable
 service unbound start
-```
+#+end_src
 
-## Advanced Tools
+** Advanced Tools
 
-### tcpdump (Packet capture)
+*** tcpdump (Packet capture)
 
-**Capture DNS traffic**:
-```bash
+*Capture DNS traffic*:
+#+begin_src bash
 # macOS/FreeBSD
 sudo tcpdump -i en0 -n port 53
 
@@ -175,36 +175,36 @@ sudo tcpdump -i en0 -n port 53 -w dns.pcap
 
 # Filter by host
 sudo tcpdump -i en0 -n host 1.1.1.1 and port 53
-```
+#+end_src
 
-### wireshark/tshark
+*** wireshark/tshark
 
-**macOS**: `brew install --cask wireshark`
-**FreeBSD**: `pkg install wireshark`
+*macOS*: ~brew install --cask wireshark~
+*FreeBSD*: ~pkg install wireshark~
 
-```bash
+#+begin_src bash
 # CLI version
 tshark -i en0 -f "port 53" -Y "dns"
 
 # Display filter
 tshark -r dns.pcap -Y "dns.qry.name contains example"
-```
+#+end_src
 
-### dnstop (Real-time DNS traffic)
+*** dnstop (Real-time DNS traffic)
 
-**FreeBSD**: `pkg install dnstop`
-**macOS**: `brew install dnstop`
+*FreeBSD*: ~pkg install dnstop~
+*macOS*: ~brew install dnstop~
 
-```bash
+#+begin_src bash
 sudo dnstop -l 3 en0
-```
+#+end_src
 
-### dnsperf (Performance testing)
+*** dnsperf (Performance testing)
 
-**FreeBSD**: `pkg install dnsperf`
-**macOS**: `brew install dnsperf`
+*FreeBSD*: ~pkg install dnsperf~
+*macOS*: ~brew install dnsperf~
 
-```bash
+#+begin_src bash
 # Create query file
 cat > queries.txt << EOF
 example.com A
@@ -214,53 +214,53 @@ EOF
 
 # Run test
 dnsperf -s 1.1.1.1 -d queries.txt
-```
+#+end_src
 
-## DNS Server Software
+** DNS Server Software
 
-### BIND 9
+*** BIND 9
 
-**FreeBSD**: `pkg install bind918`
-**macOS**: `brew install bind`
+*FreeBSD*: ~pkg install bind918~
+*macOS*: ~brew install bind~
 
-```bash
+#+begin_src bash
 # Start named
 sudo named -c /etc/namedb/named.conf
 
 # Check config
 named-checkconf
 named-checkzone example.com /etc/namedb/example.com.zone
-```
+#+end_src
 
-### Unbound
+*** Unbound
 
-**FreeBSD**: `pkg install unbound`
-**macOS**: `brew install unbound`
+*FreeBSD*: ~pkg install unbound~
+*macOS*: ~brew install unbound~
 
-```bash
+#+begin_src bash
 # Start
 sudo unbound -c /usr/local/etc/unbound/unbound.conf
 
 # Control
 unbound-control stats
 unbound-control flush example.com
-```
+#+end_src
 
-### Knot DNS
+*** Knot DNS
 
-**FreeBSD**: `pkg install knot3`
-**macOS**: `brew install knot`
+*FreeBSD*: ~pkg install knot3~
+*macOS*: ~brew install knot~
 
-```bash
+#+begin_src bash
 # Authoritative server
 knotd -c /usr/local/etc/knot/knot.conf
-```
+#+end_src
 
-## DNSSEC Tools
+** DNSSEC Tools
 
-### Validation
+*** Validation
 
-```bash
+#+begin_src bash
 # dig with DNSSEC
 dig +dnssec example.com
 
@@ -269,24 +269,24 @@ drill -S -T example.com
 
 # Check DS records
 dig DS example.com
-```
+#+end_src
 
-### Key management (FreeBSD/macOS)
+*** Key management (FreeBSD/macOS)
 
-```bash
+#+begin_src bash
 # Generate keys
 dnssec-keygen -a RSASHA256 -b 2048 -n ZONE example.com
 
 # Sign zone
 dnssec-signzone -o example.com example.com.zone
-```
+#+end_src
 
-## DNS over HTTPS (DoH)
+** DNS over HTTPS (DoH)
 
-### cloudflared
+*** cloudflared
 
-**macOS/FreeBSD**:
-```bash
+*macOS/FreeBSD*:
+#+begin_src bash
 # macOS
 brew install cloudflared
 
@@ -295,11 +295,11 @@ pkg install cloudflared
 
 # Run DoH proxy
 cloudflared proxy-dns --upstream https://1.1.1.1/dns-query
-```
+#+end_src
 
-### dnscrypt-proxy
+*** dnscrypt-proxy
 
-```bash
+#+begin_src bash
 # macOS
 brew install dnscrypt-proxy
 
@@ -308,13 +308,13 @@ pkg install dnscrypt-proxy2
 
 # Configure
 sudo dnscrypt-proxy -config /usr/local/etc/dnscrypt-proxy.toml
-```
+#+end_src
 
-## Testing Scenarios
+** Testing Scenarios
 
-### 1. Query Response Time
+*** 1. Query Response Time
 
-```bash
+#+begin_src bash
 dig @1.1.1.1 example.com | grep "Query time"
 
 # Compare resolvers
@@ -322,86 +322,86 @@ for server in 1.1.1.1 8.8.8.8 208.67.222.222; do
     echo "Testing $server"
     dig @$server example.com | grep "Query time"
 done
-```
+#+end_src
 
-### 2. Anycast Testing
+*** 2. Anycast Testing
 
-```bash
+#+begin_src bash
 # Which Cloudflare PoP?
 dig @1.1.1.1 CH TXT whoami.cloudflare
 
 # Traceroute to DNS server
 traceroute 1.1.1.1
-```
+#+end_src
 
-### 3. DNS Load Testing
+*** 3. DNS Load Testing
 
-```bash
+#+begin_src bash
 # Using dnsperf
 dnsperf -s 127.0.0.1 -d queries.txt -c 10 -l 30
 
 # Using queryperf (BIND)
 queryperf -d queries.txt -s 1.1.1.1
-```
+#+end_src
 
-## macOS Specific
+** macOS Specific
 
-### mDNSResponder Logs
+*** mDNSResponder Logs
 
-```bash
+#+begin_src bash
 # Enable debug logging
 sudo log config --mode "level:debug" --subsystem com.apple.mDNSResponder
 
 # Watch logs
 log stream --predicate 'subsystem == "com.apple.mDNSResponder"' --level debug
-```
+#+end_src
 
-### Network Extensions
+*** Network Extensions
 
-```bash
+#+begin_src bash
 # List DNS settings per interface
 scutil --dns
 
 # Show network services
 networksetup -listallnetworkservices
-```
+#+end_src
 
-## FreeBSD Specific
+** FreeBSD Specific
 
-### Jail DNS Configuration
+*** Jail DNS Configuration
 
-```bash
+#+begin_src bash
 # Set DNS for jail
 jexec myjail cat /etc/resolv.conf
 
 # Override in jail.conf
 exec.start = "sh /etc/rc; echo 'nameserver 1.1.1.1' > /etc/resolv.conf";
-```
+#+end_src
 
-### pf + DNS
+*** pf + DNS
 
-```bash
+#+begin_src bash
 # Allow DNS in pf.conf
 pass out proto udp to any port 53
 pass out proto tcp to any port 53
 
 # Log DNS queries
 pass log out proto udp to any port 53
-```
+#+end_src
 
-## Resources
+** Resources
 
-### Documentation
-- [ISC BIND](https://www.isc.org/bind/)
-- [Unbound Documentation](https://nlnetlabs.nl/documentation/unbound/)
-- [Cloudflare DNS Docs](https://developers.cloudflare.com/dns/)
+*** Documentation
+- [[https://www.isc.org/bind/][ISC BIND]]
+- [[https://nlnetlabs.nl/documentation/unbound/][Unbound Documentation]]
+- [[https://developers.cloudflare.com/dns/][Cloudflare DNS Docs]]
 
-### RFCs
+*** RFCs
 - RFC 1035: Domain Names - Implementation and Specification
 - RFC 4034: DNSSEC Resource Records
 - RFC 8484: DNS over HTTPS (DoH)
 
-### Tools
-- [DNSViz](https://dnsviz.net/) - DNS visualization
-- [DNS Spy](https://dnsspy.io/) - DNS propagation checker
-- [IntoDNS](https://intodns.com/) - DNS health check
+*** Tools
+- [[https://dnsviz.net/][DNSViz]] - DNS visualization
+- [[https://dnsspy.io/][DNS Spy]] - DNS propagation checker
+- [[https://intodns.com/][IntoDNS]] - DNS health check

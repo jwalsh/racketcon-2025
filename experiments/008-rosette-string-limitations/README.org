@@ -1,0 +1,505 @@
+#+TITLE: Experiment 008: Rosette String Theory Limitations
+#+AUTHOR: Jason Walsh
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Understanding why Rosette doesn't support the SMT theory of strings and how to work around this limitation when building DSLs like topaz-lang.
+
+* The Problem: "Rosette doesn't support the theory of strings"
+
+** What Does This Mean?
+
+When we say "Rosette doesn't support the theory of strings," we mean:
+
+1. *SMT Theory of Strings*: Modern SMT solvers like Z3 and CVC4 have a theory of strings that supports:
+   - String variables and constants
+   - String concatenation
+   - String length
+   - Substring operations
+   - Regular expression matching
+   - String comparison
+
+2. *Rosette's Limitation*: Rosette doesn't expose this theory to users, meaning:
+   - You cannot create truly symbolic strings
+   - String operations don't generate SMT constraints
+   - String matching/manipulation must use workarounds
+
+** Why This Matters
+
+For DSLs like topaz-lang:
+- DNS names are strings (e.g., "api.example.com")
+- Pattern matching on strings is crucial (e.g., suffix matching)
+- Verification needs to reason about string properties
+
+** Example of the Problem
+
+#+begin_src racket
+#lang rosette
+
+;; This DOES NOT work as you might expect:
+(define-symbolic* name string?)  ; Error or unexpected behavior
+
+;; Rosette treats this as an uninterpreted type, not SMT strings
+#+end_src
+
+* Why Rosette Doesn't Support String Theory
+
+** Historical Reasons
+
+1. *Z3 String Theory was immature*: When Rosette was designed, Z3's string theory was incomplete
+2. *Decidability concerns*: String theory is undecidable in general
+3. *Performance*: String constraints are expensive to solve
+4. *Design philosophy*: Rosette focuses on decidable theories (integers, bit-vectors, booleans)
+
+** Current State (2025)
+
+- Z3 string theory is much better now
+- CVC5 has excellent string support
+- But Rosette hasn't integrated it yet
+
+* Workarounds Used in topaz-lang
+
+** Approach 1: Encode Strings as Other Types
+
+*** Domain Names as Symbols/Integers
+
+#+begin_src racket
+#lang rosette
+
+;; Represent DNS names as enumerated symbols
+(define dns-names '(api.example.com www.example.com mail.example.com))
+
+(define-symbolic* name-idx integer?)
+
+(define (get-name idx)
+  (list-ref dns-names (modulo idx (length dns-names))))
+
+;; Now we can symbolically reason about name choices
+(define sol
+  (solve
+    (assert
+      (equal? (get-name name-idx) 'api.example.com))))
+
+(evaluate name-idx sol)  ; => 0
+#+end_src
+
+*** Fixed-Length String Encoding
+
+#+begin_src racket
+#lang rosette
+
+;; Encode string as list of character codes (limited length)
+(struct symbolic-string (chars) #:transparent)
+
+(define (make-symbolic-string len)
+  (define-symbolic* chars (bitvector 8) len)
+  (symbolic-string chars))
+
+(define (string-equal? s1 s2)
+  (and (= (length (symbolic-string-chars s1))
+          (length (symbolic-string-chars s2)))
+       (andmap bveq
+               (symbolic-string-chars s1)
+               (symbolic-string-chars s2))))
+
+;; Example
+(define s1 (make-symbolic-string 10))
+(define s2 (symbolic-string
+            (map (lambda (c) (bv (char->integer c) 8))
+                 (string->list "api"))))
+
+;; Can verify string properties
+(verify
+  (assert
+    (not (string-equal? s1 s2))))
+#+end_src
+
+** Approach 2: Abstract String Operations
+
+*** Pattern Matching via Boolean Predicates
+
+#+begin_src racket
+#lang rosette
+
+;; Instead of string operations, use abstract predicates
+(define-symbolic* is-api-subdomain? boolean?)
+(define-symbolic* is-www-subdomain? boolean?)
+(define-symbolic* is-internal? boolean?)
+
+;; Constraints that model string properties
+(define (valid-dns-classification)
+  (assert
+    ;; Mutual exclusion
+    (not (and is-api-subdomain? is-www-subdomain?))
+    ;; Internal implies not public subdomain
+    (=> is-internal?
+        (not (or is-api-subdomain? is-www-subdomain?)))))
+
+;; Verification uses boolean logic, not strings
+(verify
+  (begin
+    (valid-dns-classification)
+    (assert
+      (=> is-api-subdomain?
+          (not is-internal?)))))
+#+end_src
+
+** Approach 3: Finite Domain Encoding
+
+*** DNS Query Types as Bounded Integers
+
+#+begin_src racket
+#lang rosette
+
+;; Query type enumeration
+(define A 1)
+(define AAAA 28)
+(define CNAME 5)
+(define MX 15)
+
+(define-symbolic* qtype integer?)
+
+;; Constrain to valid range
+(define (valid-query-type? t)
+  (or (= t A) (= t AAAA) (= t CNAME) (= t MX)))
+
+;; Verify type properties
+(verify
+  (assert
+    (=> (valid-query-type? qtype)
+        (or (= qtype A)
+            (= qtype AAAA)))))
+#+end_src
+
+** Approach 4: Bounded String Matching
+
+*** Suffix Matching with Fixed Patterns
+
+#+begin_src racket
+#lang rosette
+
+;; Pre-define all possible suffixes
+(define suffixes
+  '(".com" ".org" ".net" ".edu"))
+
+(define-symbolic* suffix-idx integer?)
+
+(define (get-suffix idx)
+  (list-ref suffixes (modulo idx (length suffixes))))
+
+;; Match against known patterns
+(define (matches-suffix? name suffix-pattern)
+  (equal? (get-suffix suffix-idx) suffix-pattern))
+
+;; Example verification
+(solve
+  (assert
+    (matches-suffix? 'unknown ".com")))
+#+end_src
+
+* Full Support: Implementing String Theory
+
+** Option 1: Use Z3's String Theory Directly
+
+#+begin_src racket
+#lang racket
+
+(require z3)
+
+;; Direct Z3 bindings for strings
+(define ctx (mk-context))
+
+;; Create string variables
+(define str1 (mk-string-var ctx "str1"))
+(define str2 (mk-string-var ctx "str2"))
+
+;; String constraints
+(define constraint
+  (z3-and ctx
+    (list
+      ;; str1 ends with ".com"
+      (z3-suffix ctx str1 (mk-string ctx ".com"))
+      ;; str1 contains "api"
+      (z3-contains ctx str1 (mk-string ctx "api"))
+      ;; str1 != str2
+      (z3-not ctx (z3-= ctx str1 str2)))))
+
+;; Solve
+(define solver (mk-solver ctx))
+(solver-assert solver constraint)
+
+(when (eq? (solver-check solver) 'sat)
+  (define model (solver-get-model solver))
+  (displayln (model-eval model str1 #t)))
+#+end_src
+
+** Option 2: Extended Rosette with String Support
+
+#+begin_src racket
+#lang rosette
+
+(require rosette/solver/z3-string)  ; Hypothetical extension
+
+;; If Rosette had string support:
+(define-symbolic* name string?)
+(define-symbolic* pattern string?)
+
+;; String operations
+(verify
+  (assert
+    (string-suffix? name ".example.com")))
+
+;; Would generate Z3 string constraints
+#+end_src
+
+** Option 3: Hybrid Approach
+
+#+begin_src racket
+#lang rosette
+
+;; Combine Rosette verification with concrete string operations
+
+(define (verify-dns-policy name-concrete type-symbolic)
+  ;; Use concrete strings for matching
+  (define has-suffix?
+    (string-suffix? name-concrete ".example.com"))
+
+  ;; Use symbolic types for verification
+  (define-symbolic* qtype integer?)
+
+  (verify
+    (assert
+      (=> has-suffix?
+          (or (= qtype 1)   ; A record
+              (= qtype 28))))))  ; AAAA record
+
+;; Enumerate concrete names, verify each symbolically
+(define test-names
+  '("api.example.com"
+    "www.example.com"
+    "mail.example.org"))
+
+(for ([name test-names])
+  (verify-dns-policy name 'symbolic))
+#+end_src
+
+* Practical Solution: topaz-lang's Approach
+
+** What Cloudflare Actually Did
+
+#+begin_src racket
+#lang rosette
+
+;; From topaz-lang design blog post:
+;; "Only supports functions operating over integers and bit-vectors"
+
+(struct DNS-Query
+  (name-hash    ; Hash of name -> integer
+   type         ; Integer
+   client-ip    ; Bit-vector
+   ) #:transparent)
+
+;; DNS name as integer hash
+(define (name->hash name)
+  (string-hash name))
+
+;; Pattern matching via hash comparison
+(define (matches-domain? query domain)
+  (= (DNS-Query-name-hash query)
+     (name->hash domain)))
+
+;; Suffix matching: pre-compute all possible hashes
+(define suffix-hashes
+  (make-hash
+    (for/list ([suffix '(".com" ".org" ".net")])
+      (cons suffix (name->hash suffix)))))
+
+(define (matches-suffix? query suffix)
+  (define hash (DNS-Query-name-hash query))
+  (define suffix-hash (hash-ref suffix-hashes suffix))
+  ;; In practice, would need more sophisticated encoding
+  (= (modulo hash 1000) (modulo suffix-hash 1000)))
+#+end_src
+
+** Limitations Accepted
+
+1. *No arbitrary string operations*: Only pre-defined patterns
+2. *Bounded domain*: Finite set of possible names/patterns
+3. *Conservative verification*: May reject valid policies
+4. *Manual encoding*: Engineers encode string logic as integer/boolean constraints
+
+* Building Your Own String Support
+
+** Complete Example: Mini String Theory
+
+#+begin_src racket
+#lang rosette
+
+;; Simplified string theory for DNS names
+
+;; Fixed alphabet: lowercase, digits, dot, hyphen
+(define alphabet
+  (string->list "abcdefghijklmnopqrstuvwxyz0123456789.-"))
+
+(define (char->code c)
+  (define idx (index-of alphabet c))
+  (if idx (bv idx 6) (bv 0 6)))  ; 6 bits = 64 possible chars
+
+;; Fixed-length symbolic string (max 64 chars)
+(struct SymString (codes length) #:transparent)
+
+(define (make-symbolic-string max-len)
+  (define-symbolic* codes (bitvector 6) max-len)
+  (define-symbolic* len integer?)
+  (SymString codes len))
+
+;; String equality
+(define (symstring-equal? s1 s2)
+  (and (= (SymString-length s1) (SymString-length s2))
+       (for/and ([i (in-range (SymString-length s1))])
+         (bveq (list-ref (SymString-codes s1) i)
+               (list-ref (SymString-codes s2) i)))))
+
+;; Suffix matching
+(define (symstring-suffix? str suffix)
+  (define str-len (SymString-length str))
+  (define suf-len (SymString-length suffix))
+
+  (and (>= str-len suf-len)
+       (for/and ([i (in-range suf-len)])
+         (bveq (list-ref (SymString-codes str)
+                        (+ i (- str-len suf-len)))
+               (list-ref (SymString-codes suffix) i)))))
+
+;; Contains substring
+(define (symstring-contains? haystack needle)
+  (define hay-len (SymString-length haystack))
+  (define ndl-len (SymString-length needle))
+
+  (for/or ([offset (in-range (- hay-len ndl-len -1))])
+    (for/and ([i (in-range ndl-len)])
+      (bveq (list-ref (SymString-codes haystack) (+ offset i))
+            (list-ref (SymString-codes needle) i)))))
+
+;; Concrete string to SymString
+(define (string->symstring s)
+  (define codes (map char->code (string->list s)))
+  (SymString codes (length codes)))
+#+end_src
+
+** Using the Mini String Theory
+
+#+begin_src racket
+#lang rosette
+
+;; Create symbolic DNS name
+(define sym-name (make-symbolic-string 64))
+
+;; Known suffix
+(define dot-com (string->symstring ".com"))
+(define api-prefix (string->symstring "api"))
+
+;; Verify: if name ends with .com and contains "api",
+;; then it's an API domain
+(verify
+  (assert
+    (=> (and (symstring-suffix? sym-name dot-com)
+             (symstring-contains? sym-name api-prefix))
+        ;; Some property about API domains
+        #t)))
+#+end_src
+
+* Future: Native String Support in Rosette
+
+** What Would Be Needed
+
+1. *Integration with Z3 string theory*
+   - Update Z3 bindings
+   - Expose string operations to Racket
+
+2. *Rosette language extensions*
+   - ~define-symbolic* x string?~
+   - String operations: ~string-append~, ~string-length~, ~substring~
+   - Regular expressions: ~regexp-match?~
+
+3. *Performance optimizations*
+   - String constraint caching
+   - Incremental solving
+   - Theory combination
+
+** Prototype Implementation
+
+#+begin_src racket
+#lang racket
+
+;; Hypothetical Rosette extension
+
+(module rosette-strings racket
+  (require rosette)
+  (provide define-symbolic-string
+           symbolic-string?
+           symbolic-string-append
+           symbolic-string-suffix?
+           symbolic-string-contains?)
+
+  ;; Wrapper around Z3 string theory
+  (define (define-symbolic-string name)
+    (define sym (gensym name))
+    ;; Generate Z3 string variable
+    (z3-mk-string-var (current-solver-context)
+                      (symbol->string sym)))
+
+  ;; Operations delegate to Z3
+  (define (symbolic-string-append s1 s2)
+    (z3-string-concat (current-solver-context) s1 s2))
+
+  (define (symbolic-string-suffix? str suffix)
+    (z3-string-suffix? (current-solver-context) str suffix))
+
+  (define (symbolic-string-contains? haystack needle)
+    (z3-string-contains? (current-solver-context) haystack needle)))
+#+end_src
+
+* Resources
+
+** Papers
+- [[https://theory.stanford.edu/~nikolaj/programmingz3.html][Programming Z3 - String Theory]]
+- [[https://cvc5.github.io/docs/latest/theories/strings.html][CVC5 String Theory Documentation]]
+- [[https://arxiv.org/abs/1210.6343][An SMT-LIB Theory of Strings]]
+
+** Related Work
+- [[https://github.com/Z3Prover/z3/tree/master/examples/python/strings][Z3 String Examples]]
+- [[https://github.com/cvc5/cvc5][CVC5 Solver]]
+- [[https://github.com/Z3Prover/z3/blob/master/src/api/python/z3/z3.py][Z3 Python API (String Methods)]]
+
+** Cloudflare Blog
+- [[https://blog.cloudflare.com/topaz-policy-engine-design/][Topaz Policy Engine Design]]
+  - See section on "Limitations" for their approach
+
+* Key Takeaways
+
+1. *Rosette doesn't support SMT string theory* - It focuses on decidable theories (integers, bit-vectors, booleans)
+
+2. *Workarounds exist*:
+   - Encode strings as integers/symbols
+   - Use abstract predicates for string properties
+   - Bounded/finite domain encoding
+   - Direct Z3 bindings (outside Rosette)
+
+3. *topaz-lang's approach*: Constrain the problem space
+   - Pre-defined string patterns
+   - Hash-based matching
+   - Accept some limitations for decidability
+
+4. *Future possibility*: Native string support could be added
+   - Modern SMT solvers have good string theories
+   - Would require significant Rosette changes
+   - Performance/decidability tradeoffs
+
+5. *Practical advice*: Design your DSL to avoid complex string operations
+   - Use enumerated values where possible
+   - Pre-compute string hashes
+   - Finite pattern sets
+   - Conservative approximations

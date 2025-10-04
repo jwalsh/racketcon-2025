@@ -1,15 +1,15 @@
-# Experiment 005: Cloudflare DNS Setup
+* Experiment 005: Cloudflare DNS Setup
 
-## Overview
+** Overview
 
 Hands-on exploration of Cloudflare's DNS services, including 1.1.1.1 resolver, DNS management, and API usage. Understanding Cloudflare's DNS infrastructure provides context for the topaz-lang verification system.
 
-## Cloudflare 1.1.1.1 Resolver
+** Cloudflare 1.1.1.1 Resolver
 
-### Basic Setup
+*** Basic Setup
 
-**macOS**:
-```bash
+*macOS*:
+#+begin_src bash
 # Set Cloudflare DNS
 networksetup -setdnsservers Wi-Fi 1.1.1.1 1.0.0.1
 
@@ -18,21 +18,21 @@ networksetup -setdnsservers Wi-Fi 2606:4700:4700::1111 2606:4700:4700::1001
 
 # Verify
 scutil --dns | grep 1.1.1.1
-```
+#+end_src
 
-**FreeBSD** (`/etc/resolv.conf`):
-```conf
+*FreeBSD* (~/etc/resolv.conf~):
+#+begin_src conf
 nameserver 1.1.1.1
 nameserver 1.0.0.1
 nameserver 2606:4700:4700::1111
 nameserver 2606:4700:4700::1001
 options edns0
-```
+#+end_src
 
-### DNS over HTTPS (DoH)
+*** DNS over HTTPS (DoH)
 
-**Using cloudflared**:
-```bash
+*Using cloudflared*:
+#+begin_src bash
 # Install
 brew install cloudflared  # macOS
 pkg install cloudflared    # FreeBSD
@@ -46,22 +46,22 @@ cloudflared proxy-dns --upstream https://1.1.1.1/dns-query
 # Run as service (macOS)
 sudo cloudflared service install
 sudo launchctl start com.cloudflare.cloudflared
-```
+#+end_src
 
-**Configuration** (`~/.cloudflared/config.yml`):
-```yaml
+*Configuration* (~/.cloudflared/config.yml~):
+#+begin_src yaml
 proxy-dns: true
 proxy-dns-port: 5053
 proxy-dns-address: 127.0.0.1
 proxy-dns-upstream:
   - https://1.1.1.1/dns-query
   - https://1.0.0.1/dns-query
-```
+#+end_src
 
-### DNS over TLS (DoT)
+*** DNS over TLS (DoT)
 
-**Using stunnel**:
-```bash
+*Using stunnel*:
+#+begin_src bash
 # Install
 brew install stunnel  # macOS
 pkg install stunnel   # FreeBSD
@@ -78,88 +78,88 @@ EOF
 
 # Run
 stunnel /usr/local/etc/stunnel/cloudflare-dot.conf
-```
+#+end_src
 
-### Malware Blocking (1.1.1.2)
+*** Malware Blocking (1.1.1.2)
 
-```bash
+#+begin_src bash
 # Block malware
 networksetup -setdnsservers Wi-Fi 1.1.1.2 1.0.0.2
 
 # Block malware + adult content
 networksetup -setdnsservers Wi-Fi 1.1.1.3 1.0.0.3
-```
+#+end_src
 
-## Cloudflare DNS Management
+** Cloudflare DNS Management
 
-### Account Setup
+*** Account Setup
 
-1. **Sign up**: https://dash.cloudflare.com/sign-up
-2. **Add domain**: Click "Add a site"
-3. **Update nameservers**: Point to Cloudflare's assigned nameservers
-4. **Wait for activation**: Usually 24-48 hours
+1. *Sign up*: https://dash.cloudflare.com/sign-up
+2. *Add domain*: Click "Add a site"
+3. *Update nameservers*: Point to Cloudflare's assigned nameservers
+4. *Wait for activation*: Usually 24-48 hours
 
-### Using Cloudflare Dashboard
+*** Using Cloudflare Dashboard
 
-**DNS Records**:
+*DNS Records*:
 - Navigate to DNS → Records
 - Add A, AAAA, CNAME, MX, TXT records
 - Toggle proxy status (orange cloud)
 - Set TTL values
 
-**Common Record Types**:
-```
+*Common Record Types*:
+#+begin_example
 A       example.com         192.0.2.1       Auto    Proxied
 AAAA    example.com         2001:db8::1     Auto    Proxied
 CNAME   www                 example.com     Auto    Proxied
 MX      @                   mail.example.com 10     DNS only
 TXT     @                   "v=spf1..."     Auto    DNS only
-```
+#+end_example
 
-## Cloudflare API
+** Cloudflare API
 
-### Authentication
+*** Authentication
 
-**API Token** (recommended):
-```bash
+*API Token* (recommended):
+#+begin_src bash
 # Create at: https://dash.cloudflare.com/profile/api-tokens
 
 export CF_API_TOKEN="your-token-here"
-```
+#+end_src
 
-**Global API Key** (legacy):
-```bash
+*Global API Key* (legacy):
+#+begin_src bash
 export CF_API_KEY="your-key-here"
 export CF_API_EMAIL="your-email@example.com"
-```
+#+end_src
 
-### API Examples
+*** API Examples
 
-**List zones**:
-```bash
+*List zones*:
+#+begin_src bash
 curl -X GET "https://api.cloudflare.com/client/v4/zones" \
   -H "Authorization: Bearer $CF_API_TOKEN" \
   -H "Content-Type: application/json" | jq
-```
+#+end_src
 
-**Get zone details**:
-```bash
+*Get zone details*:
+#+begin_src bash
 ZONE_ID="your-zone-id"
 
 curl -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID" \
   -H "Authorization: Bearer $CF_API_TOKEN" \
   -H "Content-Type: application/json" | jq
-```
+#+end_src
 
-**List DNS records**:
-```bash
+*List DNS records*:
+#+begin_src bash
 curl -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records" \
   -H "Authorization: Bearer $CF_API_TOKEN" \
   -H "Content-Type: application/json" | jq
-```
+#+end_src
 
-**Create DNS record**:
-```bash
+*Create DNS record*:
+#+begin_src bash
 curl -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records" \
   -H "Authorization: Bearer $CF_API_TOKEN" \
   -H "Content-Type: application/json" \
@@ -170,10 +170,10 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records" \
     "ttl": 3600,
     "proxied": false
   }' | jq
-```
+#+end_src
 
-**Update DNS record**:
-```bash
+*Update DNS record*:
+#+begin_src bash
 RECORD_ID="your-record-id"
 
 curl -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$RECORD_ID" \
@@ -186,35 +186,35 @@ curl -X PUT "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$RE
     "ttl": 3600,
     "proxied": true
   }' | jq
-```
+#+end_src
 
-**Delete DNS record**:
-```bash
+*Delete DNS record*:
+#+begin_src bash
 curl -X DELETE "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$RECORD_ID" \
   -H "Authorization: Bearer $CF_API_TOKEN" \
   -H "Content-Type: application/json" | jq
-```
+#+end_src
 
-## CLI Tools
+** CLI Tools
 
-### flarectl
+*** flarectl
 
-**Installation**:
-```bash
+*Installation*:
+#+begin_src bash
 # macOS
 brew install cloudflare/cloudflare/flarectl
 
 # FreeBSD
 go install github.com/cloudflare/cloudflare-go/cmd/flarectl@latest
-```
+#+end_src
 
-**Configuration** (`~/.cloudflare/cloudflare.env`):
-```bash
+*Configuration* (~/.cloudflare/cloudflare.env~):
+#+begin_src bash
 export CF_API_TOKEN="your-token-here"
-```
+#+end_src
 
-**Usage**:
-```bash
+*Usage*:
+#+begin_src bash
 # List zones
 flarectl zone list
 
@@ -231,11 +231,11 @@ flarectl dns update --zone example.com \
 
 # Delete record
 flarectl dns delete --zone example.com --name api
-```
+#+end_src
 
-### cf-cli (Community)
+*** cf-cli (Community)
 
-```bash
+#+begin_src bash
 npm install -g cloudflare-cli
 
 # Configure
@@ -247,12 +247,12 @@ cf zones
 # DNS operations
 cf dns:add example.com api A 192.0.2.1
 cf dns:list example.com
-```
+#+end_src
 
-## Terraform Provider
+** Terraform Provider
 
-**Setup** (`main.tf`):
-```hcl
+*Setup* (~main.tf~):
+#+begin_src hcl
 terraform {
   required_providers {
     cloudflare = {
@@ -290,26 +290,26 @@ resource "cloudflare_record" "www" {
   type    = "CNAME"
   proxied = true
 }
-```
+#+end_src
 
-**Apply**:
-```bash
+*Apply*:
+#+begin_src bash
 terraform init
 terraform plan
 terraform apply
-```
+#+end_src
 
-## DNS Analytics
+** DNS Analytics
 
-### Using Dashboard
+*** Using Dashboard
 - Analytics → DNS
 - View queries by location
 - Response codes
 - Query types
 - Top queried records
 
-### Using API
-```bash
+*** Using API
+#+begin_src bash
 # DNS analytics
 curl -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_analytics/report" \
   -H "Authorization: Bearer $CF_API_TOKEN" \
@@ -320,12 +320,12 @@ curl -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_analytics/r
     "since": "2024-01-01T00:00:00Z",
     "until": "2024-01-31T23:59:59Z"
   }' | jq
-```
+#+end_src
 
-## DNSSEC
+** DNSSEC
 
-### Enable DNSSEC
-```bash
+*** Enable DNSSEC
+#+begin_src bash
 # Via API
 curl -X PATCH "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dnssec" \
   -H "Authorization: Bearer $CF_API_TOKEN" \
@@ -335,18 +335,18 @@ curl -X PATCH "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dnssec" \
 # Get DS records
 curl -X GET "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dnssec" \
   -H "Authorization: Bearer $CF_API_TOKEN" | jq
-```
+#+end_src
 
-### Verify DNSSEC
-```bash
+*** Verify DNSSEC
+#+begin_src bash
 dig +dnssec example.com @1.1.1.1
 drill -S example.com @1.1.1.1
-```
+#+end_src
 
-## Load Balancing
+** Load Balancing
 
-**Create load balancer**:
-```bash
+*Create load balancer*:
+#+begin_src bash
 curl -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/load_balancers" \
   -H "Authorization: Bearer $CF_API_TOKEN" \
   -H "Content-Type: application/json" \
@@ -357,12 +357,12 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/load_balancers
     "ttl": 30,
     "steering_policy": "geo"
   }' | jq
-```
+#+end_src
 
-## Testing Your Setup
+** Testing Your Setup
 
-### Verify DNS Resolution
-```bash
+*** Verify DNS Resolution
+#+begin_src bash
 # Basic query
 dig @1.1.1.1 example.com
 
@@ -371,51 +371,51 @@ for server in 1.1.1.1 8.8.8.8 208.67.222.222; do
     echo "Server: $server"
     dig @$server example.com +short
 done
-```
+#+end_src
 
-### Verify DoH
-```bash
+*** Verify DoH
+#+begin_src bash
 # Using curl
 curl -H 'accept: application/dns-json' \
   'https://1.1.1.1/dns-query?name=example.com&type=A' | jq
-```
+#+end_src
 
-### Check Cloudflare PoP
-```bash
+*** Check Cloudflare PoP
+#+begin_src bash
 # Which datacenter?
 dig @1.1.1.1 CH TXT whoami.cloudflare +short
 
 # CDN node
 curl -I https://example.com | grep -i cf-ray
-```
+#+end_src
 
-## Connection to topaz-lang
+** Connection to topaz-lang
 
 Cloudflare's DNS verification challenges:
-1. **Scale**: 100+ million domains, trillions of queries
-2. **Complexity**: Dynamic routing, load balancing, failover
-3. **Correctness**: One bug affects millions
-4. **Speed**: Changes must deploy instantly
+1. *Scale*: 100+ million domains, trillions of queries
+2. *Complexity*: Dynamic routing, load balancing, failover
+3. *Correctness*: One bug affects millions
+4. *Speed*: Changes must deploy instantly
 
-**topaz-lang** solves these by:
+*topaz-lang* solves these by:
 - Expressing DNS policies as verified programs
 - Using Rosette to prove policy correctness
 - Deploying only verified policies to edge
 - Catching bugs before production
 
-## Resources
+** Resources
 
-### Official Documentation
-- [Cloudflare DNS Docs](https://developers.cloudflare.com/dns/)
-- [API Documentation](https://developers.cloudflare.com/api/)
-- [1.1.1.1 Setup](https://1.1.1.1/dns/)
+*** Official Documentation
+- [[https://developers.cloudflare.com/dns/][Cloudflare DNS Docs]]
+- [[https://developers.cloudflare.com/api/][API Documentation]]
+- [[https://1.1.1.1/dns/][1.1.1.1 Setup]]
 
-### Tools
-- [Cloudflare Dashboard](https://dash.cloudflare.com/)
-- [API Explorer](https://developers.cloudflare.com/api/)
-- [flarectl](https://github.com/cloudflare/cloudflare-go/tree/master/cmd/flarectl)
+*** Tools
+- [[https://dash.cloudflare.com/][Cloudflare Dashboard]]
+- [[https://developers.cloudflare.com/api/][API Explorer]]
+- [[https://github.com/cloudflare/cloudflare-go/tree/master/cmd/flarectl][flarectl]]
 
-### Blog Posts
-- [Topaz Policy Engine](https://blog.cloudflare.com/topaz-policy-engine-design/)
-- [DNS Architecture](https://blog.cloudflare.com/dns-architecture/)
-- [1.1.1.1 Launch](https://blog.cloudflare.com/announcing-1111/)
+*** Blog Posts
+- [[https://blog.cloudflare.com/topaz-policy-engine-design/][Topaz Policy Engine]]
+- [[https://blog.cloudflare.com/dns-architecture/][DNS Architecture]]
+- [[https://blog.cloudflare.com/announcing-1111/][1.1.1.1 Launch]]
