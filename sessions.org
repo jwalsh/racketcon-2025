@@ -88,7 +88,49 @@ Evening Social • Lord Hobo Brewery
 
 * Sunday, October 5th
 
-** 8:30am EDT Doors Open
+** 8:30am EDT
+Doors Open • Breakfast not served (eat before coming)
+
+** [#A] 9:00am EDT Advanced Macrology: 5 Macro Programming Patterns You (No Longer) Need to Know
+Michael Ballantyne
+
+Racket's macros make creating small extensions to the language remarkably simple. But when you step up to creating DSLs with static semantics and compiler optimizations, you need new tools to integrate your DSL implementation with Racket's expansion process. In this talk I'll demonstrate 5 macro design patterns that sophisticated DSLs like match, syntax-parse, and Typed Racket use to validate syntax, communicate static information, and integrate with DrRacket. But as any good language-oriented programmer knows, a design pattern usually indicates a missing linguistic abstraction! And in fact, my syntax-spec metalanguage abstracts over all of these design patterns, generating implementations from a declarative specification of your DSL syntax. So I'll also show how you can more easily achieve the same results with syntax-spec, design-pattern-free.
+
+*Bio*: Michael Ballantyne recently completed his Ph.D. at Northeastern University, advised by Matthias Felleisen. His research works towards a future where mainstream programmers regularly create, extend, and fluidly intermix domain-specific languages, with excellent support from their programming language and environment.
+
+*Links*: [[https://docs.racket-lang.org/syntax-spec/][syntax-spec]] • [[https://www.ccs.neu.edu/home/mballantyne/][Homepage]]
+
+*Experiments*: [[file:experiments/046-pattern-matching/][046]] [[file:experiments/142-advanced-macros/][142]]
+
+** [#B] 9:30am EDT Great Composers Steal: Obbligato Reuse of Racket in Tonart
+Jared Gentner
+
+Imagine, for a moment, that a music score could somehow become a Racket module. Imagine if every notation on that music score was a syntax object. Imagine selecting areas of the score and running macro-like rewrites on the notations within that selection. Imagine a context system which allows a composer to summon important static information about any notation, such as the key, the tuning system, or the instrument. This is the vision of Tonart, an extensible language and library for composing music in Racket. This talk will highlight the ideas Tonart steals from Racket in its design, as well as the language features Tonart reuses from Racket in its implementation.
+
+*Bio*: Jared has been composing music and functions since a young age. A native of Upstate New York, he moved to Boston to study computing at Northeastern. He had no clue about Racket when he enrolled, but where fate leads, we are bound to follow! What he enjoys most is making music with his friends. Jared believes in living life to the fullest, that "Life imitates Art", and that the greatest art is to be found at home.
+
+*Links*: [[https://github.com/tonart][Tonart]] (assumed)
+
+*Experiments*: [[file:experiments/126-music-theory/][126]] [[file:experiments/147-tonart-music-lang/][147]]
+
+** [#A] 10:00am EDT Rhombus Update
+Matthew Flatt
+
+Rhombus is ready for early adopters. There's still plenty to be done in creating Rhombus-style bindings for Racket libraries, building entirely new Rhombus libraries when that makes sense, and refining the Rhombus tooling and ecosystem. No language is ever finished, but Rhombus is well past the prototype stage and increasingly a language that you can use for everyday tasks. The talk will present a status report and some guesses about what will happen next.
+
+*Links*: [[https://docs.racket-lang.org/rhombus/][Rhombus Docs]] • [[https://github.com/racket/rhombus][GitHub]]
+
+*Experiments*: [[file:experiments/152-rhombus-intro/][152]]
+
+** 10:30am EDT Break
+
+** [#A] 11:00am EDT The State of Racket
+Sam Tobin-Hochstadt
+
+** [#A] 11:30am EDT Racket Town Hall
+Racket Management
+
+Please come with your big questions and discussion topics.
 
 * Tags                                                             :noexport:
 
