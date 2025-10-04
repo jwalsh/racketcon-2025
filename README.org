@@ -3,6 +3,12 @@
 #+DATE: 2025-10-04
 #+STARTUP: overview
 
+[[https://github.com/jwalsh/racketcon-2025][https://img.shields.io/badge/RacketCon-2025-blue.svg]]
+[[https://github.com/jwalsh/racketcon-2025/blob/main/LICENSE][https://img.shields.io/badge/License-MIT-green.svg]]
+[[https://racket-lang.org/][https://img.shields.io/badge/Made%20with-Racket-red.svg]]
+[[https://docs.racket-lang.org/rosette-guide/][https://img.shields.io/badge/Rosette-Verification-orange.svg]]
+[[https://github.com/jwalsh/racketcon-2025/tree/main/experiments][https://img.shields.io/badge/Experiments-310-purple.svg]]
+
 * Overview
 
 This repository contains experiments, notes, and code examples related to [[https://con.racket-lang.org/][RacketCon 2025]] sessions.
@@ -20,6 +26,10 @@ This repository contains experiments, notes, and code examples related to [[http
 
 ** Experiments
 
+See [[file:EXPERIMENTS.org][EXPERIMENTS.org]] for complete catalog of 310 planned experiments.
+
+*** Current Experiments
+
 | # | Topic | Related Session |
 |---+-------+-----------------|
 | [[file:experiments/000-racket-setup/][000]] | Racket & Rosette Setup | Keynote: Cloudflare |
@@ -30,6 +40,29 @@ This repository contains experiments, notes, and code examples related to [[http
 | [[file:experiments/005-cloudflare-dns-setup/][005]] | Cloudflare DNS Setup | Keynote: Cloudflare |
 | [[file:experiments/006-topaz-lang-exploration/][006]] | Topaz-lang Exploration | Keynote: Cloudflare |
 | [[file:experiments/007-compositional-oop/][007]] | Compositional OOP | Rideau: OO Prototypes |
+
+*** Experiment Tracks (310 total)
+
+1. *Formal Verification & Rosette* (001-020): DNS verification, SMT solving, topaz-lang
+2. *Object-Oriented Programming* (021-040): Mixins, prototypes, CLOS, meta-object protocols
+3. *Pattern Matching & DSLs* (041-060): Immutable updates, lenses, persistent data structures
+4. *Data Formats & Ion Fusion* (061-075): Custom languages, parser combinators, #lang
+5. *Editor Integration* (076-085): Racket mode, REPL, LSP
+6. *Probabilistic Programming* (086-095): Discrete probability, Bayesian inference
+7. *Logic Programming* (096-110): Datalog, miniKanren, constraint logic
+8. *Network Protocols* (111-125): Gopher, Gemini, text-based protocols
+9. *Music & Sound* (126-140): MIDI, code sonification, live coding
+10. *Advanced Racket Features* (141-160): Macros, modules, JIT compilation
+11. *Contracts & Types* (161-175): Gradual typing, refinement types, property testing
+12. *Distributed Systems* (176-190): Consensus, CRDTs, event sourcing
+13. *Web & APIs* (191-205): HTTP servers, GraphQL, authentication
+14. *Databases* (206-220): SQL integration, query optimization, storage engines
+15. *Security & Cryptography* (221-235): Applied crypto, zero-knowledge proofs
+16. *Compilers* (236-250): Lexing, parsing, type checking, code generation
+17. *Algorithms* (251-265): Graphs, dynamic programming, data structures
+18. *Functional Programming* (266-280): Monads, lenses, recursion schemes
+19. *Testing & QA* (281-295): Property testing, fuzzing, chaos engineering
+20. *DevOps & Infrastructure* (296-310): CI/CD, containers, observability
 
 * Key Sessions
 

@@ -1,0 +1,412 @@
+#+TITLE: RacketCon 2025 - Experiment Catalog
+#+AUTHOR: Jason Walsh
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Complete catalog of 100+ experiments based on RacketCon 2025 sessions and related topics.
+
+* Experiment Organization
+
+** Track 1: Formal Verification & Rosette (001-020)
+*** DNS & Cloudflare Topaz-lang
+- [X] 000: Racket & Rosette Setup
+- [X] 001: Rosette Fundamentals
+- [X] 002: Formal Methods Overview
+- [X] 003: Rosette vs Lean vs TLA+
+- [X] 004: DNS Tools (macOS/FreeBSD)
+- [X] 005: Cloudflare DNS Setup
+- [X] 006: Topaz-lang Exploration
+- [ ] 008: Implementing Mini topaz-lang
+- [ ] 009: DNS Query Verification
+- [ ] 010: Policy Conflict Detection
+- [ ] 011: SMT Solver Integration (Z3)
+- [ ] 012: Symbolic DNS Queries
+- [ ] 013: Bounded Verification Techniques
+- [ ] 014: DNS Load Balancing Verification
+- [ ] 015: Geo-routing Policy Verification
+- [ ] 016: DNSSEC with Rosette
+- [ ] 017: Anycast Verification
+- [ ] 018: DNS Failover Correctness
+- [ ] 019: Multi-region DNS Consistency
+- [ ] 020: DNS Analytics with Verification
+
+** Track 2: Object-Oriented Programming (021-040)
+*** Compositional OOP & Mixins
+- [X] 007: Compositional OOP Prototypes
+- [ ] 021: Lambda Calculus Encoding of Objects
+- [ ] 022: Mixin Inheritance Implementation
+- [ ] 023: Multiple Inheritance via Mixins
+- [ ] 024: Prototype-based OOP without Classes
+- [ ] 025: Method Combinations (CLOS-style)
+- [ ] 026: Traits and Composable Behaviors
+- [ ] 027: Delegation vs Inheritance
+- [ ] 028: Jsonnet-style Composition
+- [ ] 029: Nix Package Composition Patterns
+- [ ] 030: Pure Functional Objects
+- [ ] 031: Lazy Object Initialization
+- [ ] 032: Object Linearization Algorithms
+- [ ] 033: Dynamic Dispatch Implementation
+- [ ] 034: Multiple Dispatch Systems
+- [ ] 035: Open Classes and Extension
+- [ ] 036: Aspect-Oriented Programming
+- [ ] 037: Meta-Object Protocols
+- [ ] 038: Self-Modifying Objects
+- [ ] 039: Object Versioning and Migration
+- [ ] 040: Comparing OOP Systems (CLOS vs Racket vs Smalltalk)
+
+** Track 3: Pattern Matching & DSLs (041-060)
+*** Immutable Updates & Match DSLs
+- [ ] 041: Deep Immutable Update Basics
+- [ ] 042: Pattern Variables in Updates
+- [ ] 043: Lens-based Updates
+- [ ] 044: Zipper Data Structures
+- [ ] 045: Functional Lenses Implementation
+- [ ] 046: Nested Structure Navigation
+- [ ] 047: Bidirectional Transformations
+- [ ] 048: Update Combinators
+- [ ] 049: Type-safe Updates with Contracts
+- [ ] 050: Structural Sharing Optimization
+- [ ] 051: Persistent Data Structures
+- [ ] 052: Finger Trees
+- [ ] 053: HAMTs (Hash Array Mapped Tries)
+- [ ] 054: Red-Black Trees
+- [ ] 055: B-Trees in Racket
+- [ ] 056: Efficient Vector Updates
+- [ ] 057: Immutable Hash Maps
+- [ ] 058: Copy-on-Write Semantics
+- [ ] 059: Diff Algorithms for Structures
+- [ ] 060: Patch Generation and Application
+
+** Track 4: Data Formats & Ion Fusion (061-075)
+*** Customizable Languages & Data Semantics
+- [ ] 061: Amazon Ion Format Basics
+- [ ] 062: Ion Schema Validation
+- [ ] 063: Ion vs JSON vs EDN
+- [ ] 064: Type-safe Data Serialization
+- [ ] 065: Ion Path Queries
+- [ ] 066: Building Custom Data Languages
+- [ ] 067: Embedded DSL Design Patterns
+- [ ] 068: Parser Combinators
+- [ ] 069: PEG (Parsing Expression Grammars)
+- [ ] 070: S-expression Processing
+- [ ] 071: Reader Macros
+- [ ] 072: Custom #lang Implementation
+- [ ] 073: Language-Oriented Programming
+- [ ] 074: Multi-stage Programming
+- [ ] 075: Compile-time vs Runtime Semantics
+
+** Track 5: Editor Integration (076-085)
+*** Racket Mode & Emacs
+- [ ] 076: Racket Mode Basics
+- [ ] 077: REPL Integration Patterns
+- [ ] 078: Syntax Highlighting Engines
+- [ ] 079: Auto-completion with Company/Corfu
+- [ ] 080: Navigation (xref, imenu)
+- [ ] 081: Interactive Debugging
+- [ ] 082: Error Highlighting
+- [ ] 083: Eldoc Integration
+- [ ] 084: LSP vs Custom Protocol
+- [ ] 085: Building Editor Extensions
+
+** Track 6: Probabilistic Programming (086-095)
+*** Roulette & Discrete Probability
+- [ ] 086: Discrete Probability Basics
+- [ ] 087: Probability Monad
+- [ ] 088: Markov Chains
+- [ ] 089: Bayesian Inference
+- [ ] 090: Monte Carlo Methods
+- [ ] 091: MCMC Sampling
+- [ ] 092: Probabilistic Logic Programming
+- [ ] 093: Inference Algorithms
+- [ ] 094: Probabilistic Data Structures
+- [ ] 095: Statistical Computing
+
+** Track 7: Logic Programming (096-110)
+*** miniDusa & Finite-Choice Logic
+- [ ] 096: Datalog Basics
+- [ ] 097: Finite-Domain Constraints
+- [ ] 098: Logic Variables and Unification
+- [ ] 099: miniKanren Implementation
+- [ ] 100: Relational Programming
+- [ ] 101: Constraint Logic Programming
+- [ ] 102: Answer Set Programming
+- [ ] 103: Prolog-style Resolution
+- [ ] 104: Tabling and Memoization
+- [ ] 105: Negation in Logic Programming
+- [ ] 106: Stratified Datalog
+- [ ] 107: Magic Sets Optimization
+- [ ] 108: Bottom-up vs Top-down Evaluation
+- [ ] 109: Graph Queries with Datalog
+- [ ] 110: Static Analysis with Logic Programming
+
+** Track 8: Network Protocols (111-125)
+*** Gopher & Slow Internet
+- [ ] 111: Gopher Protocol Basics
+- [ ] 112: Gopher Server Implementation
+- [ ] 113: Gopher Client Browser
+- [ ] 114: Gophermap Generation
+- [ ] 115: File Type DSL Design
+- [ ] 116: MIME Type Handling
+- [ ] 117: Text-based Protocols
+- [ ] 118: Gemini Protocol
+- [ ] 119: Finger Protocol
+- [ ] 120: IRC Bot in Racket
+- [ ] 121: NNTP News Reader
+- [ ] 122: Telnet Applications
+- [ ] 123: BBS Systems
+- [ ] 124: ASCII Art Generation
+- [ ] 125: Terminal UI Libraries
+
+** Track 9: Music & Sound (126-140)
+*** PROG Rock & Code Sonification
+- [ ] 126: Music Theory Basics
+- [ ] 127: MIDI Generation
+- [ ] 128: SuperCollider Integration
+- [ ] 129: ChucK Language
+- [ ] 130: Overtone (Clojure) equivalent
+- [ ] 131: Code as Music Score
+- [ ] 132: Abstract Syntax Tree Sonification
+- [ ] 133: Control Flow Melodies
+- [ ] 134: Data Structure Rhythms
+- [ ] 135: Algorithm Visualization through Sound
+- [ ] 136: Live Coding Music
+- [ ] 137: Synthesizer Design
+- [ ] 138: Audio DSP Basics
+- [ ] 139: Fourier Transforms
+- [ ] 140: Audio Effects Processing
+
+** Track 10: Advanced Racket Features (141-160)
+*** Language Implementation & Macros
+- [ ] 141: Hygenic Macros Deep Dive
+- [ ] 142: syntax-parse Patterns
+- [ ] 143: Macro Debugging
+- [ ] 144: Pattern-based Macros
+- [ ] 145: syntax-case vs define-syntax
+- [ ] 146: Macro Stepper Tool
+- [ ] 147: Building #lang Languages
+- [ ] 148: Expander Architecture
+- [ ] 149: Scope Sets and Binding
+- [ ] 150: Module System Internals
+- [ ] 151: Cross-phase Persistent Modules
+- [ ] 152: Submodules and Dependencies
+- [ ] 153: Racket Virtual Machine
+- [ ] 154: Bytecode Compilation
+- [ ] 155: JIT Compilation
+- [ ] 156: Performance Profiling
+- [ ] 157: Memory Management
+- [ ] 158: Tail Call Optimization
+- [ ] 159: Continuation Implementation
+- [ ] 160: Delimited Continuations
+
+** Track 11: Contracts & Types (161-175)
+*** Program Verification
+- [ ] 161: Contract System Basics
+- [ ] 162: Higher-order Contracts
+- [ ] 163: Blame Assignment
+- [ ] 164: Gradual Typing with Typed Racket
+- [ ] 165: Type Inference
+- [ ] 166: Occurrence Typing
+- [ ] 167: Refinement Types
+- [ ] 168: Dependent Types (Limited)
+- [ ] 169: Contract Optimization
+- [ ] 170: Symbolic Profiling
+- [ ] 171: QuickCheck-style Testing
+- [ ] 172: Property-based Testing
+- [ ] 173: Random Testing Strategies
+- [ ] 174: Coverage-guided Fuzzing
+- [ ] 175: Concolic Testing
+
+** Track 12: Distributed Systems (176-190)
+*** Consensus & Coordination
+- [ ] 176: Raft Consensus Implementation
+- [ ] 177: Paxos Algorithm
+- [ ] 178: Byzantine Fault Tolerance
+- [ ] 179: Vector Clocks
+- [ ] 180: CRDTs (Conflict-free Replicated Data Types)
+- [ ] 181: Distributed Hash Tables
+- [ ] 182: Gossip Protocols
+- [ ] 183: Epidemic Algorithms
+- [ ] 184: Leader Election
+- [ ] 185: Distributed Locking
+- [ ] 186: Two-Phase Commit
+- [ ] 187: Three-Phase Commit
+- [ ] 188: Saga Pattern
+- [ ] 189: Event Sourcing
+- [ ] 190: CQRS Architecture
+
+** Track 13: Web & APIs (191-205)
+*** Server Implementation
+- [ ] 191: HTTP Server Basics
+- [ ] 192: WebSocket Implementation
+- [ ] 193: REST API Design
+- [ ] 194: GraphQL Server
+- [ ] 195: Server-Sent Events
+- [ ] 196: Session Management
+- [ ] 197: Authentication Schemes
+- [ ] 198: JWT Implementation
+- [ ] 199: OAuth2 Flow
+- [ ] 200: Rate Limiting
+- [ ] 201: API Versioning
+- [ ] 202: OpenAPI/Swagger
+- [ ] 203: CORS Handling
+- [ ] 204: HTTPS/TLS
+- [ ] 205: Load Balancing
+
+** Track 14: Databases (206-220)
+*** Storage & Queries
+- [ ] 206: SQLite Integration
+- [ ] 207: PostgreSQL Driver
+- [ ] 208: Query Builder DSL
+- [ ] 209: ORM Implementation
+- [ ] 210: Database Migrations
+- [ ] 211: Connection Pooling
+- [ ] 212: Transaction Management
+- [ ] 213: Index Optimization
+- [ ] 214: B-tree Implementation
+- [ ] 215: LSM Tree Storage
+- [ ] 216: Write-Ahead Logging
+- [ ] 217: MVCC (Multi-Version Concurrency Control)
+- [ ] 218: Query Planning
+- [ ] 219: Cost-Based Optimization
+- [ ] 220: Distributed Queries
+
+** Track 15: Security & Cryptography (221-235)
+*** Applied Cryptography
+- [ ] 221: Hash Functions
+- [ ] 222: Symmetric Encryption
+- [ ] 223: Public Key Cryptography
+- [ ] 224: Digital Signatures
+- [ ] 225: Certificate Validation
+- [ ] 226: Key Derivation Functions
+- [ ] 227: Password Hashing (Argon2)
+- [ ] 228: Zero-Knowledge Proofs
+- [ ] 229: Secure Multi-Party Computation
+- [ ] 230: Homomorphic Encryption
+- [ ] 231: Timing Attack Prevention
+- [ ] 232: Side-Channel Analysis
+- [ ] 233: Secure Random Generation
+- [ ] 234: Cryptographic Protocols
+- [ ] 235: Security Auditing Tools
+
+** Track 16: Compilers (236-250)
+*** Language Implementation
+- [ ] 236: Lexer Implementation
+- [ ] 237: Recursive Descent Parser
+- [ ] 238: LR Parser Generator
+- [ ] 239: AST Representation
+- [ ] 240: Type Checking
+- [ ] 241: Inference Algorithm W
+- [ ] 242: Hindley-Milner Type System
+- [ ] 243: Code Generation
+- [ ] 244: Three-Address Code
+- [ ] 245: SSA Form
+- [ ] 246: Register Allocation
+- [ ] 247: Instruction Selection
+- [ ] 248: Peephole Optimization
+- [ ] 249: Dead Code Elimination
+- [ ] 250: Constant Folding
+
+** Track 17: Algorithms (251-265)
+*** Classic & Modern Algorithms
+- [ ] 251: Graph Algorithms (DFS, BFS)
+- [ ] 252: Shortest Path (Dijkstra, A*)
+- [ ] 253: Minimum Spanning Tree
+- [ ] 254: Max Flow Algorithms
+- [ ] 255: Dynamic Programming
+- [ ] 256: Divide and Conquer
+- [ ] 257: Greedy Algorithms
+- [ ] 258: Backtracking
+- [ ] 259: Branch and Bound
+- [ ] 260: String Matching (KMP, Boyer-Moore)
+- [ ] 261: Suffix Trees/Arrays
+- [ ] 262: Trie Structures
+- [ ] 263: Bloom Filters
+- [ ] 264: Skip Lists
+- [ ] 265: Treaps
+
+** Track 18: Functional Programming Patterns (266-280)
+*** Advanced FP
+- [ ] 266: Functors
+- [ ] 267: Applicative Functors
+- [ ] 268: Monads
+- [ ] 269: Monad Transformers
+- [ ] 270: Free Monads
+- [ ] 271: Comonads
+- [ ] 272: Arrows
+- [ ] 273: Lenses and Prisms
+- [ ] 274: Optics
+- [ ] 275: Recursion Schemes (Catamorphisms)
+- [ ] 276: F-Algebras
+- [ ] 277: F-Coalgebras
+- [ ] 278: Anamorphisms
+- [ ] 279: Hylomorphisms
+- [ ] 280: Paramorphisms
+
+** Track 19: Testing & QA (281-295)
+*** Quality Assurance
+- [ ] 281: Unit Testing Framework
+- [ ] 282: Test Coverage Analysis
+- [ ] 283: Mutation Testing
+- [ ] 284: Integration Testing
+- [ ] 285: End-to-End Testing
+- [ ] 286: Performance Benchmarking
+- [ ] 287: Load Testing
+- [ ] 288: Stress Testing
+- [ ] 289: Chaos Engineering
+- [ ] 290: Fault Injection
+- [ ] 291: Mock Objects
+- [ ] 292: Test Doubles
+- [ ] 293: Snapshot Testing
+- [ ] 294: Golden Testing
+- [ ] 295: Regression Testing
+
+** Track 20: DevOps & Infrastructure (296-310)
+*** Deployment & Operations
+- [ ] 296: Docker Integration
+- [ ] 297: Container Orchestration
+- [ ] 298: CI/CD Pipelines
+- [ ] 299: Infrastructure as Code
+- [ ] 300: Configuration Management
+- [ ] 301: Service Discovery
+- [ ] 302: Health Checks
+- [ ] 303: Metrics Collection
+- [ ] 304: Logging Aggregation
+- [ ] 305: Distributed Tracing
+- [ ] 306: Alerting Systems
+- [ ] 307: Incident Response
+- [ ] 308: Capacity Planning
+- [ ] 309: Auto-scaling
+- [ ] 310: Blue-Green Deployment
+
+* Implementation Priority
+
+** Phase 1: Foundation (Weeks 1-4)
+Core experiments from existing tracks 1-2
+
+** Phase 2: DSL & Language Features (Weeks 5-8)
+Tracks 3-5, building on Racket language features
+
+** Phase 3: Advanced Topics (Weeks 9-16)
+Tracks 6-12, specialized domains
+
+** Phase 4: Systems & Infrastructure (Weeks 17-24)
+Tracks 13-20, production systems
+
+* Learning Objectives
+
+Each experiment should:
+1. Connect to RacketCon 2025 session content
+2. Include working code examples
+3. Provide hands-on exercises
+4. Reference academic papers/resources
+5. Build incrementally on previous experiments
+
+* Resources Per Track
+
+** Papers
+** Books
+** Online Courses
+** Community Forums
+** Related Projects
