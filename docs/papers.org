@@ -1,0 +1,177 @@
+#+TITLE: Research Papers for RacketCon 2025
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Collection of research papers relevant to RacketCon 2025 topics.
+
+* How to Download
+
+Use the Makefile to download papers:
+
+#+begin_src bash
+# Download all papers
+gmake papers
+
+# Download specific papers
+gmake rosette-paper
+
+# Clean downloaded papers
+gmake clean-papers
+#+end_src
+
+* Rosette & Solver-Aided Programming
+
+** Rosette: A Solver-Aided Language for Building Verification Tools
+- *Authors*: Emina Torlak, Rastislav Bodik
+- *Conference*: PLDI 2014
+- *URL*: https://homes.cs.washington.edu/~bodik/ucb/Files/2014/rosette-pldi2014.pdf
+- *Download*: ~gmake rosette-paper~
+- *File*: ~papers/rosette-pldi2014.pdf~
+
+*** Abstract
+
+Rosette is a solver-aided programming language that extends Racket with constructs for program synthesis and verification. These constructs make it easy to create a new solver-aided language (SAL) by writing a standard interpreter for that language, along with a few additional lines of code for managing symbolic values.
+
+*** Key Topics
+
+- Solver-aided programming
+- Symbolic execution
+- Program synthesis
+- Verification
+- DSL construction
+
+*** Relevance to RacketCon
+
+- *Keynote (9:00am)*: Foundational paper for Rosette
+- *Roulette (2:30pm)*: Extends Rosette for probabilistic inference
+- *Experiment 001*: Rosette introduction
+- *Experiment 089*: Roulette deep dive
+
+* Truffle & Language Implementation
+
+** Self-Optimizing AST Interpreters
+- *Authors*: Thomas Würthinger et al.
+- *Conference*: DLS 2012
+- *URL*: TBD
+- *Relevance*: Truffle framework (Experiment 087)
+
+** One VM to Rule Them All
+- *Authors*: Thomas Würthinger et al.
+- *Conference*: Onward! 2013
+- *URL*: TBD
+- *Relevance*: GraalVM architecture (Experiment 087)
+
+* Probabilistic Programming
+
+** Inference-Aided Programming (Roulette)
+- *Authors*: Cameron Moy et al.
+- *URL*: TBD
+- *Relevance*: Saturday 2:30pm talk, Experiment 089
+
+** Gen: A General-Purpose Probabilistic Programming System
+- *Authors*: MIT ProbComp
+- *URL*: TBD
+- *Relevance*: Comparison to Roulette
+
+* Lenses & Optics
+
+** Profunctor Optics: Modular Data Accessors
+- *Authors*: Matthew Pickering et al.
+- *Conference*: TAS 2017
+- *URL*: TBD
+- *Relevance*: Saturday 11:15am (Delmonaco talk), Experiment 049
+
+** Lenses, Folds, and Traversals
+- *Authors*: Edward Kmett
+- *URL*: TBD
+- *Relevance*: Haskell lens library, optics foundations
+
+* Continuations
+
+** Continuations and Backtracking
+- *Authors*: Various
+- *Book*: Lisp in Small Pieces (Chapter 3)
+- *Relevance*: Experiment 092, continuation forking
+
+* Chaos Engineering
+
+** Principles of Chaos Engineering
+- *URL*: https://principlesofchaos.org/
+- *Relevance*: Experiment 091
+
+* Related Reading
+
+** Books
+
+- *Lisp in Small Pieces* - Christian Queinnec
+  - Chapter 3: Continuations (Experiment 092)
+  - Full reading guide: [[file:lisp-in-small-pieces-guide.org][Reading Guide]]
+
+- *The Reasoned Schemer* - Friedman, Byrd, Kiselyov
+  - Logic programming with miniKanren
+  - Related to AMB operator (Experiment 092)
+
+** Online Resources
+
+- [[https://docs.racket-lang.org/rosette-guide/][Rosette Guide]]
+- [[https://docs.racket-lang.org/roulette/][Roulette Documentation]]
+- [[https://www.graalvm.org/][GraalVM Documentation]]
+
+* Paper Organization
+
+Papers are stored in ~papers/~ directory (gitignored):
+
+#+begin_example
+papers/
+├── rosette-pldi2014.pdf
+├── truffle-*.pdf
+├── roulette-*.pdf
+└── ...
+#+end_example
+
+* Citation Format
+
+** BibTeX Example
+
+#+begin_src bibtex
+@inproceedings{rosette-pldi2014,
+  author    = {Emina Torlak and Rastislav Bodik},
+  title     = {A Lightweight Symbolic Virtual Machine for Solver-Aided Host Languages},
+  booktitle = {PLDI},
+  year      = {2014},
+  url       = {https://homes.cs.washington.edu/~bodik/ucb/Files/2014/rosette-pldi2014.pdf}
+}
+#+end_src
+
+* Adding New Papers
+
+To add a new paper to the Makefile:
+
+1. Edit ~Makefile~
+2. Add paper variables:
+   #+begin_src makefile
+   PAPER_NAME := $(PAPERS_DIR)/paper-name.pdf
+   PAPER_URL := https://example.com/paper.pdf
+   #+end_src
+
+3. Add download target:
+   #+begin_src makefile
+   $(PAPER_NAME): $(PAPERS_DIR)
+   	curl -L -o $(PAPER_NAME) $(PAPER_URL)
+
+   paper-name: $(PAPER_NAME)
+   #+end_src
+
+4. Add to ~papers~ target:
+   #+begin_src makefile
+   papers: rosette-paper paper-name
+   #+end_src
+
+5. Document in this file
+
+* Status
+
+Papers infrastructure ready - use ~gmake papers~ to download!
