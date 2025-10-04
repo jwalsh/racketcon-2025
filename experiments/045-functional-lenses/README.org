@@ -1,0 +1,524 @@
+#+TITLE: Experiment 045: Functional Lenses Implementation
+#+AUTHOR: Jason Walsh
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Complete implementation of functional lenses following Haskell's lens library design, including car/cdr lenses for lists and formal verification of lens laws.
+
+*Related Session*: Saturday 10:45am EDT - "A Match-Like DSL for Deep Immutable Updates"
+
+* Lens Laws (Formal Definition)
+
+A well-behaved lens must satisfy three laws:
+
+** Law 1: GetPut (You get what you put)
+
+#+begin_quote
+Setting the focus to what you just got changes nothing
+#+end_quote
+
+#+begin_src racket
+∀ target.
+  (set lens target (view lens target)) ≡ target
+#+end_src
+
+*Intuition*: Reading then writing back is identity
+
+** Law 2: PutGet (You put what you get)
+
+#+begin_quote
+Getting after setting returns what you set
+#+end_quote
+
+#+begin_src racket
+∀ target, value.
+  (view lens (set lens target value)) ≡ value
+#+end_src
+
+*Intuition*: Writing then reading returns the written value
+
+** Law 3: PutPut (Last write wins)
+
+#+begin_quote
+Setting twice is same as setting once with the second value
+#+end_quote
+
+#+begin_src racket
+∀ target, value1, value2.
+  (set lens (set lens target value1) value2)
+    ≡ (set lens target value2)
+#+end_src
+
+*Intuition*: Second write overwrites first
+
+* List Lenses: car-lens and cdr-lens
+
+** car-lens (First Element)
+
+#+begin_src racket
+#lang racket
+
+(struct lens (get set) #:transparent)
+
+(define car-lens
+  (lens
+    ; Getter: extract first element
+    car
+    ; Setter: replace first element
+    (λ (lst new-first)
+      (cons new-first (cdr lst)))))
+
+;; Usage
+(define lst '(1 2 3))
+
+(view car-lens lst)                    ; => 1
+(set car-lens lst 10)                  ; => '(10 2 3)
+(over car-lens lst (λ (x) (* x 2)))    ; => '(2 2 3)
+#+end_src
+
+** cdr-lens (Rest of List)
+
+#+begin_src racket
+#lang racket
+
+(define cdr-lens
+  (lens
+    ; Getter: extract rest
+    cdr
+    ; Setter: replace rest
+    (λ (lst new-rest)
+      (cons (car lst) new-rest))))
+
+;; Usage
+(define lst '(1 2 3))
+
+(view cdr-lens lst)                    ; => '(2 3)
+(set cdr-lens lst '(20 30))           ; => '(1 20 30)
+(over cdr-lens lst reverse)            ; => '(1 3 2)
+#+end_src
+
+** Composing car and cdr
+
+#+begin_src racket
+#lang racket
+
+;; Second element: car of cdr
+(define cadr-lens
+  (compose-lens cdr-lens car-lens))
+
+;; Third element: car of cdr of cdr
+(define caddr-lens
+  (compose-lens cdr-lens
+    (compose-lens cdr-lens car-lens)))
+
+;; Usage
+(define lst '(1 2 3 4))
+
+(view cadr-lens lst)        ; => 2
+(set cadr-lens lst 20)      ; => '(1 20 3 4)
+
+(view caddr-lens lst)       ; => 3
+(set caddr-lens lst 30)     ; => '(1 2 30 4)
+#+end_src
+
+** nth-lens (Generalized)
+
+#+begin_src racket
+#lang racket
+
+(define (nth-lens n)
+  "Lens for nth element of list (0-indexed)."
+  (if (zero? n)
+      car-lens
+      (compose-lens cdr-lens (nth-lens (sub1 n)))))
+
+;; Usage
+(define lst '(a b c d e))
+
+(view (nth-lens 0) lst)     ; => 'a
+(view (nth-lens 2) lst)     ; => 'c
+(set (nth-lens 3) lst 'D)   ; => '(a b c D e)
+#+end_src
+
+* Verifying Lens Laws
+
+** Law Verification Functions
+
+#+begin_src racket
+#lang racket
+
+(define (verify-get-put lens target)
+  "Law 1: set after get is identity"
+  (equal? (set lens target (view lens target))
+          target))
+
+(define (verify-put-get lens target value)
+  "Law 2: get after set returns value"
+  (equal? (view lens (set lens target value))
+          value))
+
+(define (verify-put-put lens target value1 value2)
+  "Law 3: second set overwrites first"
+  (equal? (set lens (set lens target value1) value2)
+          (set lens target value2)))
+
+(define (verify-lens-laws lens target value1 value2)
+  "Verify all three lens laws."
+  (and (verify-get-put lens target)
+       (verify-put-get lens target value1)
+       (verify-put-put lens target value1 value2)))
+#+end_src
+
+** Testing car-lens Laws
+
+#+begin_src racket
+#lang racket
+
+(require rackunit)
+
+(define test-list '(1 2 3))
+
+;; Law 1: GetPut
+(check-equal?
+  (set car-lens test-list (view car-lens test-list))
+  test-list
+  "car-lens: GetPut law")
+
+;; Law 2: PutGet
+(check-equal?
+  (view car-lens (set car-lens test-list 10))
+  10
+  "car-lens: PutGet law")
+
+;; Law 3: PutPut
+(check-equal?
+  (set car-lens (set car-lens test-list 10) 20)
+  (set car-lens test-list 20)
+  "car-lens: PutPut law")
+
+;; All laws together
+(check-true
+  (verify-lens-laws car-lens test-list 10 20)
+  "car-lens: All laws hold")
+#+end_src
+
+** Testing cdr-lens Laws
+
+#+begin_src racket
+#lang racket
+
+(define test-list '(1 2 3))
+
+;; Law 1: GetPut
+(check-equal?
+  (set cdr-lens test-list (view cdr-lens test-list))
+  test-list
+  "cdr-lens: GetPut law")
+
+;; Law 2: PutGet
+(check-equal?
+  (view cdr-lens (set cdr-lens test-list '(20 30)))
+  '(20 30)
+  "cdr-lens: PutGet law")
+
+;; Law 3: PutPut
+(check-equal?
+  (set cdr-lens (set cdr-lens test-list '(10 10)) '(20 30))
+  (set cdr-lens test-list '(20 30))
+  "cdr-lens: PutPut law")
+
+;; All laws
+(check-true
+  (verify-lens-laws cdr-lens test-list '(10 10) '(20 30))
+  "cdr-lens: All laws hold")
+#+end_src
+
+* Additional Lenses
+
+** head-lens and tail-lens (Clearer Names)
+
+#+begin_src racket
+#lang racket
+
+;; Aliases with clearer names
+(define head-lens car-lens)
+(define tail-lens cdr-lens)
+
+;; Usage
+(view head-lens '(a b c))      ; => 'a
+(view tail-lens '(a b c))      ; => '(b c)
+#+end_src
+
+** first-lens and rest-lens
+
+#+begin_src racket
+#lang racket
+
+(define first-lens car-lens)
+(define rest-lens cdr-lens)
+
+;; Compose for second
+(define second-lens
+  (compose-lens rest-lens first-lens))
+#+end_src
+
+** cons-lens (Pair Lenses)
+
+#+begin_src racket
+#lang racket
+
+(define fst-lens
+  "Lens for first of pair."
+  car-lens)
+
+(define snd-lens
+  "Lens for second of pair."
+  (lens
+    cdr
+    (λ (pair new-snd)
+      (cons (car pair) new-snd))))
+
+;; Usage with pairs
+(define pair (cons 10 20))
+
+(view fst-lens pair)         ; => 10
+(view snd-lens pair)         ; => 20
+
+(set fst-lens pair 100)      ; => (100 . 20)
+(set snd-lens pair 200)      ; => (10 . 200)
+#+end_src
+
+* Advanced List Patterns
+
+** at-lens (Association List)
+
+#+begin_src racket
+#lang racket
+
+(define (at-lens key)
+  "Lens for association list value at key."
+  (lens
+    ; Getter
+    (λ (alist)
+      (cdr (assoc key alist)))
+    ; Setter
+    (λ (alist new-value)
+      (define (update lst)
+        (cond
+          [(null? lst) (list (cons key new-value))]
+          [(equal? (caar lst) key)
+           (cons (cons key new-value) (cdr lst))]
+          [else (cons (car lst) (update (cdr lst)))]))
+      (update alist))))
+
+;; Usage
+(define alist '((a . 1) (b . 2) (c . 3)))
+
+(view (at-lens 'b) alist)           ; => 2
+(set (at-lens 'b) alist 20)         ; => '((a . 1) (b . 20) (c . 3))
+(set (at-lens 'd) alist 4)          ; => '((a . 1) (b . 2) (c . 3) (d . 4))
+#+end_src
+
+** filtered-lens (List Elements Matching Predicate)
+
+#+begin_src racket
+#lang racket
+
+(define (filtered-lens pred?)
+  "Traversal over list elements matching predicate."
+  (λ (fn)
+    (λ (lst)
+      (for/list ([item lst])
+        (if (pred? item)
+            (fn item)
+            item)))))
+
+;; Usage
+(define scores '(55 85 65 90 70))
+
+(over-traversal
+  (filtered-lens (λ (s) (< s 70)))
+  scores
+  (λ (s) (+ s 10)))
+;; => '(65 85 75 90 80)
+#+end_src
+
+* Lens Law Violations (What Not to Do)
+
+** Bad Lens 1: Violates GetPut
+
+#+begin_src racket
+#lang racket
+
+;; BAD: Adds extra behavior to setter
+(define bad-increment-lens
+  (lens
+    car
+    (λ (lst new-val)
+      (cons (add1 new-val) (cdr lst)))))  ; Increments!
+
+;; Test
+(define lst '(1 2 3))
+
+;; GetPut fails!
+(set bad-increment-lens lst (view bad-increment-lens lst))
+;; => '(2 2 3)  ; NOT equal to original '(1 2 3)
+#+end_src
+
+** Bad Lens 2: Violates PutGet
+
+#+begin_src racket
+#lang racket
+
+;; BAD: Getter ignores what was set
+(define bad-constant-lens
+  (lens
+    (λ (lst) 42)                    ; Always returns 42
+    (λ (lst new-val) (cons new-val (cdr lst)))))
+
+;; Test
+(view bad-constant-lens (set bad-constant-lens '(1 2 3) 10))
+;; => 42  ; NOT 10!
+#+end_src
+
+** Bad Lens 3: Violates PutPut
+
+#+begin_src racket
+#lang racket
+
+;; BAD: Setter accumulates instead of replacing
+(define bad-accumulating-lens
+  (lens
+    car
+    (λ (lst new-val)
+      (cons (+ (car lst) new-val) (cdr lst)))))  ; Adds!
+
+;; Test
+(set bad-accumulating-lens
+  (set bad-accumulating-lens '(1 2 3) 10)
+  20)
+;; => '(31 2 3)  ; NOT '(20 2 3)
+#+end_src
+
+* Property-Based Testing
+
+#+begin_src racket
+#lang racket
+
+(require rackunit
+         rackunit/quickcheck)
+
+(define (lens-laws-property lens)
+  "QuickCheck-style property for lens laws."
+  (property
+    ([target arbitrary-list]
+     [value1 arbitrary-value]
+     [value2 arbitrary-value])
+
+    ;; Law 1: GetPut
+    (check-equal?
+      (set lens target (view lens target))
+      target)
+
+    ;; Law 2: PutGet
+    (check-equal?
+      (view lens (set lens target value1))
+      value1)
+
+    ;; Law 3: PutPut
+    (check-equal?
+      (set lens (set lens target value1) value2)
+      (set lens target value2))))
+
+;; Run 100 random tests
+(quickcheck
+  (lens-laws-property car-lens)
+  #:tests 100)
+#+end_src
+
+* Isomorphisms (Bidirectional Transformations)
+
+An isomorphism is a lens that goes both ways:
+
+#+begin_src racket
+#lang racket
+
+(struct iso (to from) #:transparent)
+
+(define (iso->lens i)
+  "Convert isomorphism to lens."
+  (lens
+    (iso-to i)
+    (λ (s b) ((iso-from i) b))))
+
+;; Example: Celsius ↔ Fahrenheit
+(define celsius-fahrenheit-iso
+  (iso
+    ; to: C → F
+    (λ (c) (+ (* c 9/5) 32))
+    ; from: F → C
+    (λ (f) (* (- f 32) 5/9))))
+
+(define temp-lens (iso->lens celsius-fahrenheit-iso))
+
+;; Usage
+(view temp-lens 0)        ; => 32 (0°C = 32°F)
+(set temp-lens 0 212)     ; => 100 (212°F = 100°C)
+#+end_src
+
+* Profunctor Lenses (Advanced)
+
+#+begin_src racket
+#lang racket
+
+;; Van Laarhoven lens encoding
+(define (van-laarhoven-lens getter setter)
+  "Lens as profunctor."
+  (λ (fn)
+    (λ (s)
+      (setter s (fn (getter s))))))
+
+;; Converts to our simpler encoding
+(define (vl->lens vl-lens getter setter)
+  (lens getter setter))
+#+end_src
+
+* Resources
+
+** Papers
+- [[https://www.twanvl.nl/blog/haskell/cps-functional-references][CPS-based Functional References]]
+- [[https://arxiv.org/abs/1103.2841][Lenses, Folds, and Traversals]]
+- [[https://www.cs.ox.ac.uk/jeremy.gibbons/publications/poptics.pdf][Profunctor Optics]]
+
+** Books
+- [[https://leanpub.com/lenses][Lenses for the Mere Mortal]]
+
+** Related
+- [[file:../041-deep-immutable-updates/][041: Deep Immutable Updates]]
+- [[file:../043-lens-based-updates/][043: Lens-Based Updates]]
+
+* Exercises
+
+** Exercise 1: Implement Lens Laws Checker
+Write a function that tests all three laws for any lens.
+
+** Exercise 2: Nested List Lens
+Create a lens for deeply nested lists: `(nth-lens 2 (nth-lens 1 (nth-lens 0)))`
+
+** Exercise 3: Tree Lens
+Implement lenses for binary tree navigation (left, right, value).
+
+** Exercise 4: Prism
+Implement a prism (optional lens) for Maybe/Option types.
+
+* Key Takeaways
+
+1. *Lens laws ensure correctness*: GetPut, PutGet, PutPut
+2. *car-lens/cdr-lens*: Fundamental list lenses
+3. *Composition*: Build complex lenses from simple ones
+4. *Testing*: Property-based testing verifies laws
+5. *Bad lenses*: Violating laws leads to surprising behavior
+6. *Isomorphisms*: Bidirectional transformations
+7. *Well-behaved lenses*: Satisfy all three laws
