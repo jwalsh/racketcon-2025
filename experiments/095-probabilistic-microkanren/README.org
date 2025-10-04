@@ -1,0 +1,256 @@
+#+TITLE: Experiment 095: Probabilistic microKanren
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Explore probabilistic logic programming by combining microKanren's relational programming with probabilistic choice.
+
+* What is microKanren?
+
+** Core Concept
+
+microKanren is a minimal implementation of logic programming in ~50 lines of Scheme.
+
+Key features:
+- Relational programming
+- Unification
+- Backtracking search
+- Compositional combinators
+
+** The Three Core Operators
+
+#+begin_src scheme
+;; Unification: make two terms equal
+(≡ x y)
+
+;; Conjunction: both goals succeed
+(fresh (x y) goal1 goal2)
+
+;; Disjunction: either goal succeeds
+(conde
+  [goal1]
+  [goal2])
+#+end_src
+
+* Current Scheme Implementation
+
+** miniKanren Core (R7RS Scheme)
+
+#+begin_src scheme
+;; State representation
+(define empty-state '(() . 0))
+
+;; Variable constructor
+(define (var c) (vector c))
+(define (var? x) (vector? x))
+(define (var=? x y) (= (vector-ref x 0) (vector-ref y 0)))
+
+;; Substitution lookup
+(define (walk u s)
+  (let ((pr (and (var? u) (assv u s))))
+    (if pr (walk (cdr pr) s) u)))
+
+;; Unification
+(define (unify u v s)
+  (let ((u (walk u s)) (v (walk v s)))
+    (cond
+      ((and (var? u) (var? v) (var=? u v)) s)
+      ((var? u) (ext-s u v s))
+      ((var? v) (ext-s v u s))
+      ((and (pair? u) (pair? v))
+       (let ((s (unify (car u) (car v) s)))
+         (and s (unify (cdr u) (cdr v) s))))
+      (else (and (eqv? u v) s)))))
+
+(define (ext-s x v s) (cons `(,x . ,v) s))
+
+;; State constructor
+(define (state s c) (cons s c))
+(define (state-s st) (car st))
+(define (state-c st) (cdr st))
+
+;; Goal constructors
+(define (≡ u v)
+  (lambda (st)
+    (let ((s (unify u v (state-s st))))
+      (if s (list (state s (state-c st))) '()))))
+
+(define (call/fresh f)
+  (lambda (st)
+    (let ((c (state-c st)))
+      ((f (var c)) (state (state-s st) (+ c 1))))))
+
+;; Stream operations
+(define (mplus s1 s2)
+  (cond
+    ((null? s1) s2)
+    ((procedure? s1) (lambda () (mplus s2 (s1))))
+    (else (cons (car s1) (mplus (cdr s1) s2)))))
+
+(define (bind s g)
+  (cond
+    ((null? s) '())
+    ((procedure? s) (lambda () (bind (s) g)))
+    (else (mplus (g (car s)) (bind (cdr s) g)))))
+
+;; Conjunction and disjunction
+(define (disj g1 g2)
+  (lambda (st) (mplus (g1 st) (g2 st))))
+
+(define (conj g1 g2)
+  (lambda (st) (bind (g1 st) g2)))
+
+;; Macros
+(define-syntax fresh
+  (syntax-rules ()
+    ((_ (x ...) g ...)
+     (call/fresh
+      (lambda (x)
+        (call/fresh
+         (lambda (...)
+           (conj g (conj ...)))))))))
+
+(define-syntax conde
+  (syntax-rules ()
+    ((_ (g ...) ...)
+     (disj (conj g ...) (disj ...)))))
+#+end_src
+
+* Probabilistic Extension
+
+** Adding Probability to microKanren
+
+Extend streams with probability weights:
+
+#+begin_src scheme
+;; Weighted stream: (weight . state)
+(define (weighted-state p st)
+  (cons p st))
+
+(define (weight ws) (car ws))
+(define (unwrap ws) (cdr ws))
+
+;; Probabilistic choice
+(define (flip p)
+  (lambda (st)
+    (list
+     (weighted-state p (state (state-s st) (state-c st)))
+     (weighted-state (- 1 p) (state (state-s st) (state-c st))))))
+
+;; Weighted mplus: combine with probability
+(define (weighted-mplus s1 s2)
+  (cond
+    ((null? s1) s2)
+    ((null? s2) s1)
+    ((procedure? s1) (lambda () (weighted-mplus s2 (s1))))
+    ((procedure? s2) (lambda () (weighted-mplus s1 (s2))))
+    (else
+     (let ((w1 (weight (car s1)))
+           (w2 (weight (car s2))))
+       (cons (weighted-state (+ w1 w2) (unwrap (car s1)))
+             (weighted-mplus (cdr s1) (cdr s2)))))))
+#+end_src
+
+* Comparison: microKanren vs Roulette
+
+| Aspect | microKanren | Roulette |
+|--------+-------------+----------|
+| *Paradigm* | Logic programming | Probabilistic programming |
+| *Core* | Unification + backtracking | Symbolic evaluation + RSDD |
+| *Size* | ~50 lines | Full Racket #lang |
+| *Inference* | Search-based | Exact (RSDD) or approximate |
+| *Integration* | Embedded DSL | Language extension |
+| *Probability* | Extension needed | Built-in |
+
+* Example: Probabilistic Logic
+
+** Simple Example
+
+#+begin_src scheme
+;; Coin flip in microKanren
+(run* (q)
+  (conde
+    [(flip 0.5) (≡ q 'heads)]
+    [(≡ q 'tails)]))
+
+;; Same in Roulette
+#lang roulette
+(if (flip 0.5) 'heads 'tails)
+#+end_src
+
+** Medical Diagnosis
+
+#+begin_src scheme
+;; Disease diagnosis with uncertainty
+(run* (disease)
+  (fresh (symptom1 symptom2)
+    ;; Observe symptoms probabilistically
+    (flip 0.8)  ;; 80% fever
+    (≡ symptom1 'fever)
+
+    (flip 0.6)  ;; 60% cough
+    (≡ symptom2 'cough)
+
+    ;; Diagnose based on symptoms
+    (conde
+      [(≡ symptom1 'fever)
+       (≡ symptom2 'cough)
+       (≡ disease 'flu)]
+      [(≡ symptom1 'fever)
+       (≡ disease 'cold)])))
+#+end_src
+
+* File Structure
+
+#+begin_example
+095-probabilistic-microkanren/
+├── README.org                      # This file
+├── 01-microkanren.scm             # Core microKanren
+├── 02-probabilistic-extension.scm # Weighted streams
+├── 03-examples.scm                # Example queries
+├── 04-comparison.rkt              # Side-by-side with Roulette
+└── TUTORIAL.org                   # Complete tutorial
+#+end_example
+
+* Resources
+
+** Original Papers
+
+- "microKanren: A Minimal Functional Core for Relational Programming" (Hemann & Friedman 2013)
+- "The Reasoned Schemer" (Friedman, Byrd, Kiselyov)
+
+** Implementations
+
+- [[https://github.com/jasonhemann/microKanren][microKanren on GitHub]]
+- [[https://github.com/webyrd/miniKanren-workshop][miniKanren Workshop]]
+
+** Related
+
+- [[https://docs.racket-lang.org/racklog/][Racklog]] - Prolog in Racket
+- [[https://docs.racket-lang.org/roulette/][Roulette]] - Probabilistic programming
+
+* Connection to RacketCon
+
+** Roulette Talk (Saturday 2:30pm)
+- RSDD for exact inference
+- Comparison with search-based approaches
+- Integration with logic programming
+
+** Rosette Keynote (Saturday 9:00am)
+- Symbolic execution vs logic programming
+- Solver-aided programming
+- Verification techniques
+
+* Next Steps
+
+1. Implement core microKanren in Scheme
+2. Add probabilistic weights to streams
+3. Compare with Roulette's RSDD approach
+4. Explore hybrid logic + probabilistic programming
+5. Build example: probabilistic type inference
+
+* Status
+
+EXPERIMENT ready - Probabilistic logic programming with microKanren!

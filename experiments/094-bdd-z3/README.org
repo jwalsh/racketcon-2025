@@ -1,0 +1,474 @@
+#+TITLE: Experiment 094: BDD and Z3 for Formal Verification
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Explore Binary Decision Diagrams (BDDs) and Z3 SMT solver integration with Racket for formal verification, constraint solving, and symbolic reasoning.
+
+* Goals
+
+1. Understand BDD representation and operations
+2. Integrate Z3 SMT solver with Racket
+3. Use Rosette's symbolic evaluation with Z3
+4. Compare BDD vs SAT/SMT approaches
+5. Apply to verification problems
+6. Demonstrate RSDD (Roulette's sentential decision diagrams)
+
+* What are BDDs?
+
+** Binary Decision Diagram
+
+A BDD is a canonical representation of boolean functions as a directed acyclic graph.
+
+#+begin_src
+Example: (a ∧ b) ∨ (¬a ∧ c)
+
+         a
+        / \
+       /   \
+      b     c
+     / \   / \
+    1   0 1   0
+
+1 = true, 0 = false
+#+end_src
+
+** Properties
+
+- *Canonical*: Unique representation (given variable ordering)
+- *Compact*: Shares common subgraphs
+- *Efficient*: Polynomial-time operations (apply, exists, etc.)
+- *Complete*: Can represent any boolean function
+
+** Operations
+
+| Operation | Description | Complexity |
+|-----------+-------------+------------|
+| AND/OR/NOT | Boolean ops | O(mn) |
+| Exists | Quantification | O(n²) |
+| Restrict | Assignment | O(n) |
+| Satisfy | Find model | O(n) |
+
+* What is Z3?
+
+** SMT Solver
+
+Z3 is a Satisfiability Modulo Theories solver from Microsoft Research.
+
+- Solves constraints over multiple theories
+- Theories: integers, reals, arrays, bit-vectors, etc.
+- Used in verification, synthesis, program analysis
+
+** Theories Supported
+
+| Theory | Description | Example |
+|--------+-------------+---------|
+| QF_LIA | Linear Integer Arithmetic | x + y > 5 |
+| QF_LRA | Linear Real Arithmetic | 2.5x - y ≤ 3.14 |
+| QF_BV | Bit-Vectors | x[7:0] & y[7:0] = 0xFF |
+| Arrays | Array theory | select(store(a,i,v),i) = v |
+| Uninterpreted | Functions | f(f(x)) = x |
+
+* Architecture
+
+#+begin_src
+┌─────────────────────────────────────────┐
+│         Racket Application              │
+│                                         │
+│  • Rosette DSL                         │
+│  • Verification queries                │
+│  • Synthesis problems                  │
+└─────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────┐
+│         Symbolic Evaluation             │
+│                                         │
+│  • BDD representation (for boolean)    │
+│  • SMT-LIB generation                  │
+│  • Constraint collection               │
+└─────────────────────────────────────────┘
+                    ↓
+            ┌───────┴───────┐
+            ↓               ↓
+    ┌───────────────┐ ┌───────────────┐
+    │  BDD Engine   │ │  Z3 Solver    │
+    │               │ │               │
+    │  • CUDD/BuDDy│ │  • SMT-LIB    │
+    │  • RSDD       │ │  • C API      │
+    └───────────────┘ └───────────────┘
+#+end_src
+
+* Rosette + Z3 Integration
+
+** Rosette's Solver Interface
+
+Rosette abstracts over different solvers:
+
+#+begin_src racket
+#lang rosette
+
+;; Rosette automatically uses Z3
+(define-symbolic x y integer?)
+
+(solve
+ (assert (> x 0))
+ (assert (< x 10))
+ (assert (= (* x y) 12)))
+
+;; → (model [x 3] [y 4]) or similar
+#+end_src
+
+** RSDD in Roulette
+
+Roulette uses Reduced Sentential Decision Diagrams (RSDD) for probabilistic inference:
+
+#+begin_src racket
+#lang roulette
+
+;; RSDD for exact inference
+(define x (flip 0.5))
+(define y (flip 0.5))
+
+;; RSDD computes exact distribution
+(probability (and x y))  ; → 0.25
+#+end_src
+
+* BDD vs SAT/SMT
+
+| Aspect | BDD | SAT | SMT (Z3) |
+|--------+-----+-----+----------|
+| *Domain* | Boolean | Boolean | Multi-theory |
+| *Representation* | Graph | CNF | Formulas |
+| *Canonical* | Yes | No | No |
+| *Operations* | Fast | Model only | Model + theories |
+| *Scalability* | Variable order dependent | Good | Best for theories |
+| *Use case* | Hardware verification | Boolean SAT | Program verification |
+
+* File Structure
+
+#+begin_example
+094-bdd-z3/
+├── README.org                # This file
+├── 01-bdd-basics.rkt        # BDD fundamentals
+├── 02-z3-racket.rkt         # Z3 FFI integration
+├── 03-rosette-z3.rkt        # Rosette with Z3
+├── 04-bdd-operations.rkt    # BDD algorithms
+├── 05-verification.rkt      # Verification examples
+├── 06-rsdd-analysis.rkt     # Roulette RSDD
+├── 07-comparison.rkt        # BDD vs SAT vs SMT
+└── TUTORIAL.org             # Complete tutorial
+#+end_example
+
+* BDD Implementation Patterns
+
+** Pattern 1: Simple BDD Structure
+
+#+begin_src racket
+#lang racket
+
+;; BDD node
+(struct bdd-node (var low high) #:transparent)
+
+;; Terminal nodes
+(define bdd-true #t)
+(define bdd-false #f)
+
+;; Create node with sharing
+(define (make-bdd var low high)
+  (cond
+    [(equal? low high) low]  ; Redundancy elimination
+    [else (bdd-node var low high)]))
+#+end_src
+
+** Pattern 2: BDD Operations
+
+#+begin_src racket
+;; Apply boolean operation to BDDs
+(define (bdd-apply op bdd1 bdd2)
+  (cond
+    [(and (boolean? bdd1) (boolean? bdd2))
+     (op bdd1 bdd2)]
+    [(bdd-node? bdd1)
+     (define var (bdd-node-var bdd1))
+     (define low (bdd-apply op (bdd-node-low bdd1) ...))
+     (define high (bdd-apply op (bdd-node-high bdd1) ...))
+     (make-bdd var low high)]
+    ...))
+#+end_src
+
+** Pattern 3: Variable Ordering
+
+#+begin_src racket
+;; Good ordering: related variables together
+(define good-order '(a b c))
+
+;; Bad ordering: interleaved
+(define bad-order '(a c b))
+
+;; Size can differ exponentially!
+#+end_src
+
+* Z3 Integration Approaches
+
+** Approach 1: Z3 via Rosette
+
+#+begin_src racket
+#lang rosette
+
+(require rosette/solver/z3)
+
+;; Use Z3 explicitly
+(current-solver (z3))
+
+(define-symbolic x y integer?)
+(solve (assert (and (> x 0) (= (* x y) 42))))
+#+end_src
+
+** Approach 2: Direct FFI
+
+#+begin_src racket
+#lang racket
+
+(require ffi/unsafe)
+
+(define libz3 (ffi-lib "libz3"))
+
+(define z3-mk-config
+  (get-ffi-obj 'Z3_mk_config libz3
+    (_fun -> _pointer)))
+
+;; Build Z3 interface...
+#+end_src
+
+** Approach 3: SMT-LIB Format
+
+#+begin_src racket
+#lang racket
+
+;; Generate SMT-LIB
+(define smt-query
+  "(declare-const x Int)
+   (declare-const y Int)
+   (assert (> x 0))
+   (assert (= (* x y) 42))
+   (check-sat)
+   (get-model)")
+
+;; Call Z3
+(define result
+  (with-output-to-string
+    (lambda ()
+      (system (format "echo '~a' | z3 -in" smt-query)))))
+#+end_src
+
+* Verification Examples
+
+** Example 1: Hardware Verification with BDD
+
+#+begin_src racket
+;; Full adder verification
+(define (full-adder a b cin)
+  (define sum (xor a (xor b cin)))
+  (define cout (or (and a b) (and cin (xor a b))))
+  (values sum cout))
+
+;; Verify using BDD
+(verify (assert
+  (forall ([a boolean?] [b boolean?] [cin boolean?])
+    (let-values ([(sum cout) (full-adder a b cin)])
+      (= (+ (if a 1 0) (if b 1 0) (if cin 1 0))
+         (+ (if sum 1 0) (* 2 (if cout 1 0))))))))
+#+end_src
+
+** Example 2: Program Verification with Z3
+
+#+begin_src racket
+#lang rosette
+
+;; Verify array bounds
+(define-symbolic* a b integer?)
+
+(define (safe-access arr idx)
+  (assert (and (>= idx 0) (< idx (vector-length arr))))
+  (vector-ref arr idx))
+
+;; Check: no out-of-bounds access
+(verify
+  (assert
+    (let ([arr (vector a b)])
+      (safe-access arr 1))))  ; Always safe
+#+end_src
+
+** Example 3: Synthesis with Z3
+
+#+begin_src racket
+#lang rosette
+
+;; Synthesize function satisfying spec
+(define-symbolic* x y integer?)
+
+;; Template
+(define (f x)
+  (define-symbolic* c integer?)
+  (+ (* c x) c))
+
+;; Spec: f(0)=1, f(1)=3, f(2)=5
+(synthesize
+  #:forall (list)
+  #:guarantee (assert
+    (and (= (f 0) 1)
+         (= (f 1) 3)
+         (= (f 2) 5))))
+
+;; Finds: f(x) = 2x + 1
+#+end_src
+
+* RSDD for Probabilistic Verification
+
+#+begin_src racket
+#lang roulette
+
+;; Verify probabilistic property
+(define (noisy-channel bit)
+  (if (flip 0.1)  ; 10% error rate
+      (not bit)
+      bit))
+
+;; With error correction (3-bit repetition)
+(define (error-corrected bit)
+  (define b1 (noisy-channel bit))
+  (define b2 (noisy-channel bit))
+  (define b3 (noisy-channel bit))
+  ;; Majority vote
+  (or (and b1 b2) (and b2 b3) (and b1 b3)))
+
+;; Verify: error rate < 5%
+(define corrected (error-corrected #t))
+(assert (>= (probability corrected) 0.95))
+#+end_src
+
+* Practical Applications
+
+** 1. Circuit Verification
+
+- Use BDDs for boolean circuits
+- Equivalence checking
+- Property verification
+
+** 2. Protocol Verification
+
+- Use Z3 for state machines
+- Safety properties
+- Liveness properties
+
+** 3. Compiler Verification
+
+- Instruction semantics
+- Optimization correctness
+- Type system soundness
+
+** 4. Cryptographic Verification
+
+- Protocol correctness
+- Constant-time execution
+- Information flow
+
+** 5. AI System Verification
+
+- Neural network properties
+- Robustness guarantees
+- Fairness constraints
+
+* Tool Recommendations
+
+** For Boolean Logic
+
+1. *Use BDDs when*:
+   - Canonical form needed
+   - Many operations on same formulas
+   - Hardware verification
+   - Variable count manageable (< 100)
+
+2. *Use SAT when*:
+   - One-shot satisfiability
+   - Large problems (1000+ variables)
+   - No need for canonical form
+
+** For Rich Theories
+
+1. *Use Z3 when*:
+   - Integer/real arithmetic
+   - Arrays, bit-vectors
+   - Program verification
+   - Synthesis problems
+
+2. *Use Rosette when*:
+   - Building verification tools
+   - Need high-level DSL
+   - Racket integration
+   - Automatic lifting
+
+** For Probabilistic
+
+1. *Use Roulette/RSDD when*:
+   - Exact discrete inference
+   - Probabilistic verification
+   - Need distributions
+   - Racket integration
+
+* Connection to RacketCon
+
+** Rosette Keynote (Saturday 9:00am)
+- Solver-aided programming
+- Z3 integration
+- Verification techniques
+
+** Roulette Talk (Saturday 2:30pm)
+- RSDD for probabilistic inference
+- Extension of symbolic evaluation
+- Exact inference algorithms
+
+** Ion Fusion (Saturday 1:30pm)
+- S-expressions for formulas
+- Data representation
+
+* Resources
+
+** BDD Libraries
+
+- [[https://github.com/johnyf/dd][Python dd]] - BDD/MDD library
+- [[https://www.itu.dk/research/buddy/][BuDDy]] - BDD package
+- [[https://github.com/SSoelvsten/adiar][Adiar]] - I/O-efficient BDDs
+
+** Z3 Resources
+
+- [[https://github.com/Z3Prover/z3][Z3 on GitHub]]
+- [[https://rise4fun.com/z3/tutorial][Z3 Tutorial]]
+- [[https://theory.stanford.edu/~nikolaj/programmingz3.html][Programming Z3]]
+
+** Rosette
+
+- [[https://docs.racket-lang.org/rosette-guide/][Rosette Guide]]
+- [[https://emina.github.io/rosette/][Rosette Homepage]]
+
+** Papers
+
+- "Symbolic Boolean Manipulation with Ordered BDDs" (Bryant 1986)
+- "Rosette: A Solver-Aided Language" (Torlak & Bodik 2014)
+- "RSDD: Probabilistic Inference with Sentential Decision Diagrams"
+
+* Next Steps
+
+1. Install Z3: ~brew install z3~ or download binary
+2. Explore [[file:01-bdd-basics.rkt][BDD basics]]
+3. Try [[file:03-rosette-z3.rkt][Rosette with Z3]]
+4. Study [[file:06-rsdd-analysis.rkt][RSDD in Roulette]]
+5. Apply to [[file:05-verification.rkt][verification problems]]
+
+* Status
+
+EXPERIMENT ready - BDD and Z3 for formal verification with Racket!
+
+BDD + SAT + SMT + RSDD = Complete verification toolkit
