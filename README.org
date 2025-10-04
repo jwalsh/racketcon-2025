@@ -1,0 +1,135 @@
+#+TITLE: RacketCon 2025 - Experiments and Notes
+#+AUTHOR: Jason Walsh
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+This repository contains experiments, notes, and code examples related to [[https://con.racket-lang.org/][RacketCon 2025]] sessions.
+
+** Conference Details
+- *Dates*: October 4-5, 2025
+- *Location*: Boston, MA
+- *Website*: https://con.racket-lang.org/
+
+* Structure
+
+** Sessions
+- [[file:sessions.md][sessions.md]] - Markdown format session details
+- [[file:sessions.org][sessions.org]] - Org-mode format complete schedule
+
+** Experiments
+
+| # | Topic | Related Session |
+|---+-------+-----------------|
+| [[file:experiments/000-racket-setup/][000]] | Racket & Rosette Setup | Keynote: Cloudflare |
+| [[file:experiments/001-rosette-fundamentals/][001]] | Rosette Fundamentals | Keynote: Cloudflare |
+| [[file:experiments/002-formal-methods-overview/][002]] | Formal Methods Overview | Background |
+| [[file:experiments/003-rosette-vs-lean-tla/][003]] | Rosette vs Lean vs TLA+ | Comparison |
+| [[file:experiments/004-dns-tools-macos-freebsd/][004]] | DNS Tools (macOS/FreeBSD) | Keynote: Cloudflare |
+| [[file:experiments/005-cloudflare-dns-setup/][005]] | Cloudflare DNS Setup | Keynote: Cloudflare |
+| [[file:experiments/006-topaz-lang-exploration/][006]] | Topaz-lang Exploration | Keynote: Cloudflare |
+| [[file:experiments/007-compositional-oop/][007]] | Compositional OOP | Rideau: OO Prototypes |
+
+* Key Sessions
+
+** Keynote: Cloudflare DNS Verification
+- *Speakers*: James Larisch & Suleman Ahmad
+- *Time*: Saturday, 9:00am EDT
+- *Topic*: Using Racket and Rosette for DNS policy verification
+- *Key Technology*: topaz-lang DSL
+
+** Compositional Object Oriented Prototypes
+- *Speaker*: François-René Rideau (Faré)
+- *Time*: Saturday, 10:15am EDT
+- *Topic*: Reconstructing OO from first principles
+- *Key Insight*: OO = Modularity + Extensibility
+
+* Technologies Covered
+
+** Languages & Frameworks
+- [[https://racket-lang.org/][Racket]]
+- [[https://docs.racket-lang.org/rosette-guide/][Rosette]] (Solver-aided programming)
+- [[https://cons.io/][Gerbil Scheme]]
+
+** Formal Methods
+- SMT solving (Z3)
+- Symbolic execution
+- Program synthesis
+- Verification
+
+** DNS & Infrastructure
+- DNS at scale (Cloudflare)
+- Policy verification
+- Distributed systems
+
+* Getting Started
+
+** Prerequisites
+
+#+begin_src bash
+# Install Racket
+brew install --cask racket  # macOS
+
+# Install Rosette
+raco pkg install rosette
+
+# Verify installation
+racket --version
+#+end_src
+
+** Running Experiments
+
+Each experiment directory contains:
+- ~README.md~ or ~README.org~ - Documentation
+- ~*.rkt~ - Racket code examples
+- Additional resources
+
+#+begin_src bash
+# Example: Run Rosette fundamentals
+cd experiments/001-rosette-fundamentals
+racket symbolic-basics.rkt
+racket verify-properties.rkt
+#+end_src
+
+* Learning Path
+
+1. *Start*: [[file:experiments/000-racket-setup/][Racket Setup]] - Get environment configured
+2. *Foundations*: [[file:experiments/001-rosette-fundamentals/][Rosette Fundamentals]] - Learn symbolic execution
+3. *Context*: [[file:experiments/002-formal-methods-overview/][Formal Methods Overview]] - Understand the landscape
+4. *Application*: [[file:experiments/006-topaz-lang-exploration/][Topaz-lang]] - See real-world usage
+5. *Theory*: [[file:experiments/007-compositional-oop/][Compositional OOP]] - Explore language design
+
+* Resources
+
+** Official Documentation
+- [[https://docs.racket-lang.org/][Racket Documentation]]
+- [[https://docs.racket-lang.org/rosette-guide/][Rosette Guide]]
+- [[https://docs.racket-lang.org/guide/macros.html][Racket Macros]]
+
+** Papers
+- [[https://homes.cs.washington.edu/~emina/pubs/rosette.onward13.pdf][Growing Solver-Aided Languages with Rosette]]
+- [[https://www2.ccs.neu.edu/racket/pubs/][Racket Research Papers]]
+
+** Blog Posts
+- [[https://blog.cloudflare.com/topaz-policy-engine-design/][Topaz Policy Engine Design]]
+- [[https://blog.cloudflare.com/dns-architecture/][Cloudflare DNS Architecture]]
+
+** Community
+- [[https://racket.discourse.group/][Racket Discourse]]
+- [[https://racket.slack.com/][Racket Slack]]
+- [[irc://irc.libera.chat/#racket][#racket on Libera.Chat]]
+
+* Contributing
+
+This is a personal learning repository, but suggestions and discussions are welcome via issues.
+
+* License
+
+MIT License - See LICENSE file
+
+* Acknowledgments
+
+- RacketCon 2025 organizers and speakers
+- Racket and Rosette development teams
+- Cloudflare research team

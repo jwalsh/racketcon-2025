@@ -1,0 +1,147 @@
+#+TITLE: RacketCon 2025 Sessions
+#+AUTHOR: Jason Walsh
+#+DATE: October 4-5, 2025
+#+DESCRIPTION: Complete schedule for RacketCon 2025
+#+STARTUP: overview
+
+* Conference Information
+
+** Dates
+- Saturday, October 4, 2025
+- Sunday, October 5, 2025
+
+** Location
+Boston, MA
+
+** Links
+- [[https://con.racket-lang.org/][RacketCon 2025 Official Site]]
+- [[https://racket-lang.org/][Racket Language]]
+
+* Saturday, October 4th
+
+** 8:30am EDT - Doors Open
+Light breakfast served
+
+** 9:00am EDT - Keynote
+*** How Cloudflare Uses Racket and Rosette to Verify DNS Changes
+**** Speakers
+- James Larisch
+- Suleman Ahmad
+
+**** Abstract
+Since 2022, Cloudflare has used Racket and Rosette to prevent DNS-related bugs. Cloudflare engineers express desired DNS behavior as small programs called policies, written in a custom DSL called topaz-lang. Topaz-lang policies are executed in real-time on Cloudflare's global edge network in response to live DNS queries. But before deployment, all policies are checked for bugs using a verifier we wrote in Rosette, a solver-aided Racket #lang.
+
+In this talk, we describe our experience writing and using Racket in production at Cloudflare. We describe why managing DNS behavior at Cloudflare scale is so challenging, and how these challenges motivated topaz-lang and its parent system Topaz. We discuss why we chose Racket (and Rosette) and the types of bugs our Rosette verifier detects. Finally, we reflect on why making changes to our verifier remains daunting for many software engineers.
+
+**** Speaker Bios
+***** Suleman Ahmad
+Research Engineer at Cloudflare, working at the intersection of systems engineering and Internet security. Holds a Master's degree from the University of Wisconsin–Madison, where he focused on analyzing security and privacy challenges in large-scale Internet architectures and engineering scalable measurement platforms. Developed appreciation for functional programming and its practical application to verifiable distributed systems during graduate studies.
+
+***** James Larisch
+Systems/security researcher and programming language enthusiast. Developed appreciation for functional style and Racket during undergraduate degree at Northeastern University. Received PhD in Computer Science from Harvard University, where one project involved bringing Prolog to the Web Public Key Infrastructure. Currently Research Engineer at Cloudflare, working on Web PKI, distributed systems, and formal methods.
+
+**** Links
+- [[https://docs.racket-lang.org/rosette-guide/][Rosette Documentation]]
+- [[https://blog.cloudflare.com/][Cloudflare Blog]]
+- [[https://blog.cloudflare.com/topaz-policy-engine-design/][Topaz Policy Engine Design]]
+- [[https://research.cloudflare.com/][Cloudflare Research]]
+
+**** Related Experiments
+- [[file:experiments/000-racket-setup/][000: Racket Setup]]
+- [[file:experiments/001-rosette-fundamentals/][001: Rosette Fundamentals]]
+- [[file:experiments/006-topaz-lang-exploration/][006: Topaz-lang Exploration]]
+
+** 10:15am EDT
+*** Compositional Object Oriented Prototypes
+**** Speaker
+François-René Rideau (Faré)
+
+**** Abstract
+We reconstruct a theory of object-orientation from first principles, as modularity and extensibility together. Mixin inheritance then appears as a natural embodiment of these joined principles expressed in the lambda-calculus. Further OO concepts such as prototypes, classes, single or multiple inheritance, multiple dispatch, method combinations and more naturally follow. Interestingly, many misconceptions about OO can also be dispelled, and we find that the simplest and most natural context for OO is pure lazy dynamic functional programming, without classes, and even without objects(!). A Scheme and/or Racket prototype (ha!) of these ideas will be presented.
+
+**** Speaker Bio
+Not fitting in French Academia due to his penchant for dynamic languages, Faré learned how (not) to build software in Corporate America (ITA, Google, Bridgewater), and eventually became his own startup entrepreneur in the domain of secure blockchain architecture. Trained in Programming Language Semantics and Distributed Systems, Faré completed but never defended a thesis on Reflective Systems. Once author of versions 2 and 3 of the build system ASDF at the heart of all Common Lisp free software, he is now co-maintainer of Gerbil Scheme. Unsettled by online debates between OO vs FP back when he was a student at ENS.fr, he finally discovered twenty years later the essence of OO thanks to Jsonnet and Nix, and, trying to share his insight and digging into old bibliography, became despite himself an expert on Object-Orientation.
+
+**** Links
+- [[https://cons.io/][Gerbil Scheme]]
+- [[https://common-lisp.net/project/asdf/][ASDF Build System]]
+- [[https://fare.livejournal.com/][Faré's Blog]]
+
+**** Related Experiments
+- [[file:experiments/007-compositional-oop/][007: Compositional OOP]]
+
+** 10:45am EDT
+*** A Match-Like DSL for Deep Immutable Updates
+**** Speaker
+Mike Delmonaco
+
+**** Abstract
+Presents a DSL for immutable updates using pattern variables.
+
+** 1:30pm EDT
+*** Ion Fusion
+**** Speaker
+Todd Jonker
+
+**** Abstract
+Explores a customizable programming language unifying data semantics.
+
+** 2:00pm EDT
+*** 'It Works': More Adventures with Racket and Emacs
+**** Speaker
+Greg Hendershott
+
+**** Abstract
+Evolution of the Emacs "racket-mode" package.
+
+**** Links
+- [[https://github.com/greghendershott/racket-mode][racket-mode on GitHub]]
+
+** 2:30pm EDT
+*** Roulette for Racketeers
+**** Speaker
+Cameron Moy
+
+**** Abstract
+Discusses a new discrete probabilistic programming language.
+
+** 3:30pm EDT
+*** miniDusa: An Extensible Finite-Choice Logic Programming Language
+**** Speakers
+- Ari Prakash
+- Zachary Eisbach
+
+** 4:00pm EDT
+*** Browsing (and serving) the Slow Internet with Racket
+**** Speaker
+Jonathan Simpson
+
+** 4:30pm EDT
+*** PROG Rock: Listening to old Lisp code
+**** Speaker
+Asher Olsen
+
+** 6:00pm EDT - Evening Social
+*** Location
+Lord Hobo Brewery
+
+* Sunday, October 5th
+
+** 8:30am EDT - Doors Open
+
+* Notes                                                            :noexport:
+** TODO Extract full abstracts for remaining sessions
+** TODO Add speaker bios for Sunday sessions
+** TODO Create experiment directories for other sessions
+
+* Tags
+:PROPERTIES:
+:CUSTOM_ID: tags
+:END:
+
+- racket
+- racketcon
+- programming-languages
+- functional-programming
+- lisp
+- scheme

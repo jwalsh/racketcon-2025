@@ -1,0 +1,64 @@
+# Experiment 001: Rosette Fundamentals
+
+## Overview
+
+Deep dive into Rosette's core concepts: symbolic execution, verification, synthesis, and solving. Understanding these fundamentals is key to building DSLs with built-in verification like Cloudflare's topaz-lang.
+
+## Core Concepts
+
+### 1. Symbolic Values
+
+Rosette extends Racket with symbolic values that represent sets of concrete values.
+
+### 2. Verification
+
+Check if a program satisfies a specification for all possible inputs.
+
+### 3. Synthesis
+
+Automatically generate program fragments that satisfy given constraints.
+
+### 4. Solving
+
+Use SMT solvers to find concrete values that satisfy or violate assertions.
+
+## Examples
+
+### 1. Symbolic Execution (`symbolic-basics.rkt`)
+
+Explore symbolic values and assertions.
+
+### 2. Verification (`verify-properties.rkt`)
+
+Verify mathematical and program properties.
+
+### 3. Synthesis (`synthesize-functions.rkt`)
+
+Synthesize simple functions from specifications.
+
+### 4. Debugging with Angelic Execution (`debug-example.rkt`)
+
+Use Rosette to find and fix bugs.
+
+## Running the Examples
+
+```bash
+racket symbolic-basics.rkt
+racket verify-properties.rkt
+racket synthesize-functions.rkt
+racket debug-example.rkt
+```
+
+## Key Takeaways
+
+- Symbolic values represent all possible values of a type
+- `verify` checks if assertions hold for all symbolic inputs
+- `solve` finds concrete values that satisfy constraints
+- `synthesize` generates code that meets specifications
+- Rosette uses Z3 SMT solver under the hood
+
+## Resources
+
+- [Rosette Guide](https://docs.racket-lang.org/rosette-guide/)
+- [Rosette Tutorial](https://emina.github.io/rosette/)
+- [SMT-LIB Standard](https://smtlib.cs.uiowa.edu/)

@@ -1,0 +1,36 @@
+# Racket
+compiled/
+*.zo
+*.dep
+*.rkt~
+
+# Emacs
+*~
+\#*\#
+.#*
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Temp
+tmp/
+temp/
