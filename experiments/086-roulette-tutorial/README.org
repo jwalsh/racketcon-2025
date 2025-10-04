@@ -1,0 +1,44 @@
+#+TITLE: Experiment 086: Roulette - Inference-Aided Programming
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+
+* Overview
+
+Explore Roulette, an inference-aided programming language built on Rosette.
+
+Roulette provides first-class support for measurable values and uses specialized inference engines for probabilistic reasoning.
+
+* Goals
+
+1. Understand inference-aided programming
+2. Learn Roulette's measurable values
+3. Compare to Rosette's solver-aided approach
+4. Build probabilistic models
+
+* Related Sessions
+
+- *Saturday, 9:00am EDT*: James Larisch & Suleman Ahmad - Cloudflare DNS (Rosette)
+- Background: Probabilistic programming track
+
+* Resources
+
+- [[https://docs.racket-lang.org/roulette/index.html][Roulette Documentation]]
+- [[file:TUTORIAL.org][Hands-on Tutorial]]
+
+* File Structure
+
+#+begin_example
+086-roulette-tutorial/
+├── README.org          # This file
+└── TUTORIAL.org        # Numbered tutorial with tangle support
+#+end_example
+
+* Installation
+
+#+begin_src bash
+raco pkg install roulette
+#+end_src
+
+* Status
+
+Framework created - awaiting detailed API exploration

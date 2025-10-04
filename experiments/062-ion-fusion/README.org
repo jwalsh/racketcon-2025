@@ -1,0 +1,330 @@
+#+TITLE: Experiment 062: Ion Fusion - Unifying Data and Code
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+
+* Overview
+
+Explore Ion Fusion, a customizable programming language that unifies persistent data and code semantics, built on Amazon Ion data format.
+
+* Session Details
+
+- *Time*: Saturday, 1:30pm EDT
+- *Speaker*: Todd Jonker
+- *Topic*: Ion Fusion's design, Scheme/Racket roots, sustainable software evolution
+
+* Speaker Bio
+
+Todd Jonker:
+- Self-taught coder, reeducated by PLT at Rice
+- Failed out of CMU into industry career
+- 20+ years at Amazon building foundation tech
+- Central package builder evolution
+- Mission: Developer happiness through transparent, coherent, sustainable tools
+
+* Goals
+
+1. Understand Amazon Ion data format
+2. Learn Ion Fusion language design
+3. Explore data/code unification
+4. Study Scheme/Racket influences
+5. Apply to data processing workflows
+
+* Key Concepts
+
+** Amazon Ion
+
+- Rich data format
+- Backbone of Amazon retail systems
+- Used in consumer products
+- Self-describing, schemaless
+- Type annotations
+
+** Ion Fusion
+
+- Programming language oriented around Ion
+- Unifies data semantics and code semantics
+- In production since 2013
+- Powers:
+  - Internal analytics
+  - Data processing systems
+  - Workflow systems
+
+** Design Goals
+
+- Transparent
+- Coherent
+- Sustainable software evolution
+- Developer happiness
+
+* File Structure
+
+#+begin_example
+062-ion-fusion/
+├── README.org                    # This file
+├── 01-ion-format.org            # Amazon Ion data format
+├── 02-ion-examples.rkt          # Ion data examples
+├── 03-fusion-concepts.org       # Ion Fusion language concepts
+├── 04-data-code-unification.org # Unifying data and code
+├── 05-scheme-influence.org      # Scheme/Racket roots
+├── 06-workflow-patterns.org     # Workflow system patterns
+└── notes.org                     # Session notes
+#+end_example
+
+* Amazon Ion Primer
+
+** What is Ion?
+
+From Amazon's perspective:
+- Self-describing data format
+- Superset of JSON
+- Binary and text representations
+- Rich type system
+- Annotations
+
+** Ion vs JSON
+
+#+begin_src ion
+// JSON-like
+{name: "Alice", age: 30}
+
+// Ion with type annotations
+{
+  name: "Alice",
+  age: 30,
+  email: user::"alice@example.com",  // Annotated string
+  created: 2025-10-04T12:00:00Z      // Timestamp type
+}
+#+end_src
+
+** Ion Type System
+
+- Null
+- Boolean
+- Integer (arbitrary precision)
+- Decimal (arbitrary precision)
+- Float
+- Timestamp
+- String
+- Symbol
+- Blob/Clob
+- List
+- Struct
+
+* Ion Fusion Concepts
+
+** Data/Code Unification
+
+The central thesis: persistent data and code should share semantics.
+
+#+begin_example
+Traditional:
+  Data: JSON/XML/Protobuf (separate from code)
+  Code: Python/Java/etc (transforms data)
+
+Ion Fusion:
+  Data: Ion structures (with semantics)
+  Code: Ion transformations (unified with data)
+#+end_example
+
+** Customizable Language
+
+- Not one-size-fits-all
+- Adapted to Amazon's needs
+- Evolved over 12+ years (2013-2025)
+- Domain-specific customizations
+
+** Production Use Cases
+
+1. *Analytics*: Data queries and transformations
+2. *Data Processing*: ETL pipelines
+3. *Workflows*: State machines and orchestration
+
+* Scheme/Racket Influence
+
+** PLT Scheme Background
+
+Todd's education at Rice (PLT):
+- Functional programming foundations
+- Macro systems
+- Language-oriented programming
+- First-class everything
+
+** Racket Connections
+
+Likely influences on Ion Fusion:
+- ~#lang~ paradigm (customizable languages)
+- S-expression-like data representation
+- Homoiconicity (data is code, code is data)
+- Macros for domain-specific patterns
+
+** Language Evolution
+
+Sustainable evolution through:
+- Clear semantics
+- Composable abstractions
+- Backward compatibility considerations
+- Incremental migration paths
+
+* Questions for Session
+
+1. How does Ion Fusion handle schema evolution at Amazon scale?
+2. What are the macro/metaprogramming capabilities?
+3. How does Ion Fusion compare to ~#lang~ Racket?
+4. What were the biggest challenges in unifying data/code semantics?
+5. How do teams adopt Ion Fusion? Training? Migration?
+6. What's the relationship to other Amazon languages (Topaz, etc.)?
+7. Type system: Static? Dynamic? Gradual?
+8. Performance characteristics vs traditional approaches?
+
+* Related RacketCon Topics
+
+** Language Design
+- ~#lang~ paradigm (Rhombus, etc.)
+- Domain-specific languages
+- Scheme heritage
+
+** Data Formats
+- Ion as inspiration for Racket data formats
+- Schemaless vs typed data
+
+** Production Systems
+- Large-scale evolution
+- Developer experience
+- Sustainable software
+
+* Practical Exploration
+
+** Learning Ion Format
+
+#+begin_src bash
+# Install Ion libraries (if available)
+raco pkg install ion-data  # (hypothetical)
+
+# Or explore Amazon Ion specification
+# https://amazon-ion.github.io/ion-docs/
+#+end_src
+
+** Simulating Ion in Racket
+
+#+begin_src racket
+#lang racket
+
+;; Ion-like data structures in Racket
+
+(struct ion-value (type data annotations) #:transparent)
+
+(define (ion-string str [annotations '()])
+  (ion-value 'string str annotations))
+
+(define (ion-timestamp ts)
+  (ion-value 'timestamp ts '()))
+
+(define (ion-struct fields [annotations '()])
+  (ion-value 'struct fields annotations))
+
+;; Example
+(ion-struct
+  (hash 'name (ion-string "Alice")
+        'email (ion-string "alice@example.com" '(user))
+        'created (ion-timestamp "2025-10-04T12:00:00Z")))
+#+end_src
+
+* Connections to Other Experiments
+
+- [[file:../041-lenses-from-scratch/README.org][Experiment 041-048: Lenses/Optics]] - Data access patterns
+- [[file:../061-data-formats/README.org][Experiment 061: Data Formats]] - Format comparison
+- [[file:../144-template-dsl/README.org][Experiment 144: Template DSL]] - Language customization
+- [[file:../999-rhea-framework/README.org][Experiment 999: RHEA]] - Workflow patterns
+
+* Resources
+
+** Amazon Ion
+- [[https://amazon-ion.github.io/ion-docs/][Ion Documentation]]
+- [[https://github.com/amazon-ion][Ion GitHub Organization]]
+
+** Related Papers
+- Ion specification
+- Data format evolution papers
+- Amazon architecture publications
+
+** Racket Connections
+- ~#lang~ documentation
+- Language-oriented programming in Racket
+- Scheme heritage papers
+
+* Pre-Session Preparation
+
+1. Read Ion specification basics
+2. Review ~#lang~ Racket paradigm
+3. Understand S-expression data/code duality
+4. Prepare questions about:
+   - Production deployment
+   - Developer experience
+   - Migration strategies
+   - Performance trade-offs
+
+* Post-Session Actions
+
+1. Document key insights in [[file:notes.org][notes.org]]
+2. Create Ion data format examples
+3. Prototype Ion Fusion concepts in Racket
+4. Explore data/code unification patterns
+5. Compare to RHEA framework workflow capabilities
+
+* RHEA Framework Integration
+
+Hypothesis: Ion Fusion patterns apply to RHEA workflows
+
+#+begin_src racket
+(define-hypothesis ion-fusion-workflows
+  [#:description
+   #<<DESC
+Can Ion Fusion's data/code unification improve RHEA workflow systems?
+
+Background:
+- RHEA needs workflow orchestration
+- Ion Fusion solves this for Amazon
+- Unified data/code semantics reduce impedance mismatch
+DESC
+   ]
+  [#:assumes
+   #<<ASSUMES
+1. RHEA workflows can be expressed as data
+2. Ion-like formats work in Racket ecosystem
+3. Unified semantics improve maintainability
+ASSUMES
+   ]
+  [#:predicts
+   #<<PREDICTS
+1. Workflow definitions become more declarative
+2. Easier to version and evolve workflows
+3. Reduced code/data translation overhead
+PREDICTS
+   ])
+#+end_src
+
+* Expected Insights
+
+** Technical
+- Ion data format advantages
+- Unification implementation strategies
+- Production deployment patterns
+- Performance characteristics
+
+** Organizational
+- Developer adoption strategies
+- Training approaches
+- Migration from legacy systems
+- Long-term maintenance
+
+** Philosophical
+- Transparent language design
+- Coherent abstractions
+- Sustainable evolution principles
+- Developer happiness metrics
+
+* Status
+
+EXPERIMENT prepared for session - Saturday, 1:30pm EDT
+
+Ready to learn from Todd Jonker's 20+ years of Amazon experience!

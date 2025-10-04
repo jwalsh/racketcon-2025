@@ -1,0 +1,235 @@
+#+TITLE: Experiment 142: Here Strings - Multi-Line String Literals
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+
+* Overview
+
+Explore Racket's here string syntax for embedding multi-line literals without escaping.
+
+Here strings use ~#<<DELIMITER ... DELIMITER~ syntax for literal text blocks.
+
+* Goals
+
+1. Master here string syntax
+2. Use for SQL queries, HTML, JSON
+3. Embed code in multiple languages
+4. Generate documentation and test data
+5. Integrate with RHEA framework
+
+* Motivation
+
+** Problem: String Escaping Hell
+
+#+begin_src racket
+;; Traditional approach - painful!
+(define query
+  (string-append
+    "SELECT users.name,\n"
+    "       users.email,\n"
+    "       COUNT(orders.id) as order_count\n"
+    "FROM users\n"
+    "LEFT JOIN orders ON users.id = orders.user_id\n"
+    "WHERE users.active = true\n"
+    "GROUP BY users.id"))
+#+end_src
+
+** Solution: Here Strings
+
+#+begin_src racket
+;; Clean and readable!
+(define query
+  #<<SQL
+SELECT users.name,
+       users.email,
+       COUNT(orders.id) as order_count
+FROM users
+LEFT JOIN orders ON users.id = orders.user_id
+WHERE users.active = true
+GROUP BY users.id
+SQL
+)
+#+end_src
+
+* File Structure
+
+#+begin_example
+142-here-strings/
+├── README.org                      # This file
+├── 01-basic-syntax.rkt            # Fundamental syntax
+├── 02-sql-queries.rkt             # Database queries
+├── 03-html-templates.rkt          # Web templates
+├── 04-json-config.rkt             # Configuration files
+├── 05-embedded-languages.rkt      # Python, Ruby, etc.
+├── 06-test-data.rkt               # Test fixtures
+├── 07-documentation.rkt           # Doc strings
+├── 08-rhea-integration.rkt        # RHEA framework
+├── 09-code-generation.rkt         # Template metaprogramming
+└── 10-practical-dsl.rkt           # Domain-specific language
+#+end_example
+
+* Key Concepts
+
+** Syntax
+
+#+begin_src racket
+#<<DELIMITER
+content here (completely literal)
+DELIMITER
+#+end_src
+
+** Delimiter Rules
+
+- Can be any identifier (EOF, SQL, HTML, DATA, etc.)
+- Opening: ~#<<DELIMITER~
+- Closing: ~DELIMITER~ alone on a line
+- Content between is completely literal
+
+** No Interpolation
+
+Here strings are literal - use ~format~ for variables:
+
+#+begin_src racket
+(define table "users")
+(define query
+  (format #<<SQL
+SELECT * FROM ~a
+WHERE active = true
+SQL
+          table))
+#+end_src
+
+* Use Cases
+
+** 1. SQL Queries
+
+Perfect for complex queries without escaping:
+
+#+begin_src racket
+#<<SQL
+WITH RECURSIVE parent_chain AS (
+  SELECT id, parent_id, name
+  FROM categories
+  WHERE id = ?
+  UNION ALL
+  SELECT c.id, c.parent_id, c.name
+  FROM categories c
+  JOIN parent_chain pc ON c.id = pc.parent_id
+)
+SELECT * FROM parent_chain
+SQL
+#+end_src
+
+** 2. HTML Templates
+
+#+begin_src racket
+#<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+  <title>RacketCon 2025</title>
+  <style>
+    body { font-family: sans-serif; }
+  </style>
+</head>
+<body>
+  <h1>Welcome</h1>
+</body>
+</html>
+HTML
+#+end_src
+
+** 3. Test Data
+
+#+begin_src racket
+#<<CSV
+name,age,city
+Alice,30,Boston
+Bob,25,Cambridge
+Carol,35,Somerville
+CSV
+#+end_src
+
+** 4. Embedded Languages
+
+#+begin_src racket
+#<<PYTHON
+def factorial(n):
+    return 1 if n == 0 else n * factorial(n - 1)
+
+print(factorial(5))
+PYTHON
+#+end_src
+
+** 5. Configuration Files
+
+#+begin_src racket
+#<<TOML
+[server]
+host = "localhost"
+port = 8080
+
+[database]
+connection = "postgres://localhost/mydb"
+TOML
+#+end_src
+
+* Running Examples
+
+#+begin_src bash
+# Run individual examples
+racket 01-basic-syntax.rkt
+racket 02-sql-queries.rkt
+racket 03-html-templates.rkt
+
+# Run all examples
+for f in *.rkt; do racket "$f"; done
+#+end_src
+
+* Integration with RHEA
+
+Here strings are perfect for RHEA framework documentation:
+
+#+begin_src racket
+(define-hypothesis dns-verification
+  [#:description "DNS policy verification with Rosette"]
+  [#:assumes
+   #<<ASSUMPTIONS
+1. DNS queries follow RFC 1035 format
+2. Policy rules are expressed in topaz-lang
+3. Solver timeout is sufficient for queries
+4. Network topology is static during verification
+ASSUMPTIONS
+   ]
+  [#:predicts
+   #<<PREDICTIONS
+1. All valid queries pass policy checks
+2. Invalid queries are rejected with error codes
+3. No false positives in verification
+4. Verification completes in < 1 second per query
+PREDICTIONS
+   ])
+#+end_src
+
+* Related Experiments
+
+- [[file:../143-at-expressions/README.org][Experiment 143: At-Expressions]] - Interpolation support
+- [[file:../144-template-dsl/README.org][Experiment 144: Template DSL]] - Combining techniques
+- [[file:../999-rhea-framework/README.org][Experiment 999: RHEA Framework]] - Scientific method
+
+* Resources
+
+- [[https://docs.racket-lang.org/reference/reader.html#%28part._parse-string%29][Racket Reference: Here Strings]]
+- [[file:../../docs/here-strings.org][Complete Here String Guide]]
+- [[file:../../docs/here-string-examples.rkt][Working Examples]]
+
+* Learning Path
+
+1. Start with [[file:01-basic-syntax.rkt][Basic Syntax]] - Understand fundamentals
+2. Try [[file:02-sql-queries.rkt][SQL Queries]] - Practical database use
+3. Explore [[file:03-html-templates.rkt][HTML Templates]] - Web development
+4. Study [[file:08-rhea-integration.rkt][RHEA Integration]] - Framework usage
+5. Build [[file:10-practical-dsl.rkt][Practical DSL]] - Create your own
+
+* Status
+
+EXPERIMENT ready for exploration

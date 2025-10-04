@@ -1,0 +1,147 @@
+#+TITLE: Experiment 049: Ocular-Patdown Complete Optics Guide
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+
+* Overview
+
+Complete walkthrough of the [[https://docs.racket-lang.org/ocular-patdown/optics-guide.html][ocular-patdown Optics Guide]].
+
+This experiment systematically covers all concepts from Mike Delmonaco's optics guide:
+- Introduction to optics
+- Lenses (single focus)
+- Traversals (multiple foci)
+- Isomorphisms (bidirectional conversions)
+- Composition and practical patterns
+
+* Goals
+
+1. Work through every example in the optics guide
+2. Understand the motivation for each optic type
+3. Compare to our hand-built implementations (experiments 041-046)
+4. Build practical examples using the library
+
+* Related Sessions
+
+- *Saturday, 1:30pm EDT*: Todd Jonker - Ion Fusion
+- *Saturday, 11:15am EDT*: Mike Delmonaco - Deep Immutable Updates
+
+* File Structure
+
+#+begin_example
+049-ocular-optics-guide/
+├── README.org                          # This file
+├── 01-introduction.rkt                 # What are optics?
+├── 02-lenses.rkt                       # Single focus optics
+├── 03-traversals.rkt                   # Multiple foci optics
+├── 04-isomorphisms.rkt                 # Bidirectional conversions
+├── 05-composition.rkt                  # Composing optics
+├── 06-practical-patterns.rkt           # Real-world usage
+└── notes.org                           # Learning notes
+#+end_example
+
+* Key Concepts from Guide
+
+** What are Optics?
+
+From the guide:
+#+begin_quote
+Optics are first-class references to parts of immutable data structures.
+They provide composable, type-safe ways to query and update nested data.
+#+end_quote
+
+** The Optics Hierarchy
+
+#+begin_src
+Fold ⊃ Traversal ⊃ Prism ⊃ Lens ⊃ Isomorphism
+#+end_src
+
+- *Isomorphism*: Bidirectional conversion (always succeeds)
+- *Lens*: Focus on exactly one subpart
+- *Prism*: Focus on zero or one subpart (for sum types)
+- *Traversal*: Focus on zero or more subparts
+- *Fold*: Read-only traversal
+
+** Core Operations
+
+All optics support (note the actual API differs from the guide):
+
+| Guide Name | Actual ocular-patdown | Signature |
+|------------+-----------------------+-----------|
+| ~lens-view~ | ~optic-get~ | ~(optic-get optic target)~ |
+| ~lens-set~ | ~optic-set~ | ~(optic-set optic target value)~ |
+| ~lens-transform~ | ~optic-modify~ | ~(optic-modify optic target function)~ |
+
+Additional operations:
+- ~optic-compose~: Compose optics (like ~lens-compose~ in guide)
+- ~struct-lens~: Create lens for struct field (NOT manual ~(lens getter setter)~)
+
+** Composition
+
+Optics compose with ~optic-compose~:
+
+#+begin_src racket
+;; Compose optics to build nested paths
+(optic-compose outer-optic inner-optic)
+
+;; Example: access nested field
+(define person-city-optic
+  (optic-compose (struct-lens person address)
+                 (struct-lens address city)))
+
+(optic-get person-city-optic alice)  ;; "Boston"
+#+end_src
+
+* Implementation Notes
+
+The guide emphasizes:
+
+1. *Type Safety*: Optics preserve types through operations
+2. *Composition*: Complex paths built from simple pieces
+3. *Immutability*: All operations return new values
+4. *Genericity*: Works with structs, lists, vectors, hashes
+
+* Comparison to Hand-Built Implementations
+
+| Concept | Our Impl (041-046) | ocular-patdown |
+|---------+--------------------+----------------|
+| Lens    | ~(lens getter setter)~ | ~(struct-lens struct-type field)~ |
+| Get     | ~(lens-view lens target)~ | ~(optic-get optic target)~ |
+| Set     | ~(lens-set lens target value)~ | ~(optic-set optic target value)~ |
+| Modify  | ~(lens-transform lens fn target)~ | ~(optic-modify optic target fn)~ |
+| Compose | Manual composition | ~optic-compose~ |
+| Laws    | Explicit verification | Built-in |
+
+* Running Examples
+
+#+begin_src bash
+# Install ocular-patdown
+raco pkg install ocular-patdown
+
+# Run examples in order
+racket 01-introduction.rkt
+racket 02-lenses.rkt
+racket 03-traversals.rkt
+racket 04-isomorphisms.rkt
+racket 05-composition.rkt
+racket 06-practical-patterns.rkt
+#+end_src
+
+* Learning Path
+
+1. Read [[file:01-introduction.rkt][Introduction]] - Understand the problem optics solve
+2. Study [[file:02-lenses.rkt][Lenses]] - Single focus operations
+3. Explore [[file:03-traversals.rkt][Traversals]] - Multiple foci operations
+4. Learn [[file:04-isomorphisms.rkt][Isomorphisms]] - Bidirectional conversions
+5. Master [[file:05-composition.rkt][Composition]] - Building complex paths
+6. Apply [[file:06-practical-patterns.rkt][Patterns]] - Real-world use cases
+
+* References
+
+- [[https://docs.racket-lang.org/ocular-patdown/optics-guide.html][Ocular-Patdown Optics Guide]]
+- [[https://docs.racket-lang.org/ocular-patdown/index.html][Ocular-Patdown Documentation]]
+- [[file:../045-functional-lenses/README.org][Experiment 045: Functional Lenses]]
+- [[file:../047-ocular-patdown/README.org][Experiment 047: Ocular-Patdown Library]]
+
+* Status
+
+EXPERIMENT in progress

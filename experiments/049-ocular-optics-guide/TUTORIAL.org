@@ -1,0 +1,499 @@
+#+TITLE: Ocular-Patdown Tutorial: Hands-On Optics Guide
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+PROPERTY: header-args:racket :tangle tutorial.rkt :mkdirp yes :comments org
+#+STARTUP: overview
+
+* Introduction
+
+This tutorial provides a hands-on walkthrough of the ~ocular-patdown~ library for Racket.
+
+All code blocks are tangled to ~tutorial.rkt~ for easy execution:
+
+#+begin_example
+C-c C-v t    # Tangle all code blocks to tutorial.rkt
+racket tutorial.rkt   # Run the complete tutorial
+#+end_example
+
+* Section 1: Setup and Basic Lenses
+
+** 1.1 Imports and Data Structures
+
+#+begin_src racket
+#lang racket
+
+(require racket/struct)
+(require ocular-patdown)
+
+;; Define basic data structures
+(struct point (x y) #:transparent)
+(struct rectangle (top-left bottom-right) #:transparent)
+(struct person (name age email) #:transparent)
+#+end_src
+
+** 1.2 Creating Your First Lens
+
+Lenses focus on exactly ONE field of a struct.
+
+#+begin_src racket
+;; Create lenses for point fields
+(define point-x-lens (struct-lens point x))
+(define point-y-lens (struct-lens point y))
+
+;; Sample data
+(define origin (point 0 0))
+(define p1 (point 3 4))
+
+(displayln "=== Section 1.2: First Lens ===")
+(displayln (format "Point: ~a" p1))
+(displayln (format "Get x: ~a" (optic-get point-x-lens p1)))
+(displayln (format "Get y: ~a" (optic-get point-y-lens p1)))
+#+end_src
+
+** 1.3 Setting Values with Lenses
+
+Use ~optic-set~ to create a new structure with an updated field.
+
+#+begin_src racket
+(displayln "\n=== Section 1.3: Setting Values ===")
+
+(define p2 (optic-set point-x-lens p1 10))
+(displayln (format "Original: ~a" p1))
+(displayln (format "Set x=10: ~a" p2))
+
+(define p3 (optic-set point-y-lens p2 20))
+(displayln (format "Set y=20: ~a" p3))
+#+end_src
+
+** 1.4 Modifying Values with Functions
+
+Use ~optic-modify~ to apply a function to the focused field.
+
+#+begin_src racket
+(displayln "\n=== Section 1.4: Modifying Values ===")
+
+(define p4 (optic-modify point-x-lens p1 (λ (x) (* x 2))))
+(displayln (format "Original: ~a" p1))
+(displayln (format "Double x: ~a" p4))
+
+(define p5 (optic-modify point-y-lens p1 add1))
+(displayln (format "Increment y: ~a" p5))
+#+end_src
+
+* Section 2: Composition
+
+** 2.1 Nested Structures
+
+#+begin_src racket
+(displayln "\n=== Section 2.1: Nested Structures ===")
+
+;; Create nested structure
+(define rect (rectangle (point 0 0) (point 10 10)))
+(displayln (format "Rectangle: ~a" rect))
+
+;; Create lenses for rectangle fields
+(define rect-tl-lens (struct-lens rectangle top-left))
+(define rect-br-lens (struct-lens rectangle bottom-right))
+#+end_src
+
+** 2.2 Composing Lenses
+
+Use ~optic-compose~ to create a path through nested structures.
+
+#+begin_src racket
+(displayln "\n=== Section 2.2: Composing Lenses ===")
+
+;; Compose: rectangle -> top-left -> x
+(define rect-tl-x-lens
+  (optic-compose rect-tl-lens point-x-lens))
+
+;; Compose: rectangle -> bottom-right -> y
+(define rect-br-y-lens
+  (optic-compose rect-br-lens point-y-lens))
+
+(displayln (format "Top-left x: ~a" (optic-get rect-tl-x-lens rect)))
+(displayln (format "Bottom-right y: ~a" (optic-get rect-br-y-lens rect)))
+
+;; Update nested field
+(define rect2 (optic-set rect-tl-x-lens rect 5))
+(displayln (format "Move top-left x to 5: ~a" rect2))
+#+end_src
+
+** 2.3 Multi-Level Composition
+
+#+begin_src racket
+(displayln "\n=== Section 2.3: Multi-Level Composition ===")
+
+(struct address (street city state zip) #:transparent)
+(struct contact (name address) #:transparent)
+
+(define alice
+  (contact "Alice"
+           (address "123 Main St" "Boston" "MA" "02101")))
+
+;; Build path: contact -> address -> city
+(define city-optic
+  (optic-compose (struct-lens contact address)
+                 (struct-lens address city)))
+
+(displayln (format "Contact: ~a" alice))
+(displayln (format "City: ~a" (optic-get city-optic alice)))
+(displayln (format "Move to Cambridge: ~a"
+                   (optic-set city-optic alice "Cambridge")))
+#+end_src
+
+* Section 3: Traversals
+
+** 3.1 List Traversals
+
+Traversals focus on ZERO OR MORE elements.
+
+#+begin_src racket
+(displayln "\n=== Section 3.1: List Traversals ===")
+
+(define numbers '(1 2 3 4 5))
+(displayln (format "Numbers: ~a" numbers))
+
+;; Modify all elements
+(define doubled (optic-modify list-traversal numbers (λ (x) (* x 2))))
+(displayln (format "Doubled: ~a" doubled))
+
+;; Set all elements to same value
+(define all-zeros (optic-set list-traversal numbers 0))
+(displayln (format "All zeros: ~a" all-zeros))
+#+end_src
+
+** 3.2 Vector Traversals
+
+#+begin_src racket
+(displayln "\n=== Section 3.2: Vector Traversals ===")
+
+(define vec (vector 10 20 30))
+(displayln (format "Vector: ~a" vec))
+
+(define incremented (optic-modify vector-traversal vec add1))
+(displayln (format "Incremented: ~a" incremented))
+#+end_src
+
+** 3.3 Hash Traversals
+
+#+begin_src racket
+(displayln "\n=== Section 3.3: Hash Traversals ===")
+
+(define scores (hash 'alice 85 'bob 92 'carol 78))
+(displayln (format "Scores: ~a" scores))
+
+;; Add 5 to all scores
+(define curved (optic-modify hash-values-traversal scores (λ (x) (+ x 5))))
+(displayln (format "Curved (+5): ~a" curved))
+#+end_src
+
+** 3.4 Filtered Traversals
+
+Focus only on elements matching a predicate.
+
+#+begin_src racket
+(displayln "\n=== Section 3.4: Filtered Traversals ===")
+
+(define mixed '(1 2 3 4 5 6 7 8 9 10))
+(displayln (format "Mixed: ~a" mixed))
+
+;; Double only even numbers
+(define even-doubled
+  (optic-modify (filtered-traversal even?)
+                mixed
+                (λ (x) (* x 2))))
+(displayln (format "Double evens: ~a" even-doubled))
+
+;; Zero out odd numbers
+(define odds-zero
+  (optic-set (filtered-traversal odd?) mixed 0))
+(displayln (format "Zero odds: ~a" odds-zero))
+#+end_src
+
+* Section 4: Combining Lenses and Traversals
+
+** 4.1 Traversing Nested Structures
+
+#+begin_src racket
+(displayln "\n=== Section 4.1: Traversing Nested Structures ===")
+
+(define people
+  (list (person "Alice" 30 "alice@example.com")
+        (person "Bob" 25 "bob@example.com")
+        (person "Carol" 35 "carol@example.com")))
+
+(displayln "People:")
+(for ([p people]) (displayln (format "  ~a" p)))
+
+;; Path: list -> each person -> age
+(define all-ages-optic
+  (optic-compose list-traversal
+                 (struct-lens person age)))
+
+;; Increment all ages
+(define older (optic-modify all-ages-optic people add1))
+(displayln "\nAfter birthday:")
+(for ([p older]) (displayln (format "  ~a" p)))
+#+end_src
+
+** 4.2 Multiple Compositions
+
+#+begin_src racket
+(displayln "\n=== Section 4.2: Multiple Compositions ===")
+
+(struct company (name employees) #:transparent)
+
+(define acme
+  (company "Acme Corp"
+           (list (person "Alice" 30 "alice@acme.com")
+                 (person "Bob" 25 "bob@acme.com"))))
+
+;; Path: company -> employees -> each -> email
+(define all-emails-optic
+  (optic-compose (struct-lens company employees)
+                 list-traversal
+                 (struct-lens person email)))
+
+(displayln (format "Company: ~a" (company-name acme)))
+
+;; Update all emails to new domain
+(define new-domain
+  (optic-modify all-emails-optic
+                acme
+                (λ (email)
+                  (string-append (first (string-split email "@"))
+                                 "@newdomain.com"))))
+
+(displayln "After domain change:")
+(for ([emp (company-employees new-domain)])
+  (displayln (format "  ~a: ~a" (person-name emp) (person-email emp))))
+#+end_src
+
+* Section 5: Isomorphisms
+
+** 5.1 String and List Conversion
+
+Isomorphisms provide lossless bidirectional conversions.
+
+#+begin_src racket
+(displayln "\n=== Section 5.1: String/List Isomorphism ===")
+
+(define string-chars-iso
+  (make-iso string->list list->string))
+
+(define text "hello")
+(displayln (format "Original: ~a" text))
+
+;; View through iso
+(define as-chars (optic-get string-chars-iso text))
+(displayln (format "As chars: ~a" as-chars))
+
+;; Modify through iso
+(define uppercased
+  (optic-modify string-chars-iso
+                text
+                (λ (chars) (map char-upcase chars))))
+(displayln (format "Uppercased: ~a" uppercased))
+#+end_src
+
+** 5.2 Custom Isomorphisms
+
+#+begin_src racket
+(displayln "\n=== Section 5.2: Custom Isomorphism ===")
+
+;; Celsius <-> Fahrenheit
+(define celsius-fahrenheit-iso
+  (make-iso (λ (c) (+ (* c 9/5) 32))
+            (λ (f) (* (- f 32) 5/9))))
+
+(define temp-c 20)
+(displayln (format "~a°C = ~a°F"
+                   temp-c
+                   (optic-get celsius-fahrenheit-iso temp-c)))
+
+;; Add 10°F in Fahrenheit space
+(define warmer
+  (optic-modify celsius-fahrenheit-iso
+                temp-c
+                (λ (f) (+ f 10))))
+(displayln (format "Add 10°F: ~a°C -> ~a°C" temp-c warmer))
+#+end_src
+
+** 5.3 Composing Isomorphisms
+
+#+begin_src racket
+(displayln "\n=== Section 5.3: Composing Isomorphisms ===")
+
+;; Symbol <-> String <-> List
+(define symbol-string-iso
+  (make-iso symbol->string string->symbol))
+
+(define symbol-chars-iso
+  (optic-compose symbol-string-iso string-chars-iso))
+
+(define sym 'hello)
+(displayln (format "Symbol: ~a" sym))
+(displayln (format "As chars: ~a" (optic-get symbol-chars-iso sym)))
+
+;; Reverse symbol
+(define reversed
+  (optic-modify symbol-chars-iso sym reverse))
+(displayln (format "Reversed: ~a" reversed))
+#+end_src
+
+* Section 6: Practical Examples
+
+** 6.1 Configuration Management
+
+#+begin_src racket
+(displayln "\n=== Section 6.1: Configuration Management ===")
+
+(struct db-config (host port) #:transparent)
+(struct app-config (name db) #:transparent)
+
+(define config
+  (app-config "myapp"
+              (db-config "localhost" 5432)))
+
+(define db-host-optic
+  (optic-compose (struct-lens app-config db)
+                 (struct-lens db-config host)))
+
+(define db-port-optic
+  (optic-compose (struct-lens app-config db)
+                 (struct-lens db-config port)))
+
+(displayln (format "Config: ~a" config))
+(displayln (format "DB host: ~a" (optic-get db-host-optic config)))
+
+;; Update for production
+(define prod-config
+  (optic-set db-port-optic
+             (optic-set db-host-optic config "prod.db.example.com")
+             5433))
+
+(displayln (format "Production: ~a" prod-config))
+#+end_src
+
+** 6.2 API Response Processing
+
+#+begin_src racket
+(displayln "\n=== Section 6.2: API Response Processing ===")
+
+(define api-response
+  (hash 'status "success"
+        'data (hash 'users (list (hash 'id 1 'name "Alice" 'role "admin")
+                                 (hash 'id 2 'name "Bob" 'role "user")
+                                 (hash 'id 3 'name "Carol" 'role "admin")))))
+
+;; Path: data -> users -> each -> name
+(define user-names-optic
+  (optic-compose (hash-ref-lens 'data)
+                 (hash-ref-lens 'users)
+                 list-traversal
+                 (hash-ref-lens 'name)))
+
+;; Uppercase all names
+(define sanitized
+  (optic-modify user-names-optic api-response string-upcase))
+
+(displayln "Original names:")
+(for ([user (hash-ref (hash-ref api-response 'data) 'users)])
+  (displayln (format "  ~a" (hash-ref user 'name))))
+
+(displayln "Uppercased names:")
+(for ([user (hash-ref (hash-ref sanitized 'data) 'users)])
+  (displayln (format "  ~a" (hash-ref user 'name))))
+#+end_src
+
+** 6.3 State Management Pattern
+
+#+begin_src racket
+(displayln "\n=== Section 6.3: State Management ===")
+
+(struct todo (id text completed) #:transparent)
+(struct app-state (todos filter) #:transparent)
+
+(define state
+  (app-state (list (todo 1 "Learn Racket" #t)
+                   (todo 2 "Learn Optics" #f)
+                   (todo 3 "Build App" #f))
+             'all))
+
+;; Toggle specific todo
+(define (toggle-todo-optic id)
+  (optic-compose (struct-lens app-state todos)
+                 (filtered-traversal (λ (t) (= (todo-id t) id)))
+                 (struct-lens todo completed)))
+
+(displayln "Initial todos:")
+(for ([t (app-state-todos state)])
+  (displayln (format "  [~a] ~a"
+                     (if (todo-completed t) "X" " ")
+                     (todo-text t))))
+
+;; Toggle todo 2
+(define toggled (optic-modify (toggle-todo-optic 2) state not))
+
+(displayln "\nAfter toggling todo 2:")
+(for ([t (app-state-todos toggled)])
+  (displayln (format "  [~a] ~a"
+                     (if (todo-completed t) "X" " ")
+                     (todo-text t))))
+#+end_src
+
+* Section 7: Summary
+
+** 7.1 Key Concepts Review
+
+#+begin_src racket
+(displayln "\n=== Section 7: Summary ===")
+(displayln "1. Lenses: Focus on exactly ONE field")
+(displayln "   - Create: (struct-lens struct-type field)")
+(displayln "   - Get: (optic-get lens target)")
+(displayln "   - Set: (optic-set lens target value)")
+(displayln "   - Modify: (optic-modify lens target function)")
+
+(displayln "\n2. Composition: Build paths through nested data")
+(displayln "   - (optic-compose outer inner)")
+
+(displayln "\n3. Traversals: Focus on ZERO OR MORE elements")
+(displayln "   - list-traversal, vector-traversal, hash-values-traversal")
+(displayln "   - (filtered-traversal predicate)")
+
+(displayln "\n4. Isomorphisms: Bidirectional conversions")
+(displayln "   - (make-iso to from)")
+
+(displayln "\n5. Lens + Traversal: Update collections of nested data")
+(displayln "   - (optic-compose list-traversal (struct-lens type field))")
+
+(displayln "\n=== Tutorial Complete! ===")
+#+end_src
+
+* Appendix: API Reference
+
+** Quick Reference Table
+
+| Operation | Function | Signature |
+|-----------+----------+-----------|
+| Get value | ~optic-get~ | ~(optic-get optic target)~ |
+| Set value | ~optic-set~ | ~(optic-set optic target value)~ |
+| Modify value | ~optic-modify~ | ~(optic-modify optic target function)~ |
+| Compose | ~optic-compose~ | ~(optic-compose outer inner ...)~ |
+| Struct lens | ~struct-lens~ | ~(struct-lens struct-type field)~ |
+| Make iso | ~make-iso~ | ~(make-iso to from)~ |
+
+** Built-in Traversals
+
+- ~list-traversal~ - All list elements
+- ~vector-traversal~ - All vector elements
+- ~hash-values-traversal~ - All hash values
+- ~(filtered-traversal pred?)~ - Elements matching predicate
+
+** Next Steps
+
+1. Read [[file:notes.org][notes.org]] for conceptual overview
+2. Check [[file:API-REFERENCE.org][API-REFERENCE.org]] for complete API
+3. Explore [[file:../047-ocular-patdown/README.org][experiment 047]] for advanced patterns
+4. Compare to [[file:../045-functional-lenses/README.org][experiment 045]] (hand-built lenses)

@@ -1,0 +1,363 @@
+#+TITLE: Racket Here Strings and At-Expressions
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+
+* Here Strings in Racket
+
+** Basic Here String Syntax
+
+Racket supports here strings using ~#<<DELIMITER~ ... ~DELIMITER~ syntax:
+
+#+begin_src racket
+#lang racket
+
+;; Basic here string
+(define greeting
+  #<<EOF
+Hello, World!
+This is a multi-line string.
+EOF
+)
+
+(displayln greeting)
+#+end_src
+
+** Multiple Here Strings
+
+#+begin_src racket
+#lang racket
+
+(define sql-query
+  #<<QUERY
+SELECT name, age, email
+FROM users
+WHERE age > 21
+ORDER BY name
+QUERY
+)
+
+(define html-template
+  #<<HTML
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Hello, Racket!</h1>
+  </body>
+</html>
+HTML
+)
+
+(displayln sql-query)
+(displayln html-template)
+#+end_src
+
+** Custom Delimiters
+
+Use any delimiter you want:
+
+#+begin_src racket
+#lang racket
+
+(define code-block
+  #<<CODE
+def hello():
+    print("Python in Racket!")
+CODE
+)
+
+(define json-data
+  #<<JSON
+{
+  "name": "Alice",
+  "age": 30,
+  "city": "Boston"
+}
+JSON
+)
+#+end_src
+
+* At-Expressions (@-expressions)
+
+** Overview
+
+Racket also supports at-expressions via ~#lang at-exp racket~:
+
+#+begin_src racket
+#lang at-exp racket
+
+;; At-expressions allow embedding text naturally
+(define message
+  @string-append{
+    Hello, @"world"!
+    This is easier to read.
+  })
+
+(displayln message)
+#+end_src
+
+** Scribble-Style Documentation
+
+#+begin_src racket
+#lang scribble/base
+
+@title{My Document}
+
+@section{Introduction}
+
+This is a paragraph with @bold{bold text} and @italic{italics}.
+
+Here's some code:
+@codeblock{
+  (define (factorial n)
+    (if (zero? n)
+        1
+        (* n (factorial (sub1 n)))))
+}
+#+end_src
+
+** At-Expressions for Templates
+
+#+begin_src racket
+#lang at-exp racket
+
+(require racket/string)
+
+(define (html-page title content)
+  @string-append{
+    <!DOCTYPE html>
+    <html>
+      <head><title>@|title|</title></head>
+      <body>
+        @|content|
+      </body>
+    </html>
+  })
+
+(displayln (html-page "My Page" "<h1>Hello!</h1>"))
+#+end_src
+
+* Comparison
+
+| Feature | Here Strings | At-Expressions |
+|---------+--------------+----------------|
+| Syntax | ~#<<DELIMITER~ | ~@function{...}~ |
+| Use case | Multi-line strings | Templates, docs |
+| Interpolation | No | Yes (~@&#x7c;var&#x7c;~) |
+| Language | Standard Racket | ~#lang at-exp racket~ |
+| Escaping | Literal | Racket expressions |
+
+* Practical Examples
+
+** Example 1: SQL Queries
+
+#+begin_src racket
+#lang racket
+
+(define (make-select-query table columns where)
+  (format #<<QUERY
+SELECT ~a
+FROM ~a
+WHERE ~a
+QUERY
+          (string-join columns ", ")
+          table
+          where))
+
+(displayln (make-select-query "users"
+                              '("name" "email" "age")
+                              "age > 21"))
+#+end_src
+
+** Example 2: HTML Generation with At-Exp
+
+#+begin_src racket
+#lang at-exp racket
+
+(define (page-template title body)
+  @string-append{
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>@|title|</title>
+      </head>
+      <body>
+        @|body|
+      </body>
+    </html>
+  })
+
+(define my-page
+  (page-template "RacketCon 2025"
+                 @string-append{
+                   <h1>Welcome to RacketCon!</h1>
+                   <p>October 4-5, 2025</p>
+                 }))
+
+(displayln my-page)
+#+end_src
+
+** Example 3: Configuration Files
+
+#+begin_src racket
+#lang racket
+
+(define config
+  #<<CONFIG
+[server]
+host = localhost
+port = 8080
+
+[database]
+connection = postgres://localhost/mydb
+pool_size = 10
+CONFIG
+)
+
+(displayln config)
+#+end_src
+
+** Example 4: Embedded Python/Ruby/etc
+
+#+begin_src racket
+#lang racket
+
+(define python-script
+  #<<PYTHON
+def factorial(n):
+    if n == 0:
+        return 1
+    return n * factorial(n - 1)
+
+print(factorial(5))
+PYTHON
+)
+
+;; Could execute with (system (format "python -c '~a'" python-script))
+#+end_src
+
+* Using in RHEA Framework
+
+Here strings are useful for embedding test data:
+
+#+begin_src racket
+#lang racket
+
+(require "rhea.rkt")
+
+(define-hypothesis dns-policy
+  [#:description "DNS policy verification"]
+  [#:assumes
+   #<<ASSUMPTIONS
+1. DNS queries are well-formed
+2. Policy rules are consistent
+3. Network is stable
+ASSUMPTIONS
+   ]
+  [#:predicts
+   #<<PREDICTIONS
+1. All queries resolve correctly
+2. No policy conflicts
+3. Response time < 100ms
+PREDICTIONS
+   ])
+#+end_src
+
+* Best Practices
+
+** When to Use Here Strings
+
+✅ Good for:
+- SQL queries
+- HTML/XML templates
+- Configuration files
+- Embedded scripts
+- Documentation
+- Test data
+
+❌ Avoid for:
+- Short strings (use regular strings)
+- Strings needing interpolation (use at-expressions or ~format~)
+
+** When to Use At-Expressions
+
+✅ Good for:
+- Documentation (Scribble)
+- HTML generation
+- Templates with interpolation
+- DSLs
+
+❌ Avoid for:
+- Simple string concatenation
+- When you need literal ~@~ characters
+
+* Installation for At-Expressions
+
+At-expressions are built-in, just use:
+
+#+begin_src racket
+#lang at-exp racket
+;; or
+#lang scribble/base
+#+end_src
+
+No additional packages needed!
+
+* Resources
+
+- [[https://docs.racket-lang.org/reference/reader.html#%28part._parse-string%29][Racket Reference: Here Strings]]
+- [[https://docs.racket-lang.org/scribble/reader.html][Scribble Reader Documentation]]
+- [[https://docs.racket-lang.org/at-exp-lib/][At-Expression Library]]
+
+* Complete Example
+
+#+begin_src racket
+#lang at-exp racket
+
+(require racket/format)
+
+;; Using here string for data
+(define test-data
+  #<<DATA
+Alice,30,Boston
+Bob,25,Cambridge
+Carol,35,Somerville
+DATA
+)
+
+;; Using at-expressions for HTML
+(define (person->html name age city)
+  @string-append{
+    <tr>
+      <td>@|name|</td>
+      <td>@|age|</td>
+      <td>@|city|</td>
+    </tr>
+  })
+
+(define (parse-csv line)
+  (string-split line ","))
+
+(define people
+  (map parse-csv (string-split test-data "\n")))
+
+(define html-table
+  @string-append{
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Age</th><th>City</th></tr>
+      </thead>
+      <tbody>
+        @|(string-join
+           (for/list ([p people])
+             (apply person->html p))
+           "\n")|
+      </tbody>
+    </table>
+  })
+
+(displayln html-table)
+#+end_src
+
+* Status
+
+Complete reference for Racket here strings and at-expressions

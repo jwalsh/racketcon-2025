@@ -1,0 +1,369 @@
+#+TITLE: Emacs Racket Mode Setup Guide
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+
+* Overview
+
+Complete guide to setting up Racket mode in Emacs for RacketCon 2025 development.
+
+* Prerequisites
+
+** 1. Racket Installation
+
+#+begin_src bash
+# macOS (Homebrew)
+brew install --cask racket
+
+# Or download from https://racket-lang.org/
+
+# Verify installation
+racket --version
+raco --version
+#+end_src
+
+** 2. Emacs Installation
+
+#+begin_src bash
+# macOS (Homebrew)
+brew install --cask emacs
+
+# Or use Emacs Plus for native compilation
+brew tap d12frosted/emacs-plus
+brew install emacs-plus@30 --with-native-comp
+#+end_src
+
+* Package Installation
+
+** Method 1: Using package.el (Recommended)
+
+Add to your ~init.el~ or ~~/.emacs.d/init.el~:
+
+#+begin_src elisp
+;; Enable MELPA
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+
+;; Install racket-mode if not already installed
+(unless (package-installed-p 'racket-mode)
+  (package-refresh-contents)
+  (package-install 'racket-mode))
+
+;; Optional but recommended packages
+(unless (package-installed-p 'smartparens)
+  (package-install 'smartparens))
+
+(unless (package-installed-p 'rainbow-delimiters)
+  (package-install 'rainbow-delimiters))
+
+(unless (package-installed-p 'company)
+  (package-install 'company))
+#+end_src
+
+** Method 2: Using use-package
+
+#+begin_src elisp
+;; Install use-package first
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(require 'use-package)
+
+;; Racket mode with automatic installation
+(use-package racket-mode
+  :ensure t
+  :config
+  (add-hook 'racket-mode-hook #'racket-xp-mode)
+  (add-hook 'racket-mode-hook #'smartparens-strict-mode)
+  (add-hook 'racket-mode-hook #'rainbow-delimiters-mode))
+
+(use-package smartparens
+  :ensure t)
+
+(use-package rainbow-delimiters
+  :ensure t)
+
+(use-package company
+  :ensure t
+  :config
+  (add-hook 'racket-mode-hook #'company-mode))
+#+end_src
+
+* Basic Configuration
+
+** Minimal Setup
+
+Add to your ~init.el~:
+
+#+begin_src elisp
+;; Racket configuration
+(require 'racket-mode)
+
+;; Enable racket-xp-mode for cross-reference
+(add-hook 'racket-mode-hook #'racket-xp-mode)
+
+;; Set Racket program path (if not in PATH)
+(setq racket-program "/Applications/Racket v8.15/bin/racket")
+
+;; Enable line numbers
+(add-hook 'racket-mode-hook #'display-line-numbers-mode)
+
+;; Enable auto-complete
+(add-hook 'racket-mode-hook #'company-mode)
+#+end_src
+
+** Enhanced Setup
+
+#+begin_src elisp
+;; Enhanced Racket configuration
+(require 'racket-mode)
+(require 'racket-xp)
+(require 'smartparens)
+(require 'rainbow-delimiters)
+(require 'company)
+
+;; Enable racket-xp-mode (enhanced IDE features)
+(add-hook 'racket-mode-hook #'racket-xp-mode)
+
+;; Smartparens for balanced parentheses
+(add-hook 'racket-mode-hook #'smartparens-strict-mode)
+
+;; Rainbow delimiters for visual matching
+(add-hook 'racket-mode-hook #'rainbow-delimiters-mode)
+
+;; Company mode for auto-completion
+(add-hook 'racket-mode-hook #'company-mode)
+
+;; Show function signatures
+(add-hook 'racket-mode-hook #'eldoc-mode)
+
+;; Customize indentation
+(put 'define-hypothesis 'racket-indent-function 1)
+(put 'run-experiment 'racket-indent-function 1)
+(put 'analyze-results 'racket-indent-function 1)
+
+;; REPL settings
+(setq racket-repl-buffer-name-function #'racket-repl-buffer-name-project)
+(setq racket-documentation-search-location 'local)
+
+;; Performance
+(setq racket-xp-after-change-refresh-delay 1)
+#+end_src
+
+* RacketCon 2025 Project Setup
+
+Load the project-specific configuration automatically:
+
+The ~.dir-locals.el~ file in this repository will automatically configure:
+- ~racketcon-tools.el~ in load path
+- RHEA framework settings
+- Experiment paths
+- Custom indentation
+
+Just open any ~.rkt~ file in the project!
+
+* Key Bindings
+
+** Default Racket Mode Bindings
+
+| Key | Command | Description |
+|-----+---------+-------------|
+| ~C-c C-c~ | ~racket-send-definition~ | Send definition to REPL |
+| ~C-c C-r~ | ~racket-send-region~ | Send region to REPL |
+| ~C-c C-e~ | ~racket-send-last-sexp~ | Send last s-exp to REPL |
+| ~C-c C-z~ | ~racket-repl~ | Switch to REPL |
+| ~C-c C-k~ | ~racket-run~ | Run entire file |
+| ~C-c C-t~ | ~racket-test~ | Run tests |
+| ~M-.~ | ~racket-xp-visit-definition~ | Jump to definition |
+| ~M-,~ | ~racket-xp-mode-return~ | Return from visit |
+| ~C-c C-d~ | ~racket-xp-documentation~ | View documentation |
+
+** RacketCon Tools Bindings (from ~racketcon-tools.el~)
+
+| Key | Command | Description |
+|-----+---------+-------------|
+| ~C-c r l~ | ~racketcon-list-experiments~ | List all experiments |
+| ~C-c r g~ | ~racketcon-goto-experiment~ | Go to experiment |
+| ~C-c r n~ | ~racketcon-new-experiment~ | Create new experiment |
+| ~C-c r r~ | ~racketcon-run-current-experiment~ | Run experiment |
+| ~C-c r t~ | ~racketcon-test-current-experiment~ | Test experiment |
+| ~C-c r h~ | ~racketcon-rhea-new-hypothesis~ | RHEA hypothesis |
+| ~C-c r e~ | ~racketcon-rhea-new-experiment~ | RHEA experiment |
+| ~C-c r i l~ | ~racketcon-insert-lens~ | Insert lens template |
+| ~C-c r i p~ | ~racketcon-insert-prism~ | Insert prism template |
+
+* Troubleshooting
+
+** Issue 1: "racket: command not found"
+
+Solution: Set the full path to Racket:
+
+#+begin_src elisp
+(setq racket-program "/Applications/Racket v8.15/bin/racket")
+(setq racket-raco-program "/Applications/Racket v8.15/bin/raco")
+#+end_src
+
+** Issue 2: racket-xp-mode not working
+
+Solution: Ensure the Racket binary path is correct and restart Emacs:
+
+#+begin_src elisp
+(setq racket-program (executable-find "racket"))
+#+end_src
+
+** Issue 3: No auto-completion
+
+Solution: Install and enable company-mode:
+
+#+begin_src elisp
+(use-package company
+  :ensure t
+  :config
+  (add-hook 'racket-mode-hook #'company-mode))
+#+end_src
+
+** Issue 4: Slow performance
+
+Solution: Increase XP refresh delay:
+
+#+begin_src elisp
+(setq racket-xp-after-change-refresh-delay 2)
+#+end_src
+
+** Issue 5: .dir-locals.el not loading
+
+Solution: Kill buffers and reopen, or run:
+
+#+begin_src elisp
+M-x hack-local-variables-confirm
+#+end_src
+
+* Verification
+
+** Test Basic Functionality
+
+1. Open a ~.rkt~ file
+2. Verify syntax highlighting
+3. Press ~C-c C-z~ to start REPL
+4. Press ~C-c C-k~ to run file
+5. Press ~M-.~ on a function to jump to definition
+
+** Test RacketCon Tools
+
+1. Open ~experiments/001-rosette-fundamentals/symbolic-basics.rkt~
+2. Press ~C-c r l~ to list experiments
+3. Press ~C-c r r~ to run current experiment
+
+* Complete Example Configuration
+
+Save to ~~/.emacs.d/init.el~:
+
+#+begin_src elisp
+;;; init.el --- Emacs configuration for RacketCon 2025
+
+;; Package setup
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+
+;; Install use-package
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(require 'use-package)
+(setq use-package-always-ensure t)
+
+;; Racket mode
+(use-package racket-mode
+  :config
+  (add-hook 'racket-mode-hook #'racket-xp-mode)
+  (add-hook 'racket-mode-hook #'smartparens-strict-mode)
+  (add-hook 'racket-mode-hook #'rainbow-delimiters-mode)
+  (add-hook 'racket-mode-hook #'company-mode)
+  (add-hook 'racket-mode-hook #'eldoc-mode)
+  (add-hook 'racket-mode-hook #'display-line-numbers-mode)
+
+  ;; Set Racket program (adjust path as needed)
+  (setq racket-program "/Applications/Racket v8.15/bin/racket")
+
+  ;; Custom indentation
+  (put 'define-hypothesis 'racket-indent-function 1)
+  (put 'run-experiment 'racket-indent-function 1)
+  (put 'analyze-results 'racket-indent-function 1))
+
+;; Supporting packages
+(use-package smartparens
+  :config
+  (require 'smartparens-config))
+
+(use-package rainbow-delimiters)
+
+(use-package company
+  :config
+  (setq company-idle-delay 0.2)
+  (setq company-minimum-prefix-length 2))
+
+;; Org mode for literate programming
+(use-package org
+  :config
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((racket . t)
+     (emacs-lisp . t)
+     (shell . t))))
+
+;;; init.el ends here
+#+end_src
+
+* macOS-Specific Notes
+
+** Finding Racket Installation
+
+#+begin_src bash
+# If installed via Homebrew
+which racket
+# Usually: /usr/local/bin/racket or /opt/homebrew/bin/racket
+
+# If installed via .dmg
+# Usually: /Applications/Racket v8.15/bin/racket
+#+end_src
+
+** Setting PATH in Emacs
+
+If Racket is not in Emacs's PATH:
+
+#+begin_src elisp
+(use-package exec-path-from-shell
+  :ensure t
+  :if (memq window-system '(mac ns))
+  :config
+  (exec-path-from-shell-initialize))
+#+end_src
+
+* Resources
+
+- [[https://www.racket-mode.com/][Racket Mode Homepage]]
+- [[https://docs.racket-lang.org/guide/][Racket Guide]]
+- [[file:elisp/racketcon-tools.el][RacketCon Tools]]
+- [[file:.dir-locals.el][Project Configuration]]
+
+* Quick Start Checklist
+
+- [X] Install Racket (~brew install --cask racket~)
+- [ ] Install Emacs (~brew install --cask emacs~)
+- [ ] Add MELPA to ~init.el~
+- [ ] Install ~racket-mode~ package
+- [ ] Install supporting packages (~smartparens~, ~rainbow-delimiters~, ~company~)
+- [ ] Set ~racket-program~ path
+- [ ] Test with ~C-c C-z~ (start REPL)
+- [ ] Clone RacketCon 2025 repository
+- [ ] Open ~.rkt~ file to verify ~.dir-locals.el~ loads
+- [ ] Press ~C-c r l~ to list experiments
+
+* Status
+
+Complete Emacs Racket mode setup guide for macOS - ready to use!

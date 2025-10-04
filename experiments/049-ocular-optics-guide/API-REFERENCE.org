@@ -1,0 +1,201 @@
+#+TITLE: Ocular-Patdown API Quick Reference
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+
+* API Differences from Guide
+
+The [[https://docs.racket-lang.org/ocular-patdown/optics-guide.html][optics guide]] uses conceptual names, but the actual ~ocular-patdown~ library has different function names.
+
+** Function Name Mapping
+
+| Concept (Guide) | Actual API | Signature |
+|-----------------+------------+-----------|
+| ~lens-view~ | ~optic-get~ | ~(optic-get optic target) → value~ |
+| ~lens-set~ | ~optic-set~ | ~(optic-set optic target new-value) → target~ |
+| ~lens-transform~ | ~optic-modify~ | ~(optic-modify optic target function) → target~ |
+| ~lens-compose~ | ~optic-compose~ | ~(optic-compose outer inner ...) → optic~ |
+
+** Creating Lenses
+
+The guide shows manual lens construction, but ocular-patdown provides ~struct-lens~:
+
+#+begin_src racket
+;; DON'T (manual construction - not in library)
+(define name-lens
+  (lens person-name (λ (p v) (struct-copy person p [name v]))))
+
+;; DO (use struct-lens)
+(define name-lens (struct-lens person name))
+#+end_src
+
+* Common Operations
+
+** Accessing Nested Fields
+
+#+begin_src racket
+(require ocular-patdown)
+
+(struct address (city state) #:transparent)
+(struct person (name address) #:transparent)
+
+(define alice
+  (person "Alice" (address "Boston" "MA")))
+
+;; Get city
+(optic-get (optic-compose (struct-lens person address)
+                          (struct-lens address city))
+           alice)
+;; => "Boston"
+
+;; Set city
+(optic-set (optic-compose (struct-lens person address)
+                          (struct-lens address city))
+           alice
+           "Cambridge")
+;; => #(struct:person "Alice" #(struct:address "Cambridge" "MA"))
+
+;; Modify city
+(optic-modify (optic-compose (struct-lens person address)
+                             (struct-lens address city))
+              alice
+              string-upcase)
+;; => #(struct:person "Alice" #(struct:address "BOSTON" "MA"))
+#+end_src
+
+** Working with Collections
+
+#+begin_src racket
+;; List elements
+(optic-modify list-traversal
+              '(1 2 3 4 5)
+              (λ (x) (* x 2)))
+;; => '(2 4 6 8 10)
+
+;; Vector elements
+(optic-modify vector-traversal
+              (vector 1 2 3)
+              add1)
+;; => #(2 3 4)
+
+;; Hash values
+(optic-modify hash-values-traversal
+              (hash 'a 1 'b 2 'c 3)
+              (λ (x) (* x 10)))
+;; => #hash((a . 10) (b . 20) (c . 30))
+
+;; Filtered elements
+(optic-modify (filtered-traversal even?)
+              '(1 2 3 4 5 6)
+              (λ (x) (* x 2)))
+;; => '(1 4 3 8 5 12)
+#+end_src
+
+** Composing Traversals with Lenses
+
+#+begin_src racket
+(struct person (name age) #:transparent)
+
+(define people
+  (list (person "Alice" 30)
+        (person "Bob" 25)
+        (person "Carol" 35)))
+
+;; Modify all ages
+(optic-modify (optic-compose list-traversal
+                             (struct-lens person age))
+              people
+              add1)
+;; => All ages incremented by 1
+#+end_src
+
+* Built-in Optics
+
+** Lenses
+
+| Optic | Description |
+|-------+-------------|
+| ~(struct-lens struct-type field)~ | Access struct field |
+| ~(list-ref-lens n)~ | Access list element at index n |
+| ~(vector-ref-lens n)~ | Access vector element at index n |
+| ~(hash-ref-lens key)~ | Access hash value by key |
+| ~car-lens~ | Access first element of pair |
+| ~cdr-lens~ | Access second element of pair |
+
+** Traversals
+
+| Optic | Description |
+|-------+-------------|
+| ~list-traversal~ | All elements of list |
+| ~vector-traversal~ | All elements of vector |
+| ~hash-values-traversal~ | All values in hash |
+| ~(filtered-traversal pred?)~ | Elements matching predicate |
+
+** Isomorphisms
+
+| Optic | Description |
+|-------+-------------|
+| ~(make-iso to from)~ | Custom isomorphism |
+| ~list-reverse-iso~ | Reverse a list |
+| ~identity-iso~ | Identity (no-op) |
+
+* Complete Example
+
+#+begin_src racket
+#lang racket
+
+(require ocular-patdown)
+
+;; Data structures
+(struct config (server database cache) #:transparent)
+(struct server-config (host port) #:transparent)
+(struct db-config (connection-string pool-size) #:transparent)
+
+;; Sample data
+(define app-config
+  (config
+   (server-config "localhost" 8080)
+   (db-config "postgres://..." 10)))
+
+;; Create optic path to server port
+(define server-port-optic
+  (optic-compose (struct-lens config server)
+                 (struct-lens server-config port)))
+
+;; Operations
+(displayln "Get port:")
+(displayln (optic-get server-port-optic app-config))
+
+(displayln "Set port to 9000:")
+(displayln (optic-set server-port-optic app-config 9000))
+
+(displayln "Double port:")
+(displayln (optic-modify server-port-optic app-config (λ (p) (* p 2))))
+#+end_src
+
+* Comparison Table
+
+| Your Code | ocular-patdown Equivalent |
+|-----------+---------------------------|
+| ~(lens-view l t)~ | ~(optic-get l t)~ |
+| ~(lens-set l t v)~ | ~(optic-set l t v)~ |
+| ~(lens-transform l f t)~ | ~(optic-modify l t f)~ |
+| ~(lens-compose a b)~ | ~(optic-compose a b)~ |
+| ~(lens getter setter)~ | ~(struct-lens type field)~ |
+
+Note the argument order change in ~optic-modify~: function comes LAST.
+
+* Resources
+
+- [[https://docs.racket-lang.org/ocular-patdown/index.html][Ocular-Patdown Documentation]]
+- [[https://docs.racket-lang.org/ocular-patdown/optics-guide.html][Optics Guide]] (conceptual, names differ)
+- [[https://github.com/quasarbright/ocular-patdown][GitHub Repository]]
+
+* Installation
+
+#+begin_src bash
+raco pkg install ocular-patdown
+#+end_src
+
+* Status
+
+API reference complete - Racket 8.15 with ocular-patdown installed

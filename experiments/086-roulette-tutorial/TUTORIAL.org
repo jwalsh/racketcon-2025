@@ -1,0 +1,267 @@
+#+TITLE: Roulette Tutorial: Inference-Aided Programming
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+PROPERTY: header-args:racket :tangle tutorial.rkt :mkdirp yes :comments org
+#+STARTUP: overview
+
+* Introduction
+
+Roulette is an inference-aided programming language built on Rosette, providing first-class support for measurable values and probabilistic inference.
+
+Based on: [[https://docs.racket-lang.org/roulette/index.html][Roulette Documentation]]
+
+All code blocks tangle to ~tutorial.rkt~:
+
+#+begin_example
+C-c C-v t         # Tangle code to tutorial.rkt
+racket tutorial.rkt    # Run tutorial
+#+end_example
+
+* Section 1: Installation and Setup
+
+** 1.1 Installing Roulette
+
+#+begin_src bash :tangle no
+# Install from command line
+raco pkg install roulette
+
+# Or use DrRacket Package Manager
+# File -> Package Manager -> search "roulette" -> Install
+#+end_src
+
+** 1.2 Basic Program Structure
+
+#+begin_src racket
+#lang roulette
+
+;; Roulette extends Rosette with measurable values
+;; and specialized inference engines
+
+(require roulette)
+
+(displayln "=== Section 1.2: Roulette Setup ===")
+(displayln "Roulette is an inference-aided language")
+(displayln "Built on top of Rosette")
+(displayln "Provides first-class measurable values")
+#+end_src
+
+* Section 2: Measurable Values
+
+** 2.1 What are Measurable Values?
+
+Measurable values are first-class values with associated probability measures.
+
+#+begin_src racket
+(displayln "\n=== Section 2.1: Measurable Values ===")
+
+;; TODO: Define measurable value
+;; This will be filled in based on Roulette's actual API
+
+(displayln "Measurable values combine:")
+(displayln "  1. A value")
+(displayln "  2. A probability measure")
+(displayln "  3. Inference capabilities")
+#+end_src
+
+** 2.2 Creating Measurable Values
+
+#+begin_src racket
+(displayln "\n=== Section 2.2: Creating Measurable Values ===")
+
+;; Example: Coin flip
+;; TODO: Use actual Roulette API for probabilistic values
+
+(displayln "Example use cases:")
+(displayln "  - Coin flips")
+(displayln "  - Dice rolls")
+(displayln "  - Random sampling")
+(displayln "  - Bayesian inference")
+#+end_src
+
+* Section 3: Inference Engines
+
+** 3.1 What are Inference Engines?
+
+Roulette uses specialized inference solvers instead of traditional SMT solvers.
+
+#+begin_src racket
+(displayln "\n=== Section 3.1: Inference Engines ===")
+
+(displayln "Roulette inference engines:")
+(displayln "  - Specialized for probabilistic reasoning")
+(displayln "  - Different from Rosette's SMT solvers")
+(displayln "  - Optimized for measurable values")
+#+end_src
+
+** 3.2 Running Inference
+
+#+begin_src racket
+(displayln "\n=== Section 3.2: Running Inference ===")
+
+;; TODO: Actual inference example
+;; Will be filled in based on Roulette documentation
+
+(displayln "Inference allows:")
+(displayln "  - Computing probabilities")
+(displayln "  - Finding likely values")
+(displayln "  - Bayesian updates")
+#+end_src
+
+* Section 4: Comparison to Rosette
+
+** 4.1 Rosette vs Roulette
+
+#+begin_src racket
+(displayln "\n=== Section 4.1: Rosette vs Roulette ===")
+
+(displayln "Rosette:")
+(displayln "  - Solver-aided programming")
+(displayln "  - SMT solvers")
+(displayln "  - Symbolic execution")
+
+(displayln "\nRoulette:")
+(displayln "  - Inference-aided programming")
+(displayln "  - Inference engines")
+(displayln "  - Measurable values")
+
+(displayln "\nBoth:")
+(displayln "  - Similar programming interface")
+(displayln "  - Extend Racket")
+(displayln "  - Enable powerful abstractions")
+#+end_src
+
+* Section 5: Practical Examples
+
+** 5.1 Example 1: TODO
+
+#+begin_src racket
+(displayln "\n=== Section 5.1: Example Placeholder ===")
+
+;; This section will be filled in based on:
+;; - Roulette documentation examples
+;; - Typical probabilistic programming patterns
+
+(displayln "Example categories:")
+(displayln "  1. Basic probability")
+(displayln "  2. Bayesian inference")
+(displayln "  3. Random sampling")
+(displayln "  4. Statistical models")
+#+end_src
+
+* Section 6: Advanced Topics
+
+** 6.1 Safe Mode
+
+Roulette provides a safe variant:
+
+#+begin_src racket
+(displayln "\n=== Section 6.1: Safe Mode ===")
+
+;; #lang roulette/safe provides additional safety guarantees
+
+(displayln "Safe mode:")
+(displayln "  - Additional runtime checks")
+(displayln "  - Prevents certain errors")
+(displayln "  - May have performance overhead")
+#+end_src
+
+* Section 7: Integration with RacketCon Topics
+
+** 7.1 Relation to Formal Methods
+
+#+begin_src racket
+(displayln "\n=== Section 7.1: Formal Methods ===")
+
+(displayln "Roulette complements:")
+(displayln "  - Rosette (experiments 001-008)")
+(displayln "  - Formal verification")
+(displayln "  - Probabilistic reasoning")
+#+end_src
+
+** 7.2 Relation to Probabilistic Programming
+
+#+begin_src racket
+(displayln "\n=== Section 7.2: Probabilistic Programming ===")
+
+(displayln "Related experiments:")
+(displayln "  - Experiment 086: Discrete probability")
+(displayln "  - Experiment 087: Bayesian inference")
+(displayln "  - Experiment 088: Markov chains")
+#+end_src
+
+* Section 8: Summary and Next Steps
+
+** 8.1 Key Concepts
+
+#+begin_src racket
+(displayln "\n=== Section 8: Summary ===")
+
+(displayln "Roulette provides:")
+(displayln "  1. Measurable values (first-class)")
+(displayln "  2. Inference engines (specialized)")
+(displayln "  3. Rosette-like interface")
+(displayln "  4. Probabilistic programming")
+
+(displayln "\nUse Roulette for:")
+(displayln "  - Probabilistic reasoning")
+(displayln "  - Bayesian inference")
+(displayln "  - Statistical modeling")
+(displayln "  - Uncertainty quantification")
+
+(displayln "\n=== Tutorial Framework Complete ===")
+(displayln "Note: This tutorial provides structure.")
+(displayln "Detailed examples require exploring Roulette documentation.")
+#+end_src
+
+* Appendix: Resources
+
+** Documentation
+
+- [[https://docs.racket-lang.org/roulette/index.html][Roulette Documentation]]
+- [[https://docs.racket-lang.org/rosette-guide/][Rosette Guide]]
+- [[https://emina.github.io/rosette/][Rosette Homepage]]
+
+** Installation
+
+#+begin_src bash :tangle no
+# Install Roulette
+raco pkg install roulette
+
+# Verify installation
+racket -e "(require roulette) (displayln \"Roulette installed!\")"
+#+end_src
+
+** Related Experiments
+
+- [[file:../001-rosette-fundamentals/README.org][Experiment 001: Rosette Fundamentals]]
+- [[file:../002-formal-methods-overview/README.org][Experiment 002: Formal Methods]]
+- [[file:../086-discrete-probability/README.org][Experiment 086: Discrete Probability]]
+
+** Development Status
+
+Roulette is under active development. Check documentation for:
+- Current API
+- Breaking changes
+- New features
+- Examples
+
+** Next Steps
+
+1. Install Roulette: ~raco pkg install roulette~
+2. Explore documentation: [[https://docs.racket-lang.org/roulette/index.html][Roulette Docs]]
+3. Review examples section
+4. Compare to Rosette (experiments 001-008)
+5. Build probabilistic models
+
+* Notes
+
+This tutorial provides a framework for learning Roulette.
+
+To complete it:
+1. Install Roulette
+2. Read full documentation
+3. Fill in TODO sections with actual API examples
+4. Run and test examples
+5. Build practical applications
+
+The structure is ready for hands-on exploration!

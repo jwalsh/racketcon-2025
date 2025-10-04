@@ -1,0 +1,468 @@
+#+TITLE: Rhombus Tutorial: Modern Racket-Based Language
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+PROPERTY: header-args:rhombus :tangle tutorial.rhm :mkdirp yes :comments org
+#+STARTUP: overview
+
+* Introduction
+
+Rhombus is a new general-purpose programming language built on Racket, featuring modern syntax and unique customization capabilities.
+
+Based on: [[https://rhombus-lang.org/][Rhombus Language]]
+
+All code blocks tangle to ~tutorial.rhm~:
+
+#+begin_example
+C-c C-v t              # Tangle code to tutorial.rhm
+racket tutorial.rhm    # Run tutorial
+#+end_example
+
+* Section 1: Installation and Setup
+
+** 1.1 Installing Rhombus
+
+#+begin_src bash :tangle no
+# Install from Racket package manager
+raco pkg install rhombus
+
+# Or install development version
+raco pkg install rhombus-prototype
+
+# Verify installation
+racket -I rhombus -e 'println("Hello, Rhombus!")'
+#+end_src
+
+** 1.2 Basic Program Structure
+
+#+begin_src rhombus
+#lang rhombus
+
+// Rhombus uses C-style syntax with modern features
+// Comments use // or /* */
+
+println("=== Section 1.2: Rhombus Basics ===")
+println("Rhombus is built on Racket")
+println("Features modern syntax and flexibility")
+#+end_src
+
+* Section 2: Fundamental Syntax
+
+** 2.1 Values and Variables
+
+#+begin_src rhombus
+println("\n=== Section 2.1: Values and Variables ===")
+
+// Define values with def
+def x = 42
+def name = "Alice"
+def flag = #true
+
+println("Number: " ++ x.to_string())
+println("String: " ++ name)
+println("Boolean: " ++ flag.to_string())
+#+end_src
+
+** 2.2 Data Structures
+
+#+begin_src rhombus
+println("\n=== Section 2.2: Data Structures ===")
+
+// Lists
+def numbers = [1, 2, 3, 4, 5]
+println("List: " ++ numbers.to_string())
+
+// Maps
+def person = {
+  "name": "Alice",
+  "age": 30,
+  "city": "Boston"
+}
+println("Map: " ++ person.to_string())
+
+// Tuples
+def point = (#2d, 3, 4)
+println("Tuple: " ++ point.to_string())
+#+end_src
+
+** 2.3 Functions
+
+#+begin_src rhombus
+println("\n=== Section 2.3: Functions ===")
+
+// Function definition
+fun add(x, y):
+  x + y
+
+fun greet(name):
+  "Hello, " ++ name ++ "!"
+
+println("add(2, 3) = " ++ add(2, 3).to_string())
+println(greet("Bob"))
+
+// Anonymous functions
+def double = fun (x): x * 2
+println("double(5) = " ++ double(5).to_string())
+#+end_src
+
+* Section 3: Pattern Matching
+
+** 3.1 Basic Pattern Matching
+
+#+begin_src rhombus
+println("\n=== Section 3.1: Basic Pattern Matching ===")
+
+fun describe(value):
+  match value
+  | 0: "zero"
+  | 1: "one"
+  | n: "number: " ++ n.to_string()
+
+println(describe(0))
+println(describe(1))
+println(describe(42))
+#+end_src
+
+** 3.2 Matching Data Structures
+
+#+begin_src rhombus
+println("\n=== Section 3.2: Matching Data Structures ===")
+
+fun first_element(lst):
+  match lst
+  | []: "empty list"
+  | [head, ...]: "first: " ++ head.to_string()
+
+println(first_element([]))
+println(first_element([1, 2, 3]))
+
+// Matching maps
+fun get_name(person_map):
+  match person_map
+  | {"name": n, ...}: n
+  | _: "unknown"
+
+println(get_name({"name": "Alice", "age": 30}))
+#+end_src
+
+* Section 4: Classes and Objects
+
+** 4.1 Defining Classes
+
+#+begin_src rhombus
+println("\n=== Section 4.1: Classes ===")
+
+class Point:
+  x :: Number
+  y :: Number
+
+  constructor(x0, y0):
+    x := x0
+    y := y0
+
+  method distance_from_origin():
+    math.sqrt(x * x + y * y)
+
+def p = Point(3, 4)
+println("Point: (" ++ p.x.to_string() ++ ", " ++ p.y.to_string() ++ ")")
+// println("Distance: " ++ p.distance_from_origin().to_string())
+#+end_src
+
+** 4.2 Methods and Fields
+
+#+begin_src rhombus
+println("\n=== Section 4.2: Methods and Fields ===")
+
+class Rectangle:
+  width :: Number
+  height :: Number
+
+  constructor(w, h):
+    width := w
+    height := h
+
+  method area():
+    width * height
+
+  method perimeter():
+    2 * (width + height)
+
+def rect = Rectangle(10, 5)
+println("Rectangle " ++ rect.width.to_string() ++ "x" ++ rect.height.to_string())
+println("Area: " ++ rect.area().to_string())
+println("Perimeter: " ++ rect.perimeter().to_string())
+#+end_src
+
+* Section 5: Advanced Features
+
+** 5.1 Type Annotations
+
+#+begin_src rhombus
+println("\n=== Section 5.1: Type Annotations ===")
+
+// Rhombus supports optional type annotations
+fun typed_add(x :: Number, y :: Number) :: Number:
+  x + y
+
+fun process(name :: String, age :: Number):
+  "Name: " ++ name ++ ", Age: " ++ age.to_string()
+
+println(typed_add(10, 20).to_string())
+println(process("Alice", 30))
+#+end_src
+
+** 5.2 Macros and Metaprogramming
+
+#+begin_src rhombus
+println("\n=== Section 5.2: Macros ===")
+
+// Rhombus supports powerful macro system
+// (Examples require more advanced features)
+
+println("Rhombus macros:")
+println("  - Extend language syntax")
+println("  - Create domain-specific languages")
+println("  - Compile-time transformations")
+#+end_src
+
+** 5.3 Ellipses for Repetitions
+
+#+begin_src rhombus
+println("\n=== Section 5.3: Ellipses ===")
+
+// Ellipses create and use repetitions
+
+def coords = [[1, 2], [3, 4], [5, 6]]
+println("Coordinates: " ++ coords.to_string())
+
+// Pattern with ellipses
+fun sum_pairs(pairs):
+  match pairs
+  | [[x, y], ...]:
+      [x + y, ...]
+  | _: []
+
+println("Pair sums: " ++ sum_pairs(coords).to_string())
+#+end_src
+
+* Section 6: Rhombus vs Racket
+
+** 6.1 Syntax Comparison
+
+#+begin_src rhombus
+println("\n=== Section 6.1: Rhombus vs Racket ===")
+
+println("Racket:")
+println("  (define (add x y) (+ x y))")
+println("  S-expression syntax")
+
+println("\nRhombus:")
+println("  fun add(x, y): x + y")
+println("  Modern, familiar syntax")
+
+println("\nBoth:")
+println("  - Compile to machine code")
+println("  - Same runtime and libraries")
+println("  - Powerful macros")
+#+end_src
+
+** 6.2 Shared Infrastructure
+
+#+begin_src rhombus
+println("\n=== Section 6.2: Shared Infrastructure ===")
+
+println("Rhombus leverages Racket's:")
+println("  1. Mature toolchain")
+println("  2. Library ecosystem")
+println("  3. JIT compiler")
+println("  4. Development tools")
+println("  5. Package manager (raco)")
+#+end_src
+
+* Section 7: Practical Examples
+
+** 7.1 Data Processing
+
+#+begin_src rhombus
+println("\n=== Section 7.1: Data Processing ===")
+
+// Process a list of people
+def people = [
+  {"name": "Alice", "age": 30},
+  {"name": "Bob", "age": 25},
+  {"name": "Carol", "age": 35}
+]
+
+// Filter adults over 30
+fun is_over_30(person):
+  match person
+  | {"age": age, ...}: age > 30
+  | _: #false
+
+println("People over 30:")
+for p: people:
+  when is_over_30(p):
+    match p
+    | {"name": n, ...}:
+        println("  " ++ n)
+#+end_src
+
+** 7.2 Functional Programming Patterns
+
+#+begin_src rhombus
+println("\n=== Section 7.2: Functional Patterns ===")
+
+// Map
+fun square(x): x * x
+def nums = [1, 2, 3, 4, 5]
+def squared = for List (n: nums): square(n)
+println("Squared: " ++ squared.to_string())
+
+// Filter
+def evens = for List (n: nums):
+              keep_when n mod 2 == 0
+              n
+println("Evens: " ++ evens.to_string())
+#+end_src
+
+** 7.3 Configuration Example
+
+#+begin_src rhombus
+println("\n=== Section 7.3: Configuration ===")
+
+class Config:
+  name :: String
+  port :: Number
+  debug :: Boolean
+
+  constructor(n, p, d):
+    name := n
+    port := p
+    debug := d
+
+  method display():
+    "Config: " ++ name ++ ":" ++ port.to_string()
+
+def dev_config = Config("dev", 8080, #true)
+def prod_config = Config("prod", 443, #false)
+
+println(dev_config.display())
+println(prod_config.display())
+#+end_src
+
+* Section 8: Integration with Racket
+
+** 8.1 Using Racket Libraries
+
+#+begin_src rhombus
+println("\n=== Section 8.1: Racket Interop ===")
+
+// Rhombus can use Racket libraries
+// import: racket-module-name
+
+println("Rhombus can:")
+println("  - Import Racket modules")
+println("  - Call Racket functions")
+println("  - Use Racket data structures")
+println("  - Mix with Racket code")
+#+end_src
+
+** 8.2 Migration Path
+
+#+begin_src rhombus
+println("\n=== Section 8.2: Migration Path ===")
+
+println("From Racket to Rhombus:")
+println("  1. Start with Racket knowledge")
+println("  2. Learn Rhombus syntax")
+println("  3. Use existing libraries")
+println("  4. Gradually adopt Rhombus features")
+println("  5. Mix both languages as needed")
+#+end_src
+
+* Section 9: Summary
+
+** 9.1 Key Concepts
+
+#+begin_src rhombus
+println("\n=== Section 9: Summary ===")
+
+println("Rhombus provides:")
+println("  1. Modern, readable syntax")
+println("  2. Pattern matching")
+println("  3. Classes and objects")
+println("  4. Type annotations")
+println("  5. Powerful macros")
+
+println("\nBuilt on Racket:")
+println("  - Same runtime")
+println("  - Same libraries")
+println("  - Same tools")
+println("  - Enhanced syntax")
+
+println("\nUse Rhombus for:")
+println("  - New projects with modern syntax")
+println("  - DSL creation")
+println("  - Teaching programming")
+println("  - Gradual migration from Racket")
+
+println("\n=== Tutorial Complete! ===")
+#+end_src
+
+* Appendix: Resources
+
+** Documentation
+
+- [[https://rhombus-lang.org/][Rhombus Language Homepage]]
+- [[https://docs.racket-lang.org/rhombus/][Rhombus Documentation]]
+- [[https://github.com/racket/rhombus][GitHub Repository]]
+
+** Installation
+
+#+begin_src bash :tangle no
+# Install Rhombus
+raco pkg install rhombus
+
+# Run Rhombus REPL
+racket -I rhombus
+
+# Run Rhombus file
+racket file.rhm
+#+end_src
+
+** Related RacketCon Topics
+
+Rhombus relates to several RacketCon 2025 sessions:
+
+- Language design and implementation
+- Macro systems and DSLs
+- Teaching programming
+- Modern syntax alternatives
+
+** Quick Reference
+
+| Feature | Racket | Rhombus |
+|---------+--------+---------|
+| Function | ~(define (f x) ...)~ | ~fun f(x): ...~ |
+| Class | ~(define-class ...)~ | ~class C: ...~ |
+| Match | ~(match x ...)~ | ~match x &#x7c; ...~ |
+| List | ~'(1 2 3)~ | ~[1, 2, 3]~ |
+| Map | ~(hash ...)~ | ~{"key": val}~ |
+
+** Next Steps
+
+1. Install Rhombus: ~raco pkg install rhombus~
+2. Explore documentation: [[https://docs.racket-lang.org/rhombus/][Rhombus Docs]]
+3. Try REPL: ~racket -I rhombus~
+4. Write programs with modern syntax
+5. Compare to Racket (familiar concepts, new syntax)
+6. Build domain-specific languages
+
+** Development Status
+
+Rhombus is in early but stable stage:
+- Core features complete
+- Suitable for early adopters
+- Still evolving
+- Community growing
+
+Perfect for RacketCon 2025 exploration!

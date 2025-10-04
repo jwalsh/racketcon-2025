@@ -1,0 +1,282 @@
+#+TITLE: Ocular-Patdown Optics Guide - Learning Notes
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+
+* Introduction
+
+These notes accompany the complete walkthrough of the [[https://docs.racket-lang.org/ocular-patdown/optics-guide.html][ocular-patdown optics guide]].
+
+* Key Concepts
+
+** What are Optics?
+
+Optics are first-class, composable references to parts of immutable data structures.
+
+They solve the problem of nested immutable updates:
+
+#+begin_src racket
+;; Without optics (painful)
+(struct-copy person p
+  [address (struct-copy address (person-address p)
+             [zip new-zip])])
+
+;; With optics (elegant)
+(lens-set person-zip-lens p new-zip)
+#+end_src
+
+** The Optics Hierarchy
+
+#+begin_example
+Fold ⊃ Traversal ⊃ Prism ⊃ Lens ⊃ Isomorphism
+#+end_example
+
+Each type has different guarantees about number of foci:
+- *Isomorphism*: Exactly 1 (bidirectional conversion)
+- *Lens*: Exactly 1 (focus on subpart)
+- *Prism*: 0 or 1 (sum types, optional values)
+- *Traversal*: 0 or more (collections, filtering)
+- *Fold*: 0 or more (read-only)
+
+* Core Operations
+
+All optics support three fundamental operations:
+
+| Operation | Purpose | Example |
+|-----------+---------+---------|
+| ~lens-view~ | Extract focused value(s) | ~(lens-view lens target)~ |
+| ~lens-set~ | Replace focused value(s) | ~(lens-set lens target new-value)~ |
+| ~lens-transform~ | Apply function to focused value(s) | ~(lens-transform lens f target)~ |
+
+* Lenses
+
+** Definition
+
+A lens focuses on exactly ONE subpart of a data structure.
+
+#+begin_src racket
+(define point-x-lens
+  (lens point-x                                    ; getter
+        (λ (p v) (struct-copy point p [x v]))))   ; setter
+#+end_src
+
+** Lens Laws
+
+All proper lenses satisfy three laws:
+
+1. *GetPut*: ~(lens-view lens (lens-set lens target value)) = value~
+   - You get what you just set
+
+2. *PutGet*: ~(lens-set lens target (lens-view lens target)) = target~
+   - Setting to current value is no-op
+
+3. *PutPut*: ~(lens-set lens (lens-set lens target v1) v2) = (lens-set lens target v2)~
+   - Second set wins
+
+** Built-in Lenses
+
+- ~(list-ref-lens n)~ - Access list element at index
+- ~(vector-ref-lens n)~ - Access vector element at index
+- ~(hash-ref-lens key)~ - Access hash value by key
+
+* Traversals
+
+** Definition
+
+A traversal focuses on ZERO OR MORE subparts.
+
+#+begin_src racket
+;; Built-in traversals
+list-traversal         ;; All list elements
+vector-traversal       ;; All vector elements
+hash-values-traversal  ;; All hash values
+
+;; Filtered traversal
+(filtered-traversal even?)  ;; Only even numbers
+#+end_src
+
+** Examples
+
+#+begin_src racket
+;; Transform all list elements
+(lens-transform list-traversal (λ (x) (* x 2)) '(1 2 3))
+;; => '(2 4 6)
+
+;; Transform only even numbers
+(lens-transform (filtered-traversal even?) add1 '(1 2 3 4))
+;; => '(1 3 3 5)
+#+end_src
+
+** Composition
+
+Traversals compose with lenses to reach nested collections:
+
+#+begin_src racket
+;; All employee cities
+(lens-compose company-employees-lens    ; Lens to list
+              list-traversal            ; Traverse list
+              person-city-lens)         ; Lens to city
+#+end_src
+
+* Isomorphisms
+
+** Definition
+
+An isomorphism is a lossless, bidirectional conversion between equivalent representations.
+
+#+begin_src racket
+(define string-chars-iso
+  (iso string->list    ;; to
+       list->string))  ;; from
+#+end_src
+
+** Laws
+
+1. ~(from (to x)) = x~ - Round-trip preserves value
+2. ~(to (from y)) = y~ - Reverse round-trip preserves value
+
+** Common Isomorphisms
+
+| From | To | Example |
+|------+----+---------|
+| String | List of chars | ~string-chars-iso~ |
+| Celsius | Fahrenheit | ~celsius-fahrenheit-iso~ |
+| Struct | List | ~point-list-iso~ |
+| Forward | Backward | ~reverse-iso~ |
+
+* Composition
+
+** Composing Optics
+
+Use ~lens-compose~ to build complex paths:
+
+#+begin_src racket
+(lens-compose outer-optic inner-optic)
+#+end_src
+
+** Composition Rules
+
+| Outer | Inner | Result |
+|-------+-------+--------|
+| Lens | Lens | Lens |
+| Lens | Iso | Lens |
+| Lens | Traversal | Traversal |
+| Traversal | Lens | Traversal |
+| Traversal | Traversal | Traversal |
+
+** Pipeline Style
+
+Use ~lens-thrush~ for pipeline-style composition:
+
+#+begin_src racket
+;; Instead of:
+(lens-view (lens-compose a b c) target)
+
+;; Write:
+(lens-thrush target a b c lens-view)
+#+end_src
+
+* Practical Patterns
+
+** Configuration Management
+
+Build paths to nested config:
+
+#+begin_src racket
+(define db-host-path
+  (lens-compose app-db-lens db-host-lens))
+
+(lens-set db-host-path config "new-host")
+#+end_src
+
+** State Updates (Redux-style)
+
+#+begin_src racket
+(define (toggle-todo-path id)
+  (lens-compose state-todos-lens
+                (find-todo-lens id)
+                todo-completed-lens))
+
+(lens-transform (toggle-todo-path 1) not state)
+#+end_src
+
+** API Response Processing
+
+#+begin_src racket
+(define all-emails-path
+  (lens-compose (hash-ref-lens 'data)
+                list-traversal
+                (hash-ref-lens 'email)))
+
+(lens-view all-emails-path api-response)
+#+end_src
+
+* Comparison to Hand-Built Implementations
+
+| Aspect | Our Impl (041-046) | ocular-patdown |
+|--------+--------------------+----------------|
+| Lens | ~(lens getter setter)~ | ~lens-view/set/transform~ |
+| Prism | ~(prism match? get set)~ | Built-in prisms |
+| Laws | Manual verification | Library guarantees |
+| Compose | Manual function composition | ~lens-compose~ |
+| Stdlib | Built from scratch | Rich library |
+
+* Running the Examples
+
+#+begin_src bash
+cd experiments/049-ocular-optics-guide
+
+# Install library
+raco pkg install ocular-patdown
+
+# Run in order
+racket 01-introduction.rkt
+racket 02-lenses.rkt
+racket 03-traversals.rkt
+racket 04-isomorphisms.rkt
+racket 05-composition.rkt
+racket 06-practical-patterns.rkt
+#+end_src
+
+* Key Takeaways
+
+1. *Composability*: Build complex paths from simple pieces
+2. *Type Safety*: Compiler checks compositions
+3. *Immutability*: All operations return new values
+4. *Genericity*: Works across data types
+5. *Declarative*: Express WHAT, not HOW
+
+* Related Experiments
+
+- [[file:../041-lenses-from-scratch/README.org][Experiment 041: Lenses from Scratch]]
+- [[file:../042-optics-composition/README.org][Experiment 042: Optics Composition]]
+- [[file:../045-functional-lenses/README.org][Experiment 045: Functional Lenses]]
+- [[file:../047-ocular-patdown/README.org][Experiment 047: Ocular-Patdown Library]]
+- [[file:../048-ruby-lenses/README.org][Experiment 048: Ruby Lenses]]
+
+* Further Reading
+
+- [[https://docs.racket-lang.org/ocular-patdown/index.html][Ocular-Patdown Documentation]]
+- [[https://docs.racket-lang.org/ocular-patdown/optics-guide.html][Optics Guide]]
+- [[https://www.schoolofhaskell.com/user/tel/a-little-lens-starter-tutorial][Haskell Lens Tutorial]]
+- [[https://hackage.haskell.org/package/lens][Haskell lens library]]
+
+* Questions for RacketCon
+
+1. How does ocular-patdown compare to Haskell's lens library?
+2. What are the performance characteristics of deeply nested compositions?
+3. Can optics be used with Racket's contracts system?
+4. Are there plans for prisms and other advanced optics?
+5. How does this integrate with Racket's struct update syntax?
+
+* Emacs Integration
+
+Use ~racketcon-tools.el~ keybindings:
+
+- ~C-c r i l~ - Insert lens template
+- ~C-c r i p~ - Insert prism template
+- ~C-c r i t~ - Insert traversal template
+- ~C-c r i v~ - Insert lens law verification
+
+* Status
+
+EXPERIMENT completed - All examples working with Racket 8.15

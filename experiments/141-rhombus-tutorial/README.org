@@ -1,0 +1,48 @@
+#+TITLE: Experiment 141: Rhombus - Modern Racket-Based Language
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+
+* Overview
+
+Explore Rhombus, a new general-purpose language built on Racket with modern syntax and unique customization capabilities.
+
+* Goals
+
+1. Learn Rhombus modern syntax
+2. Compare to Racket's S-expressions
+3. Understand pattern matching and classes
+4. Leverage Racket's ecosystem from Rhombus
+
+* Resources
+
+- [[https://rhombus-lang.org/][Rhombus Homepage]]
+- [[https://docs.racket-lang.org/rhombus/][Rhombus Documentation]]
+- [[file:TUTORIAL.org][Hands-on Tutorial]]
+
+* File Structure
+
+#+begin_example
+141-rhombus-tutorial/
+├── README.org          # This file
+└── TUTORIAL.org        # Numbered tutorial with tangle support
+#+end_example
+
+* Installation
+
+#+begin_src bash
+raco pkg install rhombus
+#+end_src
+
+* Running
+
+#+begin_src bash
+# REPL
+racket -I rhombus
+
+# Run file
+racket file.rhm
+#+end_src
+
+* Status
+
+Tutorial framework created - ready for exploration
