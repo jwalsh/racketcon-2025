@@ -1,0 +1,549 @@
+#+TITLE: Experiment 089: Roulette for Racketeers - Deep Dive
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Session Details
+
+*Title*: Roulette for Racketeers
+*Speaker*: Cameron Moy (Northeastern University, PLT/PRL)
+*Time*: Saturday, 2:30pm EDT
+*Track*: Research & Advanced Topics
+
+* Speaker Bio
+
+Cameron Moy:
+- PhD student at Northeastern University
+- Member of PLT (Programming Language Team) research group
+- Member of PRL (Programming Research Laboratory)
+- Research focus: Contract systems
+- Broad interest: Programming language design
+
+* Session Overview
+
+Roulette: A discrete probabilistic programming language (PPL) with:
+1. High-performance exact inference
+2. Expressive language features
+3. Built on Rosette's symbolic evaluation
+4. Generalizes solver-aided programming for probabilistic reasoning
+
+* What is Roulette?
+
+** Core Definition
+
+Roulette is a discrete probabilistic programming language that extends Rosette to reason about probabilistic quantities instead of symbolic ones.
+
+#+begin_quote
+"Exact probabilistic inference is a requirement for many applications of probabilistic programming languages."
+— Cameron Moy
+#+end_quote
+
+** Key Innovation
+
+Leverages the connection between:
+- *Exact probabilistic inference* (computing probability distributions)
+- *Symbolic evaluation* (Rosette's symbolic execution)
+
+** Architecture
+
+#+begin_src
+┌─────────────────────────────────────────┐
+│         Roulette PPL                    │
+│                                         │
+│  • Probabilistic primitives             │
+│  • Distribution types                   │
+│  • Inference queries                    │
+└─────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────┐
+│         Rosette Framework               │
+│                                         │
+│  • Symbolic evaluation                  │
+│  • Constraint solving                   │
+│  • Verification framework               │
+└─────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────┐
+│    Specialized Inference Solvers        │
+│                                         │
+│  • RSDD (Reduced Sentential DD)        │
+│  • Exact inference algorithms          │
+│  • Probabilistic constraint solving     │
+└─────────────────────────────────────────┘
+#+end_src
+
+* Installation
+
+** Via DrRacket
+
+1. File → Install Package
+2. Enter: ~roulette~
+3. Click Install
+
+** Via Command Line
+
+#+begin_src bash
+raco pkg install roulette
+#+end_src
+
+** Language Variants
+
+#+begin_src racket
+#lang roulette         ;; Standard version
+
+#lang roulette/safe    ;; Safe variant with extra checks
+#+end_src
+
+* Core Concepts
+
+** 1. Probabilistic Values
+
+Roulette provides first-class support for measurable values:
+
+#+begin_src racket
+#lang roulette
+
+;; Discrete probability distribution
+(define coin (discrete-uniform '(heads tails)))
+
+;; Coin flip
+(define flip coin)
+
+;; Query probability
+(probability (equal? flip 'heads))  ; → 1/2
+#+end_src
+
+** 2. Exact Inference
+
+Unlike approximation methods (MCMC, variational), Roulette computes exact probabilities:
+
+#+begin_src racket
+#lang roulette
+
+;; Exact inference, not sampling
+(define (roll-die)
+  (discrete-uniform '(1 2 3 4 5 6)))
+
+;; Condition on observation
+(define result
+  (observe (= (roll-die) 6)))
+
+;; Get exact probability
+(probability result)  ; → 1/6
+#+end_src
+
+** 3. Symbolic Evaluation for Probabilistic Inference
+
+Key insight: Symbolic evaluation paths correspond to probability outcomes:
+
+#+begin_src racket
+#lang roulette
+
+;; Each execution path has a probability
+(define (two-coins)
+  (define c1 (discrete-uniform '(H T)))
+  (define c2 (discrete-uniform '(H T)))
+  (list c1 c2))
+
+;; Symbolic evaluation creates:
+;; Path 1: (H H) with prob 1/4
+;; Path 2: (H T) with prob 1/4
+;; Path 3: (T H) with prob 1/4
+;; Path 4: (T T) with prob 1/4
+
+(probability (equal? (two-coins) '(H H)))  ; → 1/4
+#+end_src
+
+** 4. Conditioning and Inference
+
+#+begin_src racket
+#lang roulette
+
+;; Bayesian inference via conditioning
+(define (medical-test)
+  ;; Prior: 1% have disease
+  (define has-disease (bernoulli 0.01))
+
+  ;; Test accuracy: 99% true positive, 5% false positive
+  (define test-result
+    (if has-disease
+        (bernoulli 0.99)  ; True positive rate
+        (bernoulli 0.05))) ; False positive rate
+
+  ;; Observe: test is positive
+  (observe test-result)
+
+  ;; Query: probability of disease given positive test
+  has-disease)
+
+;; Exact Bayesian inference
+(probability (medical-test))
+#+end_src
+
+* Roulette vs Other PPLs
+
+| Feature | Roulette | Church | WebPPL | Pyro |
+|---------+----------+--------+--------+------|
+| *Inference* | Exact | MCMC | MCMC | Variational |
+| *Domains* | Discrete | Mixed | Mixed | Continuous |
+| *Base* | Rosette | Scheme | JS | Python |
+| *Verification* | Yes | No | No | No |
+| *Performance* | High | Medium | Medium | High |
+| *Solver-aided* | Yes | No | No | No |
+
+* Roulette + Rosette Synergy
+
+** Rosette's Symbolic Evaluation
+
+#+begin_src racket
+#lang rosette
+
+;; Rosette: symbolic variables
+(define-symbolic x integer?)
+(define-symbolic y integer?)
+
+;; Solve constraints
+(solve
+ (assert (= (+ x y) 10))
+ (assert (= (* x y) 24)))
+;; → (model [x 4] [y 6]) or (model [x 6] [y 4])
+#+end_src
+
+** Roulette's Probabilistic Extension
+
+#+begin_src racket
+#lang roulette
+
+;; Roulette: probabilistic variables
+(define x (discrete-uniform '(1 2 3 4 5 6)))
+(define y (discrete-uniform '(1 2 3 4 5 6)))
+
+;; Inference under constraints
+(define result
+  (begin
+    (observe (= (+ x y) 7))
+    (list x y)))
+
+;; Exact probability of each outcome given constraint
+(probability (equal? result '(1 6)))  ; → 1/6
+(probability (equal? result '(6 1)))  ; → 1/6
+#+end_src
+
+* Advanced Features
+
+** 1. Disrupt - Probabilistic Choice
+
+#+begin_src racket
+#lang roulette
+
+;; Disrupt: probabilistic branching
+(define (weather)
+  (disrupt
+   [(1/2) 'sunny]
+   [(1/3) 'cloudy]
+   [(1/6) 'rainy]))
+
+(probability (equal? (weather) 'sunny))  ; → 1/2
+#+end_src
+
+** 2. Measures and Measurable Spaces
+
+#+begin_src racket
+#lang roulette
+
+;; Define measurable space
+(define-measurable-space color-space
+  '(red green blue))
+
+;; Distribution over measurable space
+(define favorite-color
+  (categorical color-space
+               (hash 'red 0.5
+                     'green 0.3
+                     'blue 0.2)))
+#+end_src
+
+** 3. Composed Distributions
+
+#+begin_src racket
+#lang roulette
+
+;; Compose probabilistic computations
+(define (roll-sum n)
+  (if (= n 0)
+      0
+      (+ (discrete-uniform '(1 2 3 4 5 6))
+         (roll-sum (- n 1)))))
+
+;; Probability of rolling sum of 7 with 2 dice
+(probability (= (roll-sum 2) 7))  ; → 1/6
+#+end_src
+
+** 4. RSDD Engine
+
+Reduced Sentential Decision Diagrams (RSDD):
+- Compact representation of probability distributions
+- Efficient exact inference
+- Based on knowledge compilation techniques
+
+#+begin_src racket
+#lang roulette
+
+;; Use RSDD engine explicitly
+(require roulette/engines/rsdd)
+
+;; Complex probabilistic program
+(define result
+  (with-engine rsdd-engine
+    (complex-probabilistic-computation)))
+#+end_src
+
+* Practical Examples
+
+** Example 1: Monty Hall Problem
+
+#+begin_src racket
+#lang roulette
+
+(define (monty-hall switch?)
+  ;; Prize behind random door
+  (define prize-door (discrete-uniform '(1 2 3)))
+
+  ;; Player picks door 1
+  (define player-pick 1)
+
+  ;; Monty opens a door (not prize, not player's pick)
+  (define monty-opens
+    (cond
+      [(= prize-door 1) (discrete-uniform '(2 3))]
+      [(= prize-door 2) 3]
+      [(= prize-door 3) 2]))
+
+  ;; Player switches or stays
+  (define final-pick
+    (if switch?
+        (first (remove monty-opens (remove player-pick '(1 2 3))))
+        player-pick))
+
+  ;; Did player win?
+  (= final-pick prize-door))
+
+;; Exact probabilities
+(probability (monty-hall #f))  ; → 1/3 (stay)
+(probability (monty-hall #t))  ; → 2/3 (switch)
+#+end_src
+
+** Example 2: Hidden Markov Model
+
+#+begin_src racket
+#lang roulette
+
+;; HMM: weather states (hidden) → observations
+(define (hmm observations)
+  ;; Initial state
+  (define (state-at t prev-state)
+    (cond
+      [(= t (length observations)) '()]
+      [else
+       (define current-state
+         (if (not prev-state)
+             (discrete-uniform '(sunny rainy))  ; Initial
+             (transition prev-state)))           ; Transition
+
+       (define obs (emission current-state))
+
+       ;; Observe
+       (observe (equal? obs (list-ref observations t)))
+
+       (cons current-state (state-at (+ t 1) current-state))]))
+
+  (define (transition state)
+    (case state
+      [(sunny) (disrupt [(0.8) 'sunny] [(0.2) 'rainy])]
+      [(rainy) (disrupt [(0.4) 'sunny] [(0.6) 'rainy])]))
+
+  (define (emission state)
+    (case state
+      [(sunny) (disrupt [(0.9) 'happy] [(0.1) 'sad])]
+      [(rainy) (disrupt [(0.2) 'happy] [(0.8) 'sad])]))
+
+  (state-at 0 #f))
+
+;; Given observations, infer hidden states
+(define inferred (hmm '(happy happy sad)))
+(probability inferred)
+#+end_src
+
+** Example 3: Probabilistic Verification
+
+#+begin_src racket
+#lang roulette
+
+;; Verify probabilistic property
+(define (randomized-algorithm input)
+  (define choice (bernoulli 0.5))
+  (if choice
+      (algorithm-a input)
+      (algorithm-b input)))
+
+;; Verify: algorithm succeeds with high probability
+(define (verify-property)
+  (define result (randomized-algorithm test-input))
+  (assert (>= (probability (correct? result)) 0.99)))
+
+(verify-property)
+#+end_src
+
+* Implementation Insights
+
+** Symbolic Evaluation → Probabilistic Inference
+
+1. *Rosette*: Symbolic values explore all paths
+   #+begin_src
+   (if symbolic-bool
+       path-a
+       path-b)
+   ; → Explores both paths symbolically
+   #+end_src
+
+2. *Roulette*: Probabilistic values weight paths
+   #+begin_src
+   (if (bernoulli 0.7)
+       path-a
+       path-b)
+   ; → path-a with prob 0.7, path-b with prob 0.3
+   #+end_src
+
+** Solver-Aided → Inference-Aided
+
+| Rosette | Roulette |
+|---------|----------|
+| Symbolic variables | Probabilistic variables |
+| SAT/SMT solver | Inference solver (RSDD) |
+| Find models | Compute distributions |
+| Verify properties | Probabilistic verification |
+| Constraint solving | Conditioning |
+
+* Questions for Cameron's Talk
+
+** Theory
+
+1. How does RSDD compare to other exact inference algorithms?
+2. What are the theoretical limits of exact discrete inference?
+3. Connection to knowledge compilation research?
+
+** Implementation
+
+1. How is the Rosette engine modified for probabilistic reasoning?
+2. Performance characteristics - when does exact inference fail?
+3. Integration with Rosette's verification features?
+
+** Practice
+
+1. Real-world applications of Roulette?
+2. Debugging probabilistic programs?
+3. Future directions: continuous distributions?
+
+** Language Design
+
+1. Contract system for probabilistic programs?
+2. Type system for distributions?
+3. Compositional reasoning about probabilistic programs?
+
+* Connection to RacketCon Themes
+
+** Rosette Keynote (Saturday 9:00am)
+
+- Rosette's symbolic evaluation foundation
+- Solver-aided programming principles
+- Formal methods connection
+
+** Ion Fusion (Saturday 1:30pm)
+
+- Data/code unification
+- S-expressions for probabilistic programs
+
+** Truffle/Espresso (Our Experiment 087)
+
+- Specialization and profiling
+- Roulette: symbolic specialization for probability
+
+* Exercises
+
+** Exercise 1: Basic Inference
+
+#+begin_src racket
+#lang roulette
+
+;; TODO: Implement biased coin
+(define (biased-coin p)
+  (error "Implement me"))
+
+;; TODO: Two coins, condition on at least one heads
+;; What's probability both are heads?
+#+end_src
+
+** Exercise 2: Bayesian Network
+
+#+begin_src racket
+#lang roulette
+
+;; TODO: Implement simple Bayesian network
+;;   Alarm depends on Burglary and Earthquake
+;;   Phone call depends on Alarm
+#+end_src
+
+** Exercise 3: Probabilistic Data Structure
+
+#+begin_src racket
+#lang roulette
+
+;; TODO: Probabilistic skip list
+;; Verify expected search time
+#+end_src
+
+* Resources
+
+** Official
+
+- [[https://docs.racket-lang.org/roulette/][Roulette Documentation]]
+- [[https://github.com/probcomp/roulette][Roulette on GitHub]]
+- [[https://docs.racket-lang.org/rosette-guide/][Rosette Guide]]
+
+** Papers
+
+- "Inference-Aided Programming" (Moy et al.)
+- "Rosette: Solver-Aided Programming" (Torlak & Bodik)
+- "Sentential Decision Diagrams" (Darwiche)
+
+** Related
+
+- [[file:../086-roulette/README.org][Experiment 086: Roulette Tutorial]] (if exists)
+- [[file:../001-rosette-intro/README.org][Experiment 001: Rosette Intro]]
+- [[file:../087-truffle-espresso/README.org][Experiment 087: Truffle/Espresso]]
+
+* File Structure
+
+#+begin_example
+089-roulette-deep-dive/
+├── README.org                # This file
+├── 01-basic-inference.rkt   # Basic examples
+├── 02-bayesian-nets.rkt     # Bayesian networks
+├── 03-hmm.rkt               # Hidden Markov models
+├── 04-verification.rkt      # Probabilistic verification
+├── 05-rsdd-internals.org    # RSDD engine study
+└── TUTORIAL.org             # Complete tutorial
+#+end_example
+
+* Status
+
+EXPERIMENT ready for Saturday 2:30pm EDT session with Cameron Moy
+
+Roulette combines:
+- ✓ Exact probabilistic inference
+- ✓ Symbolic evaluation (Rosette)
+- ✓ Expressive language features
+- ✓ High performance (RSDD)
+- ✓ Inference-aided programming
+
+Ready to explore probabilistic programming at RacketCon!

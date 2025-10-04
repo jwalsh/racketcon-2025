@@ -1,0 +1,17 @@
+#+TITLE: Experiment 090: Saturday 3:00pm EDT Session
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Session Details
+
+*Time*: Saturday, 3:00pm EDT
+*Track*: TBD
+
+* Notes
+
+Session details to be added when available.
+
+* Status
+
+EXPERIMENT placeholder - awaiting session information
