@@ -21,8 +21,7 @@ This repository contains experiments, notes, and code examples related to [[http
 * Structure
 
 ** Sessions
-- [[file:sessions.md][sessions.md]] - Markdown format session details
-- [[file:sessions.org][sessions.org]] - Org-mode format complete schedule
+- [[file:sessions.org][sessions.org]] - Complete schedule
 
 ** Experiments
 
