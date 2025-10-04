@@ -1,6 +1,6 @@
 #+TITLE: RacketCon 2025 - Experiment Status
 #+AUTHOR: Generated from GitHub Issues
-#+DATE: Saturday, October 4th, 2025 1:35:31pm
+#+DATE: Saturday, October 4th, 2025 2:20:57pm
 #+STARTUP: overview
 
 * Overview
@@ -9,8 +9,8 @@ This document is auto-generated from GitHub issues.
 
 * Statistics
 
-- Total Issues: 19
-- Open: 19
+- Total Issues: 26
+- Open: 26
 - Closed: 0
 - With Assignees: 2
 
@@ -18,6 +18,13 @@ This document is auto-generated from GitHub issues.
 
 | Issue | Title | State | Assignees |
 |-------|-------|-------|-----------|
+| #26 | Experiment 142: Here Strings - Multi-Line String Literals | OPEN |  |
+| #25 | Experiment 141: Rhombus - Modern Racket-Based Language | OPEN |  |
+| #24 | Experiment 088: Racket Mode Adventures - Greg Hendershott | OPEN |  |
+| #23 | Experiment 087: Java on Truffle (Espresso) & Language Implementation | OPEN |  |
+| #22 | Experiment 086: Roulette - Inference-Aided Programming | OPEN |  |
+| #21 | Experiment 062: Ion Fusion - Unifying Data and Code | OPEN |  |
+| #20 | Experiment 049: Ocular-Patdown Complete Optics Guide | OPEN |  |
 | #19 | Experiment 077: Geiser with Racket Support | OPEN |  |
 | #18 | Experiment 076: Geiser Fundamentals | OPEN |  |
 | #17 | Experiment 999: RHEA Framework Implementation | OPEN |  |
@@ -44,57 +51,3 @@ Issues with assignees:
 
 - [[https://github.com/jwalsh/racketcon-2025/issues/16][#16]]: Experiment 043: Lens-based Updates (@dsp-dr)
 - [[https://github.com/jwalsh/racketcon-2025/issues/15][#15]]: Experiment 041: Deep Immutable Updates (@aygp-dr)
-
-* Makefiles Available
-
-Experiments with make targets:
-
-- [[file:experiments/000-racket-setup/Makefile][000-racket-setup]]: Setup & verification
-- [[file:experiments/001-rosette-fundamentals/Makefile][001-rosette-fundamentals]]: 4 Rosette examples
-- [[file:experiments/045-functional-lenses/Makefile][045-functional-lenses]]: Lens laws verification
-- [[file:experiments/046-pattern-matching/Makefile][046-pattern-matching]]: Pattern DSL
-- [[file:experiments/047-ocular-patdown/Makefile][047-ocular-patdown]]: Optics library
-- [[file:experiments/048-ruby-lenses/Makefile][048-ruby-lenses]]: Cross-language port
-- [[file:experiments/061-ion-format-basics/Makefile][061-ion-format-basics]]: Ion format
-- [[file:experiments/076-geiser-fundamentals/Makefile][076-geiser-fundamentals]]: Emacs/Scheme
-- [[file:experiments/999-rhea-framework/][999-rhea-framework]]: RHEA framework
-
-* Utilities
-
-Update this document:
-
-#+begin_src bash
-cd scripts && make update-status
-#+end_src
-
-Or manually:
-
-#+begin_src bash
-./scripts/update-status.sh
-#+end_src
-
-* Quick Test Commands
-
-** Test All Experiments with Makefiles
-
-#+begin_src bash :results output
-for exp in 000 001 045 046 047 048 061 076; do
-  cd experiments/${exp}-*
-  echo "=== Testing $exp ==="
-  make test 2>&1 | head -10
-  cd ../..
-done
-#+end_src
-
-** Test Specific Track
-
-#+begin_src bash
-# Track 1: Rosette
-cd experiments/000-racket-setup && make setup && make test
-
-# Track 3: Lenses
-cd experiments/045-functional-lenses && make test
-
-# Track 5: Geiser
-cd experiments/076-geiser-fundamentals && make test
-#+end_src
