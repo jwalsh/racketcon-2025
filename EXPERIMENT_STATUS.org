@@ -1,6 +1,6 @@
 #+TITLE: RacketCon 2025 - Experiment Status
 #+AUTHOR: Generated from GitHub Issues
-#+DATE: Saturday, October 4th, 2025 2:20:57pm
+#+DATE: Saturday, October 4th, 2025 6:10:51pm
 #+STARTUP: overview
 
 * Overview
@@ -9,22 +9,24 @@ This document is auto-generated from GitHub issues.
 
 * Statistics
 
-- Total Issues: 26
-- Open: 26
+- Total Issues: 28
+- Open: 28
 - Closed: 0
-- With Assignees: 2
+- With Assignees: 5
 
 * All Issues
 
 | Issue | Title | State | Assignees |
 |-------|-------|-------|-----------|
+| #28 | Experiment 097: Tonart - Music Composition as Racket Programming | OPEN |  |
+| #27 | Experiment 096: Advanced Macro Patterns - syntax-spec | OPEN |  |
 | #26 | Experiment 142: Here Strings - Multi-Line String Literals | OPEN |  |
 | #25 | Experiment 141: Rhombus - Modern Racket-Based Language | OPEN |  |
 | #24 | Experiment 088: Racket Mode Adventures - Greg Hendershott | OPEN |  |
 | #23 | Experiment 087: Java on Truffle (Espresso) & Language Implementation | OPEN |  |
 | #22 | Experiment 086: Roulette - Inference-Aided Programming | OPEN |  |
 | #21 | Experiment 062: Ion Fusion - Unifying Data and Code | OPEN |  |
-| #20 | Experiment 049: Ocular-Patdown Complete Optics Guide | OPEN |  |
+| #20 | Experiment 049: Ocular-Patdown Complete Optics Guide | OPEN | @dsp-dr |
 | #19 | Experiment 077: Geiser with Racket Support | OPEN |  |
 | #18 | Experiment 076: Geiser Fundamentals | OPEN |  |
 | #17 | Experiment 999: RHEA Framework Implementation | OPEN |  |
@@ -37,8 +39,8 @@ This document is auto-generated from GitHub issues.
 | #10 | Experiment 005: Cloudflare DNS Setup | OPEN |  |
 | #9 | Experiment 004: DNS Tools (macOS/FreeBSD) | OPEN |  |
 | #8 | Experiment 003: Rosette vs Lean vs TLA+ | OPEN |  |
-| #7 | Experiment 048: Ruby Lenses - Cross-Language Optics Port | OPEN |  |
-| #6 | Experiment 047: Ocular Patdown - Mike Delmonaco's Optics Library | OPEN |  |
+| #7 | Experiment 048: Ruby Lenses - Cross-Language Optics Port | OPEN | @aygp-dr |
+| #6 | Experiment 047: Ocular Patdown - Mike Delmonaco's Optics Library | OPEN | @dsp-dr |
 | #5 | Experiment 046: Pattern Matching Fundamentals | OPEN |  |
 | #4 | Experiment 045: Functional Lenses Implementation | OPEN |  |
 | #3 | Experiment 002: Formal Methods Overview | OPEN |  |
@@ -49,5 +51,8 @@ This document is auto-generated from GitHub issues.
 
 Issues with assignees:
 
+- [[https://github.com/jwalsh/racketcon-2025/issues/20][#20]]: Experiment 049: Ocular-Patdown Complete Optics Guide (@dsp-dr)
 - [[https://github.com/jwalsh/racketcon-2025/issues/16][#16]]: Experiment 043: Lens-based Updates (@dsp-dr)
 - [[https://github.com/jwalsh/racketcon-2025/issues/15][#15]]: Experiment 041: Deep Immutable Updates (@aygp-dr)
+- [[https://github.com/jwalsh/racketcon-2025/issues/7][#7]]: Experiment 048: Ruby Lenses - Cross-Language Optics Port (@aygp-dr)
+- [[https://github.com/jwalsh/racketcon-2025/issues/6][#6]]: Experiment 047: Ocular Patdown - Mike Delmonaco's Optics Library (@dsp-dr)

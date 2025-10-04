@@ -1,0 +1,197 @@
+#+TITLE: Experiment 096: Advanced Macro Patterns
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Explore 5 advanced macro design patterns used by sophisticated DSLs like match, syntax-parse, and Typed Racket, and how syntax-spec abstracts over them.
+
+* The 5 Macro Patterns
+
+** Pattern 1: Syntax Validation with Syntax Classes
+
+Traditional approach:
+#+begin_src racket
+(define-syntax (my-macro stx)
+  (syntax-parse stx
+    [(_ (id:id ...) body:expr ...)
+     #'(lambda (id ...) body ...)]))
+#+end_src
+
+With syntax-spec:
+#+begin_src racket
+(syntax-spec
+  (extension-class my-lang
+    (pattern (my-form (id:id ...) body:expr ...)
+             #:binding (scope (bind id) body))))
+#+end_src
+
+** Pattern 2: Static Information Propagation
+
+Problem: Pass type info, binding info, etc. through expansion
+
+Traditional: Syntax properties
+#+begin_src racket
+(define-syntax (annotate stx)
+  (syntax-parse stx
+    [(_ e:expr type)
+     (syntax-property #'e 'type (syntax-e #'type))]))
+#+end_src
+
+With syntax-spec: Declarative binding and reference
+#+begin_src racket
+(nonterminal typed-expr
+  (e:typed-expr type)
+  #:binding (export type-of e type))
+#+end_src
+
+** Pattern 3: Binding Forms
+
+Traditional: Macro stepper integration, free-identifier=?
+#+begin_src racket
+(define-syntax (my-let stx)
+  (syntax-parse stx
+    [(_ ([x:id rhs:expr] ...) body:expr ...)
+     #'((lambda (x ...) body ...) rhs ...)]))
+#+end_src
+
+With syntax-spec: Automatic binding tracking
+#+begin_src racket
+(pattern (my-let ([x rhs] ...) body ...)
+         #:binding (scope (bind x) body))
+#+end_src
+
+** Pattern 4: Compile-Time Computation
+
+Traditional: begin-for-syntax, phase levels
+#+begin_src racket
+(begin-for-syntax
+  (define (helper x) ...))
+
+(define-syntax (macro stx)
+  ... (helper (syntax-e #'x)) ...)
+#+end_src
+
+With syntax-spec: Meta-functions
+#+begin_src racket
+(define-metafunction compute
+  [(compute n) (+ n 1)])
+
+(pattern (increment e)
+         #'(compute e))
+#+end_src
+
+** Pattern 5: DrRacket Integration
+
+Traditional: Syntax coloring modes, Check Syntax hooks
+#+begin_src racket
+(define-syntax (highlight stx)
+  (syntax-parse stx
+    [(_ x)
+     (syntax-property #'x 'mouse-over-tooltips ...)]))
+#+end_src
+
+With syntax-spec: Automatic tooling
+- Check Syntax arrows
+- Rename refactoring
+- Documentation tooltips
+- All derived from binding spec
+
+* Design Pattern Anti-Pattern
+
+#+begin_quote
+"A design pattern usually indicates a missing linguistic abstraction!"
+— Michael Ballantyne
+#+end_quote
+
+These 5 patterns are necessary workarounds in traditional macro programming.
+
+syntax-spec eliminates them by providing:
+1. Declarative syntax specification
+2. Automatic binding tracking
+3. Static semantics propagation
+4. Tool integration generation
+
+* Sophisticated DSL Examples
+
+** Match
+
+Uses patterns:
+- Syntax validation (pattern matching syntax)
+- Static info (exhaustiveness checking)
+- Binding forms (pattern variables)
+- Compile-time computation (optimization)
+
+** syntax-parse
+
+Uses patterns:
+- Syntax classes for validation
+- Syntax properties for attributes
+- Binding in #:with clauses
+- Phase separation for syntax class definitions
+
+** Typed Racket
+
+Uses patterns:
+- Syntax validation (type annotations)
+- Static info propagation (types through expansion)
+- Binding forms (typed definitions)
+- Compile-time computation (type checker)
+- DrRacket integration (type tooltips)
+
+* File Structure
+
+#+begin_example
+096-macro-patterns/
+├── README.org                    # This file
+├── 01-syntax-validation.rkt     # Pattern 1: Validation
+├── 02-static-info.rkt           # Pattern 2: Static information
+├── 03-binding-forms.rkt         # Pattern 3: Bindings
+├── 04-compile-time.rkt          # Pattern 4: Computation
+├── 05-drracket-integration.rkt  # Pattern 5: Tooling
+├── 06-syntax-spec-examples.rkt  # All patterns with syntax-spec
+└── TUTORIAL.org                 # Complete tutorial
+#+end_example
+
+* Connection to RacketCon
+
+** Sunday, 9:00am EDT: Michael Ballantyne
+"Advanced Macrology: 5 Macro Programming Patterns You (No Longer) Need to Know"
+
+Key topics:
+- Traditional macro patterns in sophisticated DSLs
+- Limitations requiring these workarounds
+- syntax-spec metalanguage abstraction
+- Declarative DSL specification
+- Generated tool integration
+
+* Resources
+
+** syntax-spec
+
+- [[https://docs.racket-lang.org/syntax-spec/][syntax-spec documentation]]
+- [[https://github.com/michaelballantyne/syntax-spec][syntax-spec on GitHub]]
+
+** Papers
+
+- "Binding as Sets of Scopes" (Flatt 2016)
+- "Macros for Domain-Specific Languages" (Ballantyne et al.)
+
+** Related Tools
+
+- syntax-parse: Pattern matching for syntax
+- Turnstile: Type system DSL framework
+- Redex: Semantics engineering
+
+* Next Steps
+
+1. Study each traditional pattern
+2. Identify the pain points
+3. Compare with syntax-spec approach
+4. Build example DSL using syntax-spec
+5. Explore generated DrRacket integration
+
+* Status
+
+EXPERIMENT ready - Advanced macro patterns and syntax-spec!

@@ -1,0 +1,353 @@
+#+TITLE: Experiment 097: Tonart - Music Composition in Racket
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Tonart is an extensible language and library for composing music in Racket, where musical scores become modules and notations become syntax objects.
+
+* Core Vision
+
+** Music Score as Module
+
+#+begin_src racket
+#lang tonart
+
+;; Musical score is a Racket module
+(score "My Composition"
+  #:key C-major
+  #:tempo 120
+
+  (staff treble
+    (measure 1
+      (note C 4 quarter)
+      (note E 4 quarter)
+      (note G 4 half))))
+#+end_src
+
+** Notation as Syntax Object
+
+Each musical notation is a syntax object with:
+- Source location
+- Lexical context
+- Syntax properties (pitch, duration, dynamics, etc.)
+
+** Macro-like Rewrites
+
+Select regions and apply transformations:
+#+begin_src racket
+;; Transpose selection up a major third
+(transform (selected-region)
+  #:transpose +4)
+
+;; Retrograde (reverse notes)
+(transform (measures 5 8)
+  #:retrograde)
+
+;; Augmentation (double note values)
+(transform (staff bass)
+  #:augment 2)
+#+end_src
+
+** Context System
+
+Access static information about any notation:
+#+begin_src racket
+(define-transformation add-harmony
+  (lambda (note-stx)
+    (define current-key (get-context 'key))
+    (define current-instrument (get-context 'instrument))
+    (define pitch (syntax-property note-stx 'pitch))
+
+    ;; Add third above in current key
+    (add-note (scale-degree (+ pitch 2) current-key))))
+#+end_src
+
+* Ideas Stolen from Racket
+
+** 1. Syntax Objects
+
+Musical notations are first-class syntax objects:
+- Hygiene for voice independence
+- Source locations for error messages
+- Macros for compositional transformations
+
+** 2. Modules
+
+Scores are modules:
+- Import/export musical themes
+- Separate compilation
+- Version control friendly
+
+** 3. Macros
+
+Compositional patterns as macros:
+#+begin_src racket
+(define-musical-macro (sequence-pattern motif)
+  ;; Original
+  motif
+  ;; Transposed up 2nd
+  (transpose motif +2)
+  ;; Transposed down 3rd
+  (transpose motif -3)
+  ;; Inverted
+  (invert motif))
+#+end_src
+
+** 4. Binding and Scope
+
+Musical variables and themes:
+#+begin_src racket
+(define-theme main-theme
+  (notes C E G E C))
+
+(score
+  (part violin
+    (play main-theme))
+  (part cello
+    (play (transpose main-theme -12))))
+#+end_src
+
+** 5. Contracts and Types
+
+Musical constraints:
+#+begin_src racket
+(define/contract (valid-chord notes)
+  (-> (listof pitch?) boolean?)
+  (all-within-octave? notes))
+
+(define/instrument violin
+  #:range (C3 . E7)
+  #:transposition concert)
+#+end_src
+
+** 6. Phases and Compilation
+
+- Compile-time: Score validation, range checking
+- Run-time: MIDI generation, audio synthesis
+
+** 7. Racket Features Reused
+
+From the implementation:
+- Pattern matching (syntax-parse)
+- Structs for musical objects
+- Sequences for score traversal
+- Streams for real-time playback
+- Foreign interface for audio libs
+
+* Musical Transformations
+
+** Classical Techniques
+
+All as macros/functions:
+
+#+begin_src racket
+;; Transposition
+(transpose motif +7)  ; Up perfect 5th
+
+;; Inversion
+(invert motif)  ; Mirror around axis
+
+;; Retrograde
+(reverse-notes motif)
+
+;; Augmentation/Diminution
+(augment motif 2)    ; Double duration
+(diminish motif 2)   ; Half duration
+
+;; Canon
+(canon main-theme
+  #:voices 3
+  #:interval +5
+  #:delay (whole-note))
+#+end_src
+
+** Modern Techniques
+
+#+begin_src racket
+;; Serialism
+(twelve-tone-row C Db F E G ...)
+
+;; Minimalism
+(repeat-with-phase-shift
+  (pattern A B C)
+  #:voices 2
+  #:shift (eighth-note))
+
+;; Algorithmic composition
+(generative-melody
+  #:scale pentatonic
+  #:rhythm (markov-chain ...))
+#+end_src
+
+* Context System
+
+Like Racket's syntax parameters:
+
+#+begin_src racket
+(with-key C-major
+  (with-tempo 120
+    (with-instrument violin
+      (notes C E G ...))))
+
+;; Access context anywhere
+(define (note-in-key? note)
+  (define key (current-key))
+  (member? note (scale-pitches key)))
+#+end_src
+
+* Score Selection
+
+Like Racket regions:
+
+#+begin_src racket
+;; Select measures 5-8
+(select (measures 5 8))
+
+;; Select staff
+(select (staff violin))
+
+;; Select by pattern
+(select (all-notes-matching
+         (lambda (n) (= (pitch n) 'C))))
+#+end_src
+
+* File Structure
+
+#+begin_example
+097-tonart/
+├── README.org                 # This file
+├── 01-basic-score.rkt        # Simple score example
+├── 02-transformations.rkt    # Musical transformations
+├── 03-macros.rkt             # Compositional macros
+├── 04-context-system.rkt     # Context and scope
+├── 05-canon.rkt              # Canon implementation
+├── 06-twelve-tone.rkt        # Serialism example
+└── TUTORIAL.org              # Complete tutorial
+#+end_example
+
+* Example: Simple Score
+
+#+begin_src racket
+#lang tonart
+
+(score "Twinkle Twinkle"
+  #:key C-major
+  #:time-signature 4/4
+  #:tempo 120
+
+  (staff treble
+    (measure 1
+      (note C 4 quarter)
+      (note C 4 quarter)
+      (note G 4 quarter)
+      (note G 4 quarter))
+
+    (measure 2
+      (note A 4 quarter)
+      (note A 4 quarter)
+      (note G 4 half))))
+
+;; Export as MIDI
+(export-midi "twinkle.mid")
+
+;; Export as notation
+(export-score "twinkle.pdf")
+#+end_src
+
+* Example: Canon in D
+
+#+begin_src racket
+#lang tonart
+
+(define bass-line
+  (notes D A B Fs G D G A))
+
+(define melody
+  (notes Fs E D Cs D E Fs G ...))
+
+(score "Canon in D"
+  #:key D-major
+
+  ;; Bass (ostinato)
+  (staff bass
+    (repeat bass-line 8))
+
+  ;; Canon voices
+  (canon melody
+    #:voices 3
+    #:interval octave
+    #:delay (measures 2)))
+#+end_src
+
+* Example: Twelve-Tone Row
+
+#+begin_src racket
+#lang tonart
+
+(define row
+  (twelve-tone-row C Db F E G Fs A Gs B A Eb D))
+
+(score "Webern-style"
+  #:technique serial
+
+  (staff violin
+    ;; Prime form
+    (play row)
+    ;; Retrograde
+    (play (retrograde row))
+    ;; Inversion
+    (play (invert row))
+    ;; Retrograde inversion
+    (play (retrograde (invert row)))))
+#+end_src
+
+* Connection to RacketCon
+
+** Sunday, 9:30am EDT: Jared Gentner
+"Great Composers Steal: Obbligato Reuse of Racket in Tonart"
+
+Key topics:
+- Music scores as modules
+- Notations as syntax objects
+- Macro-like compositional rewrites
+- Context system for musical information
+- Racket feature reuse in implementation
+
+* Resources
+
+** Music Theory
+
+- Common practice harmony
+- Counterpoint and voice leading
+- Serialism and twelve-tone technique
+- Minimalism and phase music
+
+** Similar Projects
+
+- [[https://github.com/overtone/overtone][Overtone]] - Music environment (Clojure)
+- [[https://supercollider.github.io/][SuperCollider]] - Audio synthesis
+- [[https://tidalcycles.org/][TidalCycles]] - Live coding music (Haskell)
+- [[https://github.com/alda-lang/alda][Alda]] - Music programming language
+
+** Racket Music Libraries
+
+- RSound - Sound synthesis
+- portaudio - Audio I/O
+- MIDI libraries
+
+* Next Steps
+
+1. Explore basic score syntax
+2. Implement transformations
+3. Build compositional macros
+4. Design context system
+5. Create example compositions
+6. MIDI export integration
+
+* Status
+
+EXPERIMENT ready - Musical composition as Racket programming!
+
+"Life imitates Art" - Jared Gentner
