@@ -1,0 +1,616 @@
+#+TITLE: Experiment 043: Lens-Based Updates - Target and Focus
+#+AUTHOR: Jason Walsh
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Deep dive into lenses and optics: understanding *target* (the whole data structure) and *focus* (the part we're zooming into). This is the abstraction powering Mike Delmonaco's match-like update DSL.
+
+*Related Session*: Saturday 10:45am EDT - "A Match-Like DSL for Deep Immutable Updates"
+
+* The Lens Metaphor
+
+A lens is like a camera lens:
+- *Target*: The entire scene (whole data structure)
+- *Focus*: What you're zooming in on (specific part)
+- *Lens*: The optical system that lets you view and modify the focus
+
+#+begin_src racket
+#lang racket
+
+;; Target: entire person
+(define person
+  (hash 'name "Alice"
+        'age 30
+        'address (hash 'city "Seattle")))
+
+;; Lens: focuses on city
+(define city-lens ...)
+
+;; Focus: "Seattle"
+(view city-lens person)  ; => "Seattle"
+
+;; Modify focus: change to "Portland"
+(set city-lens person "Portland")
+;; => person with city changed
+#+end_src
+
+* Core Lens Definition
+
+** Minimal Lens
+
+A lens is a pair of functions:
+1. *Getter* (view): Extract focus from target
+2. *Setter* (set): Replace focus in target
+
+#+begin_src racket
+#lang racket
+
+(struct lens (get set) #:transparent)
+
+;; Example: lens for hash field
+(define (hash-lens key)
+  (lens
+    ; Getter: extract field from hash
+    (λ (target) (hash-ref target key))
+    ; Setter: replace field in hash
+    (λ (target new-focus) (hash-set target key new-focus))))
+
+;; Usage
+(define name-lens (hash-lens 'name))
+
+(define person (hash 'name "Alice" 'age 30))
+
+;; View focus
+((lens-get name-lens) person)  ; => "Alice"
+
+;; Set focus
+((lens-set name-lens) person "Bob")
+;; => #hash((name . "Bob") (age . 30))
+#+end_src
+
+** Van Laarhoven Representation
+
+More powerful lens encoding using functors:
+
+#+begin_src racket
+#lang racket
+
+;; Lens as function: (a -> f b) -> (s -> f t)
+;; Where:
+;;   s = source (target type)
+;;   t = result (target type after update)
+;;   a = focus type (before)
+;;   b = focus type (after)
+
+;; For our purposes (simple lenses):
+;;   s = t (same target type)
+;;   a = b (same focus type)
+
+(define (lens getter setter)
+  (λ (fn)
+    (λ (target)
+      (define focus (getter target))
+      (define new-focus (fn focus))
+      (setter target new-focus))))
+#+end_src
+
+* Basic Lens Operations
+
+** View (Get Focus)
+
+#+begin_src racket
+#lang racket
+
+(define (view lens target)
+  "Extract focus from target using lens."
+  ((lens-get lens) target))
+
+;; Example
+(view name-lens person)  ; => "Alice"
+#+end_src
+
+** Set (Replace Focus)
+
+#+begin_src racket
+#lang racket
+
+(define (set lens target new-focus)
+  "Replace focus in target using lens."
+  ((lens-set lens) target new-focus))
+
+;; Example
+(set name-lens person "Bob")
+;; => #hash((name . "Bob") (age . 30))
+#+end_src
+
+** Over (Modify Focus)
+
+#+begin_src racket
+#lang racket
+
+(define (over lens target fn)
+  "Modify focus in target by applying fn."
+  ((lens-set lens) target
+    (fn ((lens-get lens) target))))
+
+;; Example
+(over name-lens person string-upcase)
+;; => #hash((name . "ALICE") (age . 30))
+#+end_src
+
+* Lens Composition
+
+The power of lenses: they compose!
+
+** Composing Two Lenses
+
+#+begin_src racket
+#lang racket
+
+(define (compose-lens outer inner)
+  "Compose two lenses: outer focuses on container, inner on nested part."
+  (lens
+    ; Getter: get outer, then get inner
+    (λ (target)
+      (define outer-focus ((lens-get outer) target))
+      ((lens-get inner) outer-focus))
+    ; Setter: update inner, then update outer
+    (λ (target new-focus)
+      (define outer-focus ((lens-get outer) target))
+      (define new-outer-focus ((lens-set inner) outer-focus new-focus))
+      ((lens-set outer) target new-outer-focus))))
+
+;; Example: Focus on nested city
+(define person
+  (hash 'name "Alice"
+        'address (hash 'city "Seattle" 'state "WA")))
+
+(define address-lens (hash-lens 'address))
+(define city-lens (hash-lens 'city))
+
+(define address-city-lens
+  (compose-lens address-lens city-lens))
+
+(view address-city-lens person)  ; => "Seattle"
+(set address-city-lens person "Portland")
+;; => person with city changed to "Portland"
+#+end_src
+
+** Lens Chain (Multiple Composition)
+
+#+begin_src racket
+#lang racket
+
+(define (lens-chain . lenses)
+  "Compose multiple lenses left-to-right."
+  (foldl compose-lens (car lenses) (cdr lenses)))
+
+;; Example: Deep nesting
+(define company
+  (hash 'name "Tech Corp"
+        'departments
+          (list
+            (hash 'name "Engineering"
+                  'manager (hash 'name "Alice" 'salary 150000)))))
+
+(define departments-lens (hash-lens 'departments))
+(define first-lens (list-lens 0))
+(define manager-lens (hash-lens 'manager))
+(define salary-lens (hash-lens 'salary))
+
+(define manager-salary-lens
+  (lens-chain
+    departments-lens
+    first-lens
+    manager-lens
+    salary-lens))
+
+(view manager-salary-lens company)  ; => 150000
+(over manager-salary-lens company (λ (s) (* s 1.1)))
+;; => company with Alice's salary increased 10%
+#+end_src
+
+* Different Types of Lenses
+
+** Hash Lens (Field Access)
+
+#+begin_src racket
+#lang racket
+
+(define (hash-lens key)
+  "Lens focusing on hash field."
+  (lens
+    (λ (h) (hash-ref h key))
+    (λ (h v) (hash-set h key v))))
+#+end_src
+
+** List Lens (Index Access)
+
+#+begin_src racket
+#lang racket
+
+(define (list-lens idx)
+  "Lens focusing on list element at index."
+  (lens
+    (λ (lst) (list-ref lst idx))
+    (λ (lst v) (list-set lst idx v))))
+
+;; Example
+(define scores '(85 90 92))
+(define second-score-lens (list-lens 1))
+
+(view second-score-lens scores)  ; => 90
+(set second-score-lens scores 95)  ; => '(85 95 92)
+#+end_src
+
+** Vector Lens
+
+#+begin_src racket
+#lang racket
+
+(define (vector-lens idx)
+  "Lens focusing on vector element."
+  (lens
+    (λ (vec) (vector-ref vec idx))
+    (λ (vec v)
+      (define new-vec (vector-copy vec))
+      (vector-set! new-vec idx v)
+      new-vec)))
+#+end_src
+
+** Struct Lens
+
+#+begin_src racket
+#lang racket
+
+(struct posn (x y) #:transparent)
+
+(define (posn-x-lens)
+  "Lens for posn x coordinate."
+  (lens
+    posn-x
+    (λ (p new-x) (struct-copy posn p [x new-x]))))
+
+(define (posn-y-lens)
+  "Lens for posn y coordinate."
+  (lens
+    posn-y
+    (λ (p new-y) (struct-copy posn p [y new-y]))))
+
+;; Example
+(define p (posn 10 20))
+
+(view (posn-x-lens) p)  ; => 10
+(set (posn-x-lens) p 15)  ; => (posn 15 20)
+(over (posn-y-lens) p (λ (y) (* y 2)))  ; => (posn 10 40)
+#+end_src
+
+* Advanced Lens Patterns
+
+** Conditional Lens (Prism)
+
+A prism is a lens that may fail (focus might not exist).
+
+#+begin_src racket
+#lang racket
+
+(struct prism (match? get set) #:transparent)
+
+(define (hash-key-prism key)
+  "Prism for optional hash key."
+  (prism
+    (λ (h) (hash-has-key? h key))
+    (λ (h) (hash-ref h key))
+    (λ (h v) (hash-set h key v))))
+
+;; View with default
+(define (view-prism p target [default #f])
+  (if ((prism-match? p) target)
+      ((prism-get p) target)
+      default))
+
+;; Set if exists
+(define (set-prism p target value)
+  (if ((prism-match? p) target)
+      ((prism-set p) target value)
+      target))
+#+end_src
+
+** Traversal (Multiple Foci)
+
+A traversal focuses on multiple parts.
+
+#+begin_src racket
+#lang racket
+
+(define (list-traversal)
+  "Traversal over all list elements."
+  (λ (fn)
+    (λ (lst)
+      (map fn lst))))
+
+;; Modify all elements
+(define (over-traversal trav target fn)
+  ((trav fn) target))
+
+;; Example
+(define scores '(85 90 92))
+(over-traversal (list-traversal) scores (λ (s) (+ s 5)))
+;; => '(90 95 97)
+#+end_src
+
+** Filtered Traversal
+
+#+begin_src racket
+#lang racket
+
+(define (filtered-traversal pred?)
+  "Traversal over matching elements."
+  (λ (fn)
+    (λ (lst)
+      (for/list ([item lst])
+        (if (pred? item)
+            (fn item)
+            item)))))
+
+;; Example: boost only failing grades
+(define scores '(55 85 65 90 70))
+
+(over-traversal
+  (filtered-traversal (λ (s) (< s 70)))
+  scores
+  (λ (s) (+ s 10)))
+;; => '(65 85 75 90 80)
+#+end_src
+
+* Real-World Examples
+
+** Example 1: Nested Person Update
+
+#+begin_src racket
+#lang racket
+
+(struct person (name address) #:transparent)
+(struct address (street city state zip) #:transparent)
+
+;; Define lenses
+(define name-lens
+  (lens person-name
+        (λ (p v) (struct-copy person p [name v]))))
+
+(define address-lens
+  (lens person-address
+        (λ (p v) (struct-copy person p [address v]))))
+
+(define city-lens
+  (lens address-city
+        (λ (a v) (struct-copy address a [city v]))))
+
+;; Compose to focus on city
+(define person-city-lens
+  (compose-lens address-lens city-lens))
+
+;; Use it
+(define alice
+  (person "Alice"
+          (address "123 Main St" "Seattle" "WA" "98101")))
+
+(view person-city-lens alice)  ; => "Seattle"
+
+(set person-city-lens alice "Portland")
+;; => person with city changed
+
+(over person-city-lens alice string-upcase)
+;; => person with city "SEATTLE"
+#+end_src
+
+** Example 2: Rectangle Movement
+
+#+begin_src racket
+#lang racket
+
+(struct rect (top-left width height) #:transparent)
+(struct posn (x y) #:transparent)
+
+;; Lenses
+(define top-left-lens
+  (lens rect-top-left
+        (λ (r v) (struct-copy rect r [top-left v]))))
+
+(define x-lens
+  (lens posn-x
+        (λ (p v) (struct-copy posn p [x v]))))
+
+(define y-lens
+  (lens posn-y
+        (λ (p v) (struct-copy posn p [y v]))))
+
+;; Composed lenses
+(define rect-x-lens (compose-lens top-left-lens x-lens))
+(define rect-y-lens (compose-lens top-left-lens y-lens))
+
+;; Move rectangle
+(define (move-rect-right rect dx)
+  (over rect-x-lens rect (λ (x) (+ x dx))))
+
+(define (move-rect-down rect dy)
+  (over rect-y-lens rect (λ (y) (+ y dy))))
+
+;; Usage
+(define r (rect (posn 10 20) 100 50))
+
+(move-rect-right r 5)   ; Move right 5 pixels
+(move-rect-down r 10)   ; Move down 10 pixels
+
+;; Or chain
+(move-rect-down (move-rect-right r 5) 10)
+#+end_src
+
+** Example 3: Employee Salary Updates
+
+#+begin_src racket
+#lang racket
+
+(struct employee (id name salary department) #:transparent)
+
+(define salary-lens
+  (lens employee-salary
+        (λ (e v) (struct-copy employee e [salary v]))))
+
+;; Give 10% raise
+(define (give-raise emp)
+  (over salary-lens emp (λ (s) (* s 1.1))))
+
+;; Set specific salary
+(define (set-salary emp amount)
+  (set salary-lens emp amount))
+
+;; Traversal over employee list
+(define (give-raises-to employees pred?)
+  (for/list ([emp employees])
+    (if (pred? emp)
+        (give-raise emp)
+        emp)))
+
+;; Usage
+(define team
+  (list
+    (employee 1 "Alice" 100000 "Engineering")
+    (employee 2 "Bob" 95000 "Engineering")
+    (employee 3 "Charlie" 80000 "Sales")))
+
+(give-raises-to team
+  (λ (e) (equal? (employee-department e) "Engineering")))
+;; => Engineers get raises
+#+end_src
+
+* Lens Laws
+
+Good lenses should obey three laws:
+
+** Law 1: Get-Put (Set what you got does nothing)
+
+#+begin_src racket
+;; (set l target (view l target)) == target
+
+(define target (hash 'x 10))
+(define x-lens (hash-lens 'x))
+
+(equal? (set x-lens target (view x-lens target))
+        target)
+;; => #t
+#+end_src
+
+** Law 2: Put-Get (Get what you set)
+
+#+begin_src racket
+;; (view l (set l target v)) == v
+
+(equal? (view x-lens (set x-lens target 20))
+        20)
+;; => #t
+#+end_src
+
+** Law 3: Put-Put (Second set wins)
+
+#+begin_src racket
+;; (set l (set l target v1) v2) == (set l target v2)
+
+(equal? (set x-lens (set x-lens target 20) 30)
+        (set x-lens target 30))
+;; => #t
+#+end_src
+
+* Connection to dupdate DSL
+
+Mike Delmonaco's match-like DSL uses lenses internally:
+
+#+begin_src racket
+;; Hypothetical dupdate
+(dupdate person
+  [(hash 'address (hash 'city c))
+   (hash 'address (hash 'city "Portland"))])
+
+;; Translates to lens operations:
+;; 1. Parse pattern to identify 'c' as update location
+;; 2. Build lens: (compose-lens address-lens city-lens)
+;; 3. Apply: (set composed-lens person "Portland")
+#+end_src
+
+* Comparison with Haskell
+
+** Haskell Lens Library
+
+#+begin_src haskell
+-- Haskell
+import Control.Lens
+
+data Person = Person
+  { _name :: String
+  , _address :: Address
+  }
+
+data Address = Address
+  { _city :: String
+  , _state :: String
+  }
+
+makeLenses ''Person
+makeLenses ''Address
+
+-- Usage
+person ^. address . city  -- view
+person & address . city .~ "Portland"  -- set
+person & address . city %~ map toUpper  -- over
+#+end_src
+
+** Racket Equivalent
+
+#+begin_src racket
+#lang racket
+
+(struct person (name address) #:transparent)
+(struct address (city state) #:transparent)
+
+;; Manual lens definition
+(define address-lens ...)
+(define city-lens ...)
+(define person-city (compose-lens address-lens city-lens))
+
+;; Usage
+(view person-city person)  ; view
+(set person-city person "Portland")  ; set
+(over person-city person string-upcase)  ; over
+#+end_src
+
+* Resources
+
+** Papers
+- [[https://www.twanvl.nl/blog/haskell/cps-functional-references][CPS-based Functional References]]
+- [[https://arxiv.org/abs/1103.2841][Lenses, Folds, and Traversals (Edward Kmett)]]
+- [[https://www.cs.ox.ac.uk/jeremy.gibbons/publications/poptics.pdf][Profunctor Optics: Modular Data Accessors]]
+
+** Libraries
+- [[https://docs.racket-lang.org/lens/index.html][Racket Lens Library]]
+- [[https://hackage.haskell.org/package/lens][Haskell lens package]]
+- [[https://github.com/ekmett/lens/wiki][Lens Wiki]]
+
+** Tutorials
+- [[https://www.schoolofhaskell.com/school/to-infinity-and-beyond/pick-of-the-week/a-little-lens-starter-tutorial][A Little Lens Starter Tutorial]]
+- [[https://github.com/ekmett/lens/wiki/Derivation][How Lenses Work]]
+
+** Related Experiments
+- [[file:../041-deep-immutable-updates/][041: Deep Immutable Updates]]
+- [[file:../045-functional-lenses/][045: Functional Lenses Implementation]]
+
+* Key Takeaways
+
+1. *Lens = composable getter/setter pair*
+2. *Target = whole data structure, Focus = part you're updating*
+3. *Three operations*: view (get), set (replace), over (modify)
+4. *Lenses compose*: chain them to navigate nested structures
+5. *Optics family*: lenses, prisms, traversals for different use cases
+6. *Lens laws*: ensure lenses behave correctly
+7. *Powers dupdate*: match-like DSL is syntactic sugar over lenses
