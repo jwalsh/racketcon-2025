@@ -1,0 +1,219 @@
+#+TITLE: RHEA Framework - Racket Hypothesis-Experiment-Analysis
+#+AUTHOR: Jason Walsh
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+The RHEA (Racket Hypothesis-Experiment-Analysis) Framework provides a structured approach to conducting programming language experiments using the scientific method.
+
+* Framework Structure
+
+Each experiment follows a three-phase cycle:
+
+** Phase 1: HYPOTHESIS - Formulate Research Question
+*** Components
+- *Research Question*: What specific aspect are we investigating?
+- *Background*: What prior work/knowledge informs this?
+- *Hypothesis*: What do we expect to find?
+- *Success Criteria*: How will we know if the hypothesis is validated?
+- *Dependencies*: What experiments must be completed first?
+
+** Phase 2: EXPERIMENT - Design and Execute
+*** Components
+- *Setup*: Environment, dependencies, initial state
+- *Procedure*: Step-by-step execution
+- *Variables*: Independent, dependent, controlled
+- *Data Collection*: What metrics/observations to capture
+- *Code Artifacts*: Implementations, tests, benchmarks
+
+** Phase 3: ANALYSIS - Evaluate and Iterate
+*** Components
+- *Results*: Raw data and observations
+- *Interpretation*: What do the results mean?
+- *Validation*: Does this support or refute the hypothesis?
+- *Limitations*: What are the bounds of these findings?
+- *Next Experiments*: What new questions emerged?
+
+* Experiment States
+
+- ~PLANNED~: Hypothesis formulated, not yet started
+- ~IN_PROGRESS~: Actively running experiment
+- ~COMPLETED~: Results collected, analysis done
+- ~BLOCKED~: Waiting on dependencies
+- ~CLOSED~: Final, with links to follow-up experiments
+
+* Metadata Template
+
+#+begin_src org
+,* Experiment XXX: [Title]
+
+,** HYPOTHESIS
+,*** Research Question
+[What are we investigating?]
+
+,*** Background
+[Prior art, related experiments]
+
+,*** Hypothesis
+[Expected outcome]
+
+,*** Success Criteria
+- [ ] Criterion 1
+- [ ] Criterion 2
+
+,*** Dependencies
+- Experiment YYY
+- Tool/Library ZZZ
+
+,** EXPERIMENT
+,*** Setup
+#+begin_src bash
+# Environment setup
+#+end_src
+
+,*** Procedure
+1. Step 1
+2. Step 2
+
+,*** Variables
+| Type        | Name       | Description |
+|-------------+------------+-------------|
+| Independent | input-size | Size of input |
+| Dependent   | runtime    | Execution time |
+| Controlled  | platform   | Fixed OS/hardware |
+
+,*** Code Artifacts
+- ~file1.rkt~: Main implementation
+- ~test.rkt~: Test suite
+
+,** ANALYSIS
+,*** Results
+#+begin_src
+[Data, output, measurements]
+#+end_src
+
+,*** Interpretation
+[What the results mean]
+
+,*** Validation
+- [X] Hypothesis supported
+- [ ] Hypothesis refuted
+- [ ] Inconclusive
+
+,*** Limitations
+- Limitation 1
+- Limitation 2
+
+,*** Next Experiments
+- [[file:../XXX-follow-up/][XXX: Follow-up Topic]]
+#+end_src
+
+* Cross-Experiment Relationships
+
+** Dependency Graph
+#+begin_src dot :file experiment-deps.png
+digraph {
+  "001-rosette-fundamentals" -> "003-rosette-vs-lean-tla";
+  "001-rosette-fundamentals" -> "008-rosette-string-limitations";
+  "045-functional-lenses" -> "047-ocular-patdown";
+  "045-functional-lenses" -> "048-ruby-lenses";
+}
+#+end_src
+
+** Experiment Closure
+When closing an experiment:
+1. Mark status as ~CLOSED~
+2. Link to all follow-up experiments
+3. Archive artifacts
+4. Update dependency graph
+
+* Example: Lens Laws Verification
+
+#+begin_src org
+,* Experiment 045: Functional Lenses Implementation
+
+,** HYPOTHESIS
+,*** Research Question
+Can we implement Haskell-style lenses in Racket and formally verify lens laws?
+
+,*** Hypothesis
+Lenses satisfying GetPut, PutGet, and PutPut laws can be implemented and verified using property-based testing.
+
+,*** Success Criteria
+- [X] Implement car-lens and cdr-lens
+- [X] Define three lens laws formally
+- [X] Verify laws with property-based tests
+- [X] Demonstrate composition
+
+,** EXPERIMENT
+,*** Setup
+#+begin_src bash
+raco pkg install rackunit-quickcheck
+#+end_src
+
+,*** Code Artifacts
+- ~lens-laws.rkt~: Core implementation
+- ~lens-tests.rkt~: Property tests
+
+,** ANALYSIS
+,*** Results
+All three lens laws hold for car-lens and cdr-lens across 1000 random test cases.
+
+,*** Validation
+- [X] Hypothesis supported
+- GetPut, PutGet, PutPut laws verified
+- Composition preserves laws
+
+,*** Next Experiments
+- [[file:../047-ocular-patdown/][047: Ocular Patdown (Racket optics library)]]
+- [[file:../048-ruby-lenses/][048: Ruby Lenses (cross-language port)]]
+
+,** STATUS: CLOSED
+#+end_src
+
+* Integration with GitHub Issues
+
+Each experiment generates a GitHub issue:
+
+#+begin_src bash
+gh issue create \
+  --title "Experiment XXX: [Title]" \
+  --body "$(cat issue-template.md)" \
+  --label "experiment,phase-hypothesis"
+#+end_src
+
+Issue labels track phase:
+- ~phase-hypothesis~
+- ~phase-experiment~
+- ~phase-analysis~
+- ~state-blocked~
+- ~state-closed~
+
+* Tools and Utilities
+
+** Generate New Experiment
+#+begin_src bash
+./scripts/new-experiment.sh 099-topic-name "Research Question"
+#+end_src
+
+** Update Experiment Status
+#+begin_src bash
+./scripts/update-status.sh 045 CLOSED
+#+end_src
+
+** Generate Dependency Graph
+#+begin_src bash
+./scripts/generate-graph.sh
+#+end_src
+
+* References
+
+** Scientific Method in CS
+- [[https://dl.acm.org/doi/10.1145/1062455.1062533][Experiments in Software Engineering]]
+- [[https://cacm.acm.org/magazines/2020/12/248799-science-in-software-engineering/][Science in Software Engineering (CACM)]]
+
+** Related Frameworks
+- [[https://jupyter.org/][Jupyter Notebooks]] - Computational notebook paradigm
+- [[https://orgmode.org/worg/org-contrib/babel/][Org-mode Babel]] - Literate programming
+- [[https://rmarkdown.rstudio.com/][R Markdown]] - Reproducible research

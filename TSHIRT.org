@@ -1,0 +1,199 @@
+#+TITLE: RacketCon 2025 T-Shirt Code
+#+AUTHOR: RacketCon 2025
+#+DATE: October 4-5, 2025
+
+* The T-Shirt Code
+
+The RacketCon 2025 t-shirt features a beautiful example of Racket's 2D syntax capabilities - a magic square solver implemented using the ~#lang 2d racket~ language.
+
+* Code
+
+#+begin_src racket
+#lang 2d racket
+(require syntax/parse/define)
+(provide (all-from-out racket) 2d-magic)
+
+(define-syntax-parse-rule
+  (define-2d (m _ _ pat ...) rhs)
+  (define-syntax-parse-rule (m _ _ pat ...) rhs))
+
+(define-2d #2d-magic
+  ╔═══════════╦═══════════╦═══════════╗
+  ║ a:integer ║ b:integer ║ c:integer ║
+  ╠═══════════╬═══════════╬═══════════╣
+  ║ d:integer ║ e:integer ║ f:integer ║
+  ╠═══════════╬═══════════╬═══════════╣
+  ║ g:integer ║ h:integer ║ i:integer ║
+  ╚═══════════╩═══════════╩═══════════╝
+  (and (= (+ a b c) (+ d e f) (+ g h i)
+          (+ a d g) (+ b e h) (+ c f i)
+          (+ a e i) (+ g e c))
+       (equal? (set a b c d e f g h i)
+               (set 1 2 3 4 5 6 7 8 9))
+       (+ a b c)))
+#+end_src
+
+* What It Does
+
+This code defines a *magic square* constraint solver using Racket's 2D syntax.
+
+** Magic Square
+A 3×3 grid where:
+- Each row sums to the same value
+- Each column sums to the same value
+- Both diagonals sum to the same value
+- Uses numbers 1-9 exactly once
+
+** The Constraints
+
+#+begin_example
+  ╔═══╦═══╦═══╗
+  ║ a ║ b ║ c ║  Row 1: a+b+c
+  ╠═══╬═══╬═══╣
+  ║ d ║ e ║ f ║  Row 2: d+e+f
+  ╠═══╬═══╬═══╣
+  ║ g ║ h ║ i ║  Row 3: g+h+i
+  ╚═══╩═══╩═══╝
+    ↓   ↓   ↓
+   a+d+g b+e+h c+f+i
+
+  Diagonals:
+    a+e+i (top-left to bottom-right)
+    g+e+c (bottom-left to top-right)
+#+end_example
+
+All these sums must be equal!
+
+** The Solution
+
+#+begin_example
+  ╔═══╦═══╦═══╗
+  ║ 2 ║ 7 ║ 6 ║  = 15
+  ╠═══╬═══╬═══╣
+  ║ 9 ║ 5 ║ 1 ║  = 15
+  ╠═══╬═══╬═══╣
+  ║ 4 ║ 3 ║ 8 ║  = 15
+  ╚═══╩═══╩═══╝
+   = 15 15 15
+
+  Diagonals: 2+5+8=15, 4+5+6=15 ✓
+#+end_example
+
+(Note: There are 8 solutions to the 3×3 magic square, related by rotation and reflection)
+
+* Key Racket Features
+
+** 1. ~#lang 2d racket~
+- Enables 2D syntax in source code
+- Box-drawing characters form meaningful structure
+- Visual representation matches problem domain
+
+** 2. ~syntax/parse/define~
+- Advanced macro system
+- Pattern matching on syntax
+- Type annotations (~:integer~)
+
+** 3. ~define-2d~
+- Custom 2D macro definition
+- Maps visual layout to code structure
+- Extracts pattern variables from grid
+
+** 4. Visual Constraints
+The grid layout directly shows:
+- 9 variables (a through i)
+- Their spatial relationships
+- The magic square structure
+
+** 5. Logical Constraints
+#+begin_src racket
+(and
+  ;; All sums equal
+  (= (+ a b c)      ; row 1
+     (+ d e f)      ; row 2
+     (+ g h i)      ; row 3
+     (+ a d g)      ; col 1
+     (+ b e h)      ; col 2
+     (+ c f i)      ; col 3
+     (+ a e i)      ; diag 1
+     (+ g e c))     ; diag 2
+
+  ;; Uses 1-9 exactly once
+  (equal? (set a b c d e f g h i)
+          (set 1 2 3 4 5 6 7 8 9))
+
+  ;; Return the sum
+  (+ a b c))
+#+end_src
+
+* Why This is Cool
+
+1. *Visual Programming* - The code looks like the problem
+2. *Language-Oriented Programming* - Custom syntax for the domain
+3. *Constraint Solving* - Declarative specification
+4. *Metaprogramming* - Macros enable new syntactic forms
+5. *Unicode Beauty* - Box-drawing characters as syntax
+
+* Try It Yourself
+
+#+begin_src racket
+#lang 2d racket
+(require "tshirt.rkt")
+
+;; Use the magic square
+(2d-magic 2 7 6
+          9 5 1
+          4 3 8)
+;; => 15
+#+end_src
+
+* Educational Value
+
+This code teaches:
+- 2D syntax capabilities in Racket
+- Pattern matching in macros
+- Constraint specification
+- Set operations
+- The magic square problem
+
+It's a perfect example of Racket's philosophy:
+#+begin_quote
+*Language-oriented programming:* Create languages that match your problem domain
+#+end_quote
+
+* History
+
+Magic squares have been studied for over 4000 years:
+- Ancient China (Lo Shu Square, ~2800 BCE)
+- Islamic mathematics (9th century)
+- European Renaissance (Albrecht Dürer's Melencolia I, 1514)
+- Now: RacketCon 2025 t-shirt!
+
+* Related Concepts
+
+- 2D languages: ~#lang 2d~
+- Visual programming
+- Constraint logic programming
+- Pattern matching
+- Macro systems
+- Domain-specific languages
+
+* Links
+
+- [[https://docs.racket-lang.org/2d/][2D Syntax Documentation]]
+- [[https://docs.racket-lang.org/syntax-parse/][syntax/parse]]
+- [[https://en.wikipedia.org/wiki/Magic_square][Magic Squares (Wikipedia)]]
+
+* The Perfect Racket T-Shirt
+
+This code encapsulates everything Racket stands for:
+- *Extensibility* - New syntactic forms
+- *Expressiveness* - Code that looks like the problem
+- *Power* - Macros that transform syntax
+- *Beauty* - Unicode box-drawing art
+- *Education* - Teaches while delighting
+
+Wear it with pride! 🎉
+
+#+begin_center
+*RacketCon 2025 • Boston, MA • October 4-5*
+#+end_center
