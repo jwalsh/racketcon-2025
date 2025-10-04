@@ -1,0 +1,113 @@
+#+TITLE: Experiment 093: Weightmaps - Probability Distribution Visualizations
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Visualize probability distributions (weightmaps) for repeated random events using Roulette for exact inference.
+
+* What is a Weightmap?
+
+A *weightmap* is a probability distribution showing the likelihood of each possible outcome across all execution paths.
+
+** For Coin Flips (100 rounds)
+- Possible outcomes: 0 to 100 heads
+- Distribution follows binomial: B(n=100, p=0.5)
+- Peak at 50 heads (most likely)
+- Symmetric bell curve
+
+** For Dice Rolls (100d6)
+- Possible outcomes: 100 to 600
+- Distribution follows sum of uniforms
+- Peak at 350 (mean)
+- Approximately normal (CLT)
+
+* Key Concepts
+
+** Binomial Distribution (Coin Flips)
+
+#+begin_src
+P(k heads in n flips) = C(n,k) × p^k × (1-p)^(n-k)
+
+For n=100, p=0.5:
+- Mean: 50
+- Variance: 25
+- Std Dev: 5
+#+end_src
+
+** Sum of Uniform (Dice)
+
+#+begin_src
+Sum of 100d6:
+- Min: 100 (all 1s)
+- Max: 600 (all 6s)
+- Mean: 350 (100 × 3.5)
+- Variance: 100 × 35/12 ≈ 291.67
+- Std Dev: ≈ 17.08
+#+end_src
+
+* Visualization Examples
+
+** Coin Flips ASCII Histogram
+
+#+begin_example
+Heads in 100 flips:
+ 35 0.000001 ▏
+ 40 0.001084 ███▏
+ 45 0.048492 ███████████████████████████████████████████████▌
+ 50 0.079590 ████████████████████████████████████████████████████████████████████████████████
+ 55 0.048492 ███████████████████████████████████████████████▌
+ 60 0.001084 ███▏
+ 65 0.000001 ▏
+#+end_example
+
+** Dice Sum Histogram
+
+#+begin_example
+Sum of 100d6:
+300 0.000000 ▏
+320 0.000135 ████▏
+340 0.019463 ████████████████████████████████████████████████████████████████████████████
+350 0.023318 ████████████████████████████████████████████████████████████████████████████████████
+360 0.019463 ████████████████████████████████████████████████████████████████████████████
+380 0.000135 ████▏
+400 0.000000 ▏
+#+end_example
+
+* File Structure
+
+#+begin_example
+093-weightmaps/
+├── README.org                # This file
+├── 01-coin-weightmap.rkt    # 100 coin flips
+├── 02-dice-weightmap.rkt    # 100d6 rolls
+├── 03-heatmap.rkt           # 2D heatmaps
+├── 04-convergence.rkt       # CLT demonstration
+└── TUTORIAL.org             # Complete tutorial
+#+end_example
+
+* Applications
+
+** 1. Game Balance Analysis
+
+Analyze probability distributions for game mechanics:
+- Damage rolls
+- Loot drop rates
+- Character stats
+
+** 2. Monte Carlo Validation
+
+Compare exact distributions to sampled approximations.
+
+** 3. Central Limit Theorem
+
+Demonstrate convergence to normal distribution.
+
+** 4. Risk Assessment
+
+Visualize outcome probabilities for decision making.
+
+* Status
+
+EXPERIMENT ready - Visualizing probability weightmaps for coin flips and dice!
