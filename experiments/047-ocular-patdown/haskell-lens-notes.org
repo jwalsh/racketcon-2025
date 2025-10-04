@@ -1,0 +1,257 @@
+#+TITLE: Haskell lens Library: Deep Dive Notes
+#+AUTHOR: RacketCon 2025
+#+DATE: October 4-5, 2025
+
+* Overview
+
+The Haskell ~lens~ library is the canonical implementation of optics in functional programming. It provides lenses, prisms, traversals, isos, and many other optic types.
+
+* Library Information
+
+- *Package*: lens
+- *Hackage*: https://hackage.haskell.org/package/lens
+- *Tutorial*: https://hackage.haskell.org/package/lens-tutorial
+- *Author*: Edward Kmett and contributors
+- *Dependencies*: Many (full-featured)
+- *Alternative*: microlens (lightweight, no dependencies)
+
+* Core Concepts
+
+** Lenses
+- First-class getter and setter
+- Type: ~Lens s a = forall f. Functor f => (a -> f a) -> s -> f s~
+- Operations:
+  - ~view~ (or ~^.~): extract value
+  - ~set~ (or ~.~=~): update value
+  - ~over~ (or ~%~=~): transform value
+
+** Prisms
+- Optional/partial optics
+- Type: ~Prism s a~
+- Operations:
+  - ~preview~ (or ~^?~): try to extract
+  - ~review~ (or ~#~): inject
+
+** Traversals
+- Multiple foci (0 to N)
+- Type: ~Traversal s a~
+- Operations:
+  - ~toListOf~ (or ~^..~): extract all
+  - ~traverseOf~: map over all
+
+** Isomorphisms
+- Bidirectional conversions
+- Type: ~Iso s a~
+- Operations:
+  - ~from~: reverse direction
+  - ~under~: work in opposite view
+
+* Comparison: Haskell vs Racket
+
+** Haskell (lens)
+#+begin_src haskell
+data Person = Person { _name :: String, _age :: Int }
+makeLenses ''Person
+
+alice = Person "Alice" 30
+
+-- Get
+alice ^. name         -- "Alice"
+
+-- Set
+alice & name .~ "Bob" -- Person "Bob" 30
+
+-- Modify
+alice & age %~ (+1)   -- Person "Alice" 31
+#+end_src
+
+** Racket (ocular-patdown)
+#+begin_src racket
+(struct person (name age) #:transparent)
+
+(define alice (person "Alice" 30))
+
+;; Get
+(lens-get (struct-lens person name) alice)  ; "Alice"
+
+;; Set
+(lens-set (struct-lens person name) alice "Bob")  ; (person "Bob" 30)
+
+;; Modify
+(lens-modify (struct-lens person age) alice add1)  ; (person "Alice" 31)
+#+end_src
+
+* Key Differences
+
+** Type System
+- Haskell: Sophisticated type-level encoding
+- Racket: Dynamic typing, runtime checks
+
+** Composition
+- Haskell: Function composition ~.~
+- Racket: Explicit ~lens-compose~
+
+** Operators
+- Haskell: Rich operator syntax (~^.~, ~.~=~, ~%~=~)
+- Racket: Named functions
+
+** Template Haskell
+- Haskell: ~makeLenses ''Type~ generates lenses
+- Racket: Manual ~struct-lens~ calls
+
+* Advanced Features in Haskell lens
+
+** Indexed Optics
+- Lenses that track position/key
+- ~imap~, ~itraverse~, etc.
+
+** Folds
+- Read-only traversals
+- ~folded~, ~to~
+
+** Getters
+- Read-only lenses
+- More general than lenses
+
+** Setters
+- Write-only optics
+- ~mapped~, ~sets~
+
+** Prisms for Sum Types
+#+begin_src haskell
+data Either a b = Left a | Right b
+
+_Left :: Prism (Either a b) a
+_Right :: Prism (Either a b) b
+
+example ^? _Left  -- Maybe a
+#+end_src
+
+* Common Haskell Lens Patterns
+
+** Nested Access
+#+begin_src haskell
+data Address = Address { _city :: String, _state :: String }
+data Person = Person { _address :: Address }
+makeLenses ''Person
+makeLenses ''Address
+
+-- Composed access
+person ^. address . city
+
+-- Update nested field
+person & address . city .~ "Boston"
+#+end_src
+
+** Traversals Over Collections
+#+begin_src haskell
+-- All elements
+[1,2,3] & traverse %~ (*2)  -- [2,4,6]
+
+-- Filter then modify
+[1,2,3,4,5] & traverse . filtered even %~ (*10)  -- [1,20,3,40,5]
+#+end_src
+
+** At and Ix for Containers
+#+begin_src haskell
+import qualified Data.Map as M
+
+m = M.fromList [("a", 1), ("b", 2)]
+
+-- Access by key
+m ^. at "a"      -- Just 1
+m & at "c" ?~ 3  -- Insert
+
+-- Index
+[1,2,3] ^? ix 1  -- Just 2
+[1,2,3] & ix 1 .~ 9  -- [1,9,3]
+#+end_src
+
+* Library Ecosystem
+
+** Core Libraries
+- ~lens~ - Full featured
+- ~microlens~ - Lightweight subset
+- ~microlens-platform~ - More features than microlens
+- ~lens-aeson~ - Lenses for JSON
+
+** Integration
+- ~lens-aeson~ - JSON traversal
+- ~lens-regex-pcre~ - Regex-based traversals
+- ~generic-lens~ - Generic deriving
+
+* Performance
+
+** Haskell lens
+- Zero runtime overhead with inlining
+- Compile-time fusion
+- GHC optimizations
+
+** Comparison
+- Haskell: Compiled, optimized
+- Racket: Interpreted/JIT, dynamic
+
+* Learning Resources
+
+** Official
+- Hackage documentation
+- lens-tutorial package
+- Wiki on GitHub
+
+** Community
+- School of Haskell tutorials
+- Wikibooks: Haskell/Lenses
+- Stack Overflow Q&A
+
+** Videos
+- Simon Peyton Jones introduction
+- Various conference talks
+
+* Installation
+
+** Via GHCup (Recommended)
+#+begin_src bash
+curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+ghcup install ghc recommended
+ghcup install cabal recommended
+cabal update
+cabal install lens
+#+end_src
+
+** Via Homebrew (macOS)
+#+begin_src bash
+brew install ghc cabal-install
+cabal update
+cabal install lens
+#+end_src
+
+** FreeBSD
+#+begin_src bash
+pkg install ghc hs-cabal-install
+cabal update
+cabal install lens
+#+end_src
+
+* Key Takeaways
+
+1. *Haskell lens is the gold standard* for optics in FP
+2. *Type safety* - compile-time guarantees
+3. *Rich ecosystem* - many integrations
+4. *Operator heavy* - concise but terse
+5. *Learning curve* - complex types
+6. *Racket ocular-patdown* - inspired by Haskell lens
+7. *Both solve same problem* - deep immutable updates
+
+* Relationship to RacketCon Work
+
+Our experiments have been exploring the same concepts:
+- Experiment 041-046: Built lens/optics from scratch
+- Experiment 047: Used Racket's ocular-patdown
+- This note: Understanding the Haskell origins
+
+** Progression
+1. Theory (our implementations)
+2. Practice (ocular-patdown)
+3. Origins (Haskell lens)
+
+All three perspectives illuminate the optics abstraction.
