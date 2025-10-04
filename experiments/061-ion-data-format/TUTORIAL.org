@@ -1,0 +1,461 @@
+#+TITLE: Amazon Ion Tutorial: Complete Data Format Guide
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+PROPERTY: header-args:racket :tangle ion-tutorial.rkt :mkdirp yes :comments org
+#+STARTUP: overview
+
+* Introduction
+
+Amazon Ion is a richly-typed, self-describing data serialization format designed for large-scale systems.
+
+This tutorial provides hands-on exploration with Racket implementations.
+
+Tangle and run:
+#+begin_example
+C-c C-v t              # Tangle to ion-tutorial.rkt
+racket ion-tutorial.rkt    # Run tutorial
+#+end_example
+
+* Section 1: Ion Basics
+
+** 1.1 What is Ion?
+
+Ion is a data format with:
+- Both text and binary encodings
+- Rich type system
+- Self-describing (no external schema)
+- Annotations for metadata
+
+** 1.2 First Ion Example
+
+#+begin_src racket
+#lang racket
+
+(displayln "=== Section 1.2: First Ion Example ===\n")
+
+;; Ion-like representation in Racket
+;; We'll build structures that mimic Ion semantics
+
+(struct ion-value (type data annotations) #:transparent)
+
+(define (make-ion type data [annotations '()])
+  (ion-value type data annotations))
+
+;; Simple examples
+(define my-int (make-ion 'int 42))
+(define my-string (make-ion 'string "Hello, Ion!"))
+(define my-decimal (make-ion 'decimal 3.14 '(pi)))
+
+(displayln "Ion value (int): " my-int)
+(displayln "Ion value (string): " my-string)
+(displayln "Ion value (annotated decimal): " my-decimal)
+#+end_src
+
+* Section 2: Ion Type System
+
+** 2.1 Null Types
+
+#+begin_src racket
+(displayln "\n=== Section 2.1: Null Types ===\n")
+
+;; Ion has typed nulls
+(define null-generic (make-ion 'null #f))
+(define null-int (make-ion 'null.int #f))
+(define null-string (make-ion 'null.string #f))
+
+(displayln "Generic null: " null-generic)
+(displayln "Typed null (int): " null-int)
+(displayln "Typed null (string): " null-string)
+#+end_src
+
+** 2.2 Numbers
+
+#+begin_src racket
+(displayln "\n=== Section 2.2: Numbers ===\n")
+
+;; Integers (arbitrary precision)
+(define small-int (make-ion 'int 42))
+(define large-int (make-ion 'int 999999999999999999999))
+
+;; Decimals (exact)
+(define price (make-ion 'decimal 19.99))
+(define precise (make-ion 'decimal 0.123456789))
+
+;; Floats (IEEE-754)
+(define float-val (make-ion 'float 3.14))
+(define infinity (make-ion 'float +inf.0))
+
+(displayln "Small int: " small-int)
+(displayln "Large int: " large-int)
+(displayln "Decimal price: " price)
+(displayln "Float: " float-val)
+(displayln "Infinity: " infinity)
+#+end_src
+
+** 2.3 Timestamps
+
+#+begin_src racket
+(displayln "\n=== Section 2.3: Timestamps ===\n")
+
+(require racket/date)
+
+;; Ion timestamps with arbitrary precision
+(define now (make-ion 'timestamp (current-date)))
+(define conference-date
+  (make-ion 'timestamp
+            (seconds->date (find-seconds 0 0 12 4 10 2025))))
+
+(displayln "Current timestamp: " now)
+(displayln "Conference date: " conference-date)
+#+end_src
+
+** 2.4 Strings and Symbols
+
+#+begin_src racket
+(displayln "\n=== Section 2.4: Strings and Symbols ===\n")
+
+;; Strings (quoted in Ion)
+(define greeting (make-ion 'string "Hello, RacketCon!"))
+(define multiline (make-ion 'string "Line 1\nLine 2\nLine 3"))
+
+;; Symbols (unquoted in Ion - efficient)
+(define name-symbol (make-ion 'symbol 'name))
+(define field-symbol (make-ion 'symbol 'first_name))
+
+(displayln "String: " greeting)
+(displayln "Symbol: " name-symbol)
+#+end_src
+
+** 2.5 Collections
+
+#+begin_src racket
+(displayln "\n=== Section 2.5: Collections ===\n")
+
+;; Lists (ordered)
+(define numbers (make-ion 'list (list 1 2 3 4 5)))
+(define mixed (make-ion 'list (list 1 "two" 3.0 #t)))
+
+;; Structs (key-value)
+(define person
+  (make-ion 'struct
+            (hash 'name "Alice"
+                  'age 30
+                  'city "Boston")))
+
+;; S-expressions (Lisp-like)
+(define sexp (make-ion 'sexp '(+ 1 2 3)))
+
+(displayln "List of numbers: " numbers)
+(displayln "Mixed list: " mixed)
+(displayln "Struct (person): " person)
+(displayln "S-expression: " sexp)
+#+end_src
+
+* Section 3: Annotations
+
+** 3.1 Simple Annotations
+
+#+begin_src racket
+(displayln "\n=== Section 3.1: Simple Annotations ===\n")
+
+;; Annotations add semantic meaning
+(define dollars (make-ion 'decimal 123.45 '(dollars)))
+(define meters (make-ion 'int 100 '(meters)))
+(define email (make-ion 'string "alice@example.com" '(email)))
+
+(displayln "Money: " dollars)
+(displayln "Distance: " meters)
+(displayln "Email: " email)
+#+end_src
+
+** 3.2 Multiple Annotations
+
+#+begin_src racket
+(displayln "\n=== Section 3.2: Multiple Annotations ===\n")
+
+;; Stack annotations left to right
+(define verified-email
+  (make-ion 'string "alice@example.com" '(verified user email)))
+
+(define validated-data
+  (make-ion 'list '(1 2 3) '(validated user-input)))
+
+(displayln "Verified email: " verified-email)
+(displayln "Validated data: " validated-data)
+#+end_src
+
+** 3.3 Structural Annotations
+
+#+begin_src racket
+(displayln "\n=== Section 3.3: Structural Annotations ===\n")
+
+;; Annotate entire structures
+(define annotated-struct
+  (make-ion 'struct
+            (hash 'name "Alice" 'age 30)
+            '(person verified)))
+
+(define annotated-list
+  (make-ion 'list '(1 2 3 4 5) '(test-data)))
+
+(displayln "Annotated struct: " annotated-struct)
+(displayln "Annotated list: " annotated-list)
+#+end_src
+
+* Section 4: Practical Examples
+
+** 4.1 Configuration Data
+
+#+begin_src racket
+(displayln "\n=== Section 4.1: Configuration Data ===\n")
+
+(define app-config
+  (make-ion 'struct
+            (hash 'name "MyApp"
+                  'version "1.2.3"
+                  'server (hash 'host "localhost"
+                               'port 8080
+                               'timeout (make-ion 'int 30 '(seconds)))
+                  'features (list 'analytics 'caching))
+            '(app-config)))
+
+(displayln "Application config: " app-config)
+#+end_src
+
+** 4.2 API Response
+
+#+begin_src racket
+(displayln "\n=== Section 4.2: API Response ===\n")
+
+(define api-response
+  (make-ion 'struct
+            (hash 'status (make-ion 'int 200 '(ok))
+                  'timestamp (make-ion 'timestamp (current-date))
+                  'data (hash 'user_id "alice"
+                             'balance (make-ion 'decimal 1234.56 '(usd)))
+                  'metadata (hash 'request_id "req-12345"
+                                 'version "v2"))
+            '(api-response)))
+
+(displayln "API response: " api-response)
+#+end_src
+
+** 4.3 Event Log Entry
+
+#+begin_src racket
+(displayln "\n=== Section 4.3: Event Log Entry ===\n")
+
+(define login-event
+  (make-ion 'struct
+            (hash 'type 'user_login
+                  'timestamp (current-date)
+                  'user_id "alice"
+                  'ip (make-ion 'string "192.168.1.1" '(ipv4))
+                  'success #t)
+            '(event)))
+
+(define purchase-event
+  (make-ion 'struct
+            (hash 'type 'purchase
+                  'timestamp (current-date)
+                  'user_id "alice"
+                  'total (make-ion 'decimal 99.99 '(usd))
+                  'items (list
+                          (hash 'sku "ITEM-001" 'qty 2)
+                          (hash 'sku "ITEM-042" 'qty 1)))
+            '(event)))
+
+(displayln "Login event: " login-event)
+(displayln "Purchase event: " purchase-event)
+#+end_src
+
+* Section 5: Working with Ion Data
+
+** 5.1 Accessing Values
+
+#+begin_src racket
+(displayln "\n=== Section 5.1: Accessing Values ===\n")
+
+(define (ion-type val)
+  (ion-value-type val))
+
+(define (ion-data val)
+  (ion-value-data val))
+
+(define (ion-annotations val)
+  (ion-value-annotations val))
+
+(define sample (make-ion 'decimal 123.45 '(dollars usd)))
+
+(displayln "Type: " (ion-type sample))
+(displayln "Data: " (ion-data sample))
+(displayln "Annotations: " (ion-annotations sample))
+#+end_src
+
+** 5.2 Checking Annotations
+
+#+begin_src racket
+(displayln "\n=== Section 5.2: Checking Annotations ===\n")
+
+(define (has-annotation? val annotation)
+  (member annotation (ion-annotations val)))
+
+(define money (make-ion 'decimal 100.00 '(dollars)))
+(define distance (make-ion 'int 50 '(meters)))
+
+(displayln "Money has 'dollars' annotation: "
+           (has-annotation? money 'dollars))
+(displayln "Distance has 'dollars' annotation: "
+           (has-annotation? distance 'dollars))
+#+end_src
+
+** 5.3 Transforming Values
+
+#+begin_src racket
+(displayln "\n=== Section 5.3: Transforming Values ===\n")
+
+(define (add-annotation val annotation)
+  (make-ion (ion-type val)
+            (ion-data val)
+            (cons annotation (ion-annotations val))))
+
+(define plain (make-ion 'string "alice@example.com"))
+(define annotated (add-annotation plain 'email))
+(define verified (add-annotation annotated 'verified))
+
+(displayln "Plain: " plain)
+(displayln "With email annotation: " annotated)
+(displayln "With verified: " verified)
+#+end_src
+
+* Section 6: Ion vs JSON
+
+** 6.1 JSON Limitations
+
+#+begin_src racket
+(displayln "\n=== Section 6.1: JSON Limitations ===\n")
+
+;; JSON example (represented as Racket hash)
+(define json-data
+  (hash 'name "Fido"
+        'age 4                    ; What unit? Years? Months?
+        'birthday "2012-03-01"    ; Just a string
+        'weight 41.2))            ; What unit? Pounds? Kilos?
+
+(displayln "JSON data (ambiguous): " json-data)
+#+end_src
+
+** 6.2 Ion Advantages
+
+#+begin_src racket
+(displayln "\n=== Section 6.2: Ion Advantages ===\n")
+
+;; Same data in Ion - unambiguous
+(define ion-data
+  (make-ion 'struct
+            (hash 'name "Fido"
+                  'age (make-ion 'int 4 '(years))
+                  'birthday (make-ion 'timestamp
+                                     (seconds->date
+                                      (find-seconds 0 0 0 1 3 2012)))
+                  'weight (make-ion 'decimal 41.2 '(pounds)))))
+
+(displayln "Ion data (unambiguous): " ion-data)
+#+end_src
+
+* Section 7: Advanced Patterns
+
+** 7.1 Nested Structures
+
+#+begin_src racket
+(displayln "\n=== Section 7.1: Nested Structures ===\n")
+
+(define company
+  (make-ion 'struct
+            (hash 'name "Acme Corp"
+                  'employees (list
+                              (hash 'name "Alice"
+                                   'role (make-ion 'symbol 'admin '(verified)))
+                              (hash 'name "Bob"
+                                   'role (make-ion 'symbol 'user '(standard))))
+                  'metadata (hash 'founded 2010
+                                 'location "Boston"))
+            '(company)))
+
+(displayln "Company structure: " company)
+#+end_src
+
+** 7.2 Schema-Free Evolution
+
+#+begin_src racket
+(displayln "\n=== Section 7.2: Schema-Free Evolution ===\n")
+
+;; Version 1
+(define user-v1
+  (make-ion 'struct
+            (hash 'name "Alice"
+                  'email "alice@example.com")))
+
+;; Version 2 - add field without breaking v1
+(define user-v2
+  (make-ion 'struct
+            (hash 'name "Alice"
+                  'email "alice@example.com"
+                  'phone "+1-555-0123")))  ; New field
+
+(displayln "User v1: " user-v1)
+(displayln "User v2 (evolved): " user-v2)
+#+end_src
+
+* Section 8: Summary
+
+** 8.1 Key Concepts
+
+#+begin_src racket
+(displayln "\n=== Section 8: Summary ===\n")
+
+(displayln "Ion provides:")
+(displayln "  1. Rich type system (timestamps, decimals, symbols)")
+(displayln "  2. Annotations for semantic metadata")
+(displayln "  3. Self-describing data (no schema needed)")
+(displayln "  4. Both text and binary formats")
+(displayln "  5. Better than JSON for large-scale systems")
+
+(displayln "\nUse cases:")
+(displayln "  - Configuration files")
+(displayln "  - API responses")
+(displayln "  - Event logs")
+(displayln "  - Data pipelines")
+(displayln "  - Service communication")
+
+(displayln "\n=== Tutorial Complete! ===")
+#+end_src
+
+* Appendix: Resources
+
+** Official Documentation
+
+- [[https://amazon-ion.github.io/ion-docs/][Ion Documentation]]
+- [[https://amazon-ion.github.io/ion-docs/guides/cookbook.html][Ion Cookbook]]
+- [[https://github.com/amazon-ion/ion-specification][Ion Specification]]
+
+** Language Libraries
+
+- [[https://github.com/amazon-ion/ion-c][Ion C]]
+- [[https://github.com/amazon-ion/ion-java][Ion Java]]
+- [[https://github.com/amazon-ion/ion-python][Ion Python]]
+- [[https://github.com/amazon-ion/ion-js][Ion JavaScript]]
+
+** Related Experiments
+
+- [[file:../062-ion-fusion/README.org][Experiment 062: Ion Fusion]]
+- [[file:../142-here-strings/README.org][Experiment 142: Here Strings]]
+- [[file:../999-rhea-framework/README.org][Experiment 999: RHEA Framework]]
+
+** Next Steps
+
+1. Tangle this tutorial: ~C-c C-v t~
+2. Run it: ~racket ion-tutorial.rkt~
+3. Explore [[file:04-ion-in-racket.rkt][Ion in Racket implementation]]
+4. Build your own Ion parser
+5. Attend Ion Fusion session (Saturday 1:30pm)

@@ -1,0 +1,208 @@
+// Test file for ion-mode syntax highlighting
+// RacketCon 2025 - Experiment 061
+
+// ============================================================================
+// Basic Types
+// ============================================================================
+
+// Nulls
+null
+null.int
+null.string
+
+// Booleans
+true
+false
+
+// Numbers
+42
+-17
+3.14
+1.23d-4
+3.14e0
++inf
+-inf
+nan
+0xDEADBEEF
+0b11111111
+
+// Timestamps
+2025-10-04T
+2025-10-04T12:30:45Z
+2025-10-04T12:30:45-05:00
+2025-10-04T12:30:45.123456Z
+
+// ============================================================================
+// Strings and Symbols
+// ============================================================================
+
+// Strings
+"Hello, Ion!"
+"String with \"quotes\""
+"Unicode: λ → π"
+'''
+Multi-line
+string literal
+'''
+
+// Symbols
+name
+firstName
+last_name
+'quoted symbol'
+'symbol with spaces'
+
+// ============================================================================
+// Annotations
+// ============================================================================
+
+// Simple
+dollars::123.45
+meters::100
+email::"alice@example.com"
+
+// Multiple
+verified::user::email::"alice@example.com"
+validated::sanitized::user_input::"data"
+
+// Domain-specific
+ipv4::"192.168.1.1"
+uuid::"550e8400-e29b-41d4-a716-446655440000"
+usd::1234.56
+
+// ============================================================================
+// Collections
+// ============================================================================
+
+// Lists
+[1, 2, 3, 4, 5]
+["Alice", "Bob", "Carol"]
+[1, "two", 3.0, true, null]
+
+// Structs
+{
+  name: "Alice",
+  age: 30,
+  email: verified::"alice@example.com",
+  balance: usd::1234.56
+}
+
+// Nested
+{
+  person: {
+    name: "Bob",
+    age: 25
+  },
+  address: {
+    street: "123 Main St",
+    city: "Boston",
+    state: "MA"
+  }
+}
+
+// ============================================================================
+// S-expressions
+// ============================================================================
+
+// Simple
+(+ 1 2 3)
+(cons 'a 'b)
+(car mylist)
+
+// Nested
+(+ (* 2 3) (* 4 5))
+(lambda (x) (* x x))
+
+// Functions
+(map square (list 1 2 3 4 5))
+(filter even? numbers)
+(foldr + 0 (range 10))
+
+// Complex
+(define (factorial n)
+  (if (zero? n)
+      1
+      (* n (factorial (- n 1)))))
+
+// Pipeline
+(pipeline
+  (read-csv "data.csv")
+  (filter (lambda (row) (> (get row 'age) 21)))
+  (map (lambda (row) (get row 'name)))
+  (sort string<?))
+
+// ============================================================================
+// Binary Data
+// ============================================================================
+
+// Blob
+{{aGVsbG8=}}
+{{VG8gaW5maW5pdHkuLi4gYW5kIGJleW9uZCE=}}
+
+// CLOB
+{{"This is a clob"}}
+{{"Multi-line\nclob data"}}
+
+// ============================================================================
+// Real-world Example
+// ============================================================================
+
+// API Response
+{
+  status: ok::200,
+  timestamp: 2025-10-04T12:00:00Z,
+  request_id: uuid::"550e8400-e29b-41d4-a716-446655440000",
+
+  data: {
+    user_id: "alice",
+    username: "alice",
+    email: verified::"alice@example.com",
+    created: 2025-01-15T10:30:00Z,
+    balance: usd::1234.56,
+
+    permissions: [
+      admin::write,
+      user::read
+    ]
+  },
+
+  metadata: {
+    cache: hit::true,
+    version: "v2",
+    server: "ion-api-01"
+  }
+}
+
+// Event with S-expression
+event::{
+  type: computation,
+  timestamp: 2025-10-04T12:06:00Z,
+  operation: (reduce + (map square (range 1 100))),
+  result: 328350,
+  duration: milliseconds::42
+}
+
+// Configuration with transformations
+{
+  app: "data-processor",
+  version: "2.1.0",
+
+  transform: (compose
+    (map (lambda (x) (* x 2)))
+    (filter (lambda (x) (> x 10)))
+    (sort <)),
+
+  validate: (and
+    (has-field? 'id)
+    (has-field? 'timestamp)
+    (> (get 'amount) 0)),
+
+  workers: 8,
+  timeout: seconds::30
+}
+
+/* Block comment
+   testing multi-line
+   comments */
+
+// End of test file

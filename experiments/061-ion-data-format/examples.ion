@@ -1,0 +1,512 @@
+// examples.ion - Complete Amazon Ion data type showcase
+// RacketCon 2025 - Experiment 061
+
+// ============================================================================
+// 1. NULL VALUES
+// ============================================================================
+
+// Generic null
+null
+
+// Typed nulls
+null.bool
+null.int
+null.decimal
+null.float
+null.timestamp
+null.string
+null.symbol
+null.blob
+null.clob
+null.list
+null.sexp
+null.struct
+
+// ============================================================================
+// 2. BOOLEAN VALUES
+// ============================================================================
+
+true
+false
+
+// ============================================================================
+// 3. INTEGER VALUES
+// ============================================================================
+
+// Decimal integers
+0
+42
+-17
+1_234_567
+
+// Hexadecimal integers
+0xBeef
+0xCAFE
+0xDEADBEEF
+
+// Binary integers
+0b0101
+0b1111
+0b11111111
+
+// ============================================================================
+// 4. REAL NUMBERS
+// ============================================================================
+
+// Decimals (arbitrary precision)
+3.14
+-0.001
+1.23d-4
+999.999d0
+
+// Floats (IEEE 754)
+3.14e0
+1.23e10
+-5.67e-8
++inf
+-inf
+nan
+
+// ============================================================================
+// 5. TIMESTAMP VALUES
+// ============================================================================
+
+// Date only
+2025-10-04T
+
+// Date and time (UTC)
+2025-10-04T12:00Z
+2025-10-04T12:30:45Z
+
+// With timezone offset
+2025-10-04T12:30:45-05:00
+2025-10-04T12:30:45+00:00
+
+// With fractional seconds
+2025-10-04T12:30:45.123Z
+2025-10-04T12:30:45.123456Z
+
+// Year and month only
+2025-10T
+2025T
+
+// ============================================================================
+// 6. STRING VALUES
+// ============================================================================
+
+// Short strings
+"Hello, Ion!"
+"String with \"quotes\""
+"Unicode: λ → π"
+"Escapes: \n\t\r\\"
+"Hex escape: \x41"
+"Unicode escape: \u03BB"
+
+// Long strings (triple-quoted)
+'''
+This is a long string.
+It can span multiple lines.
+Whitespace is preserved.
+'''
+
+'''Multi-line
+with no indent'''
+
+// ============================================================================
+// 7. SYMBOL VALUES
+// ============================================================================
+
+// Unquoted symbols (identifiers)
+name
+firstName
+last_name
+$dollar
+_underscore
+
+// Quoted symbols (can contain anything)
+'symbol with spaces'
+'123-starts-with-number'
+'special!@#$%characters'
+'unicode-λ-symbol'
+
+// ============================================================================
+// 8. BLOB VALUES (Binary Large Objects)
+// ============================================================================
+
+// Base64-encoded binary data
+{{aGVsbG8=}}
+{{VG8gaW5maW5pdHkuLi4gYW5kIGJleW9uZCE=}}
+
+// Multi-line blob
+{{
+  VGhpcyBpcyBh
+  bXVsdGktbGlu
+  ZSBibG9i
+}}
+
+// ============================================================================
+// 9. CLOB VALUES (Character Large Objects)
+// ============================================================================
+
+// Character data stored as bytes
+{{"This is a clob"}}
+{{"Multi-line\nclob data"}}
+{{
+  "Another way to write
+   a multi-line clob"
+}}
+
+// ============================================================================
+// 10. LIST VALUES (Ordered Collections)
+// ============================================================================
+
+// Empty list
+[]
+
+// Homogeneous lists
+[1, 2, 3, 4, 5]
+["Alice", "Bob", "Carol"]
+[true, false, true]
+
+// Heterogeneous lists
+[1, "two", 3.0, true, null]
+
+// Nested lists
+[[1, 2], [3, 4], [5, 6]]
+[
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9]
+]
+
+// Lists with different types
+[
+  42,
+  "string",
+  3.14,
+  2025-10-04T,
+  true,
+  {name: "nested struct"},
+  [1, 2, 3]
+]
+
+// ============================================================================
+// 11. S-EXPRESSION VALUES (Lisp-like)
+// ============================================================================
+
+// Empty s-expression
+()
+
+// Simple s-expressions
+(+ 1 2 3)
+(cons 'a 'b)
+(car mylist)
+
+// Nested s-expressions
+(+ (* 2 3) (* 4 5))
+(cons (car x) (cdr y))
+(lambda (x) (* x x))
+
+// Function calls
+(map square (list 1 2 3 4 5))
+(filter even? numbers)
+(foldr + 0 (range 10))
+
+// Complex s-expressions
+(define (factorial n)
+  (if (zero? n)
+      1
+      (* n (factorial (- n 1)))))
+
+// S-expressions with different types
+(process "data" 42 3.14 true)
+(create-user 'alice "alice@example.com" 30)
+
+// Quoted symbols in s-expressions
+(quote (a b c))
+'(1 2 3)
+
+// Nested function compositions
+(compose
+  (map add1)
+  (filter positive?)
+  (sort <))
+
+// Macro-like s-expressions
+(defmacro unless (test then else)
+  (list 'if (list 'not test) then else))
+
+// Data transformation pipeline
+(pipeline
+  (read-csv "data.csv")
+  (filter (lambda (row) (> (get row 'age) 21)))
+  (map (lambda (row) (get row 'name)))
+  (sort string<?))
+
+// ============================================================================
+// 12. STRUCT VALUES (Key-Value Pairs)
+// ============================================================================
+
+// Empty struct
+{}
+
+// Simple structs
+{name: "Alice"}
+{name: "Alice", age: 30}
+{x: 1, y: 2, z: 3}
+
+// Struct with various value types
+{
+  name: "Alice",
+  age: 30,
+  email: "alice@example.com",
+  active: true,
+  balance: 1234.56,
+  created: 2025-01-15T10:30:00Z,
+  tags: [admin, verified],
+  metadata: null
+}
+
+// Nested structs
+{
+  person: {
+    name: "Bob",
+    age: 25
+  },
+  address: {
+    street: "123 Main St",
+    city: "Boston",
+    state: "MA",
+    zip: "02101"
+  }
+}
+
+// Struct with all container types
+{
+  list_field: [1, 2, 3],
+  sexp_field: (+ 1 2),
+  struct_field: {nested: true},
+  mixed: [
+    {id: 1, name: "First"},
+    {id: 2, name: "Second"}
+  ]
+}
+
+// ============================================================================
+// 13. ANNOTATIONS
+// ============================================================================
+
+// Single annotations
+dollars::123.45
+email::"alice@example.com"
+meters::100
+seconds::30
+
+// Multiple annotations (left to right)
+verified::user::email::"alice@example.com"
+validated::sanitized::user_input::"data"
+experimental::beta::feature::enabled::true
+
+// Annotations on different types
+celsius::20
+fahrenheit::68.0
+timestamp::utc::2025-10-04T12:00Z
+base64::encoded::{{aGVsbG8=}}
+
+// Annotations on containers
+test_data::[1, 2, 3, 4, 5]
+person::verified::{name: "Alice", age: 30}
+lisp::code::(define x 42)
+
+// Domain-specific annotations
+ipv4::"192.168.1.1"
+ipv6::"2001:0db8:85a3::8a2e:0370:7334"
+uuid::"550e8400-e29b-41d4-a716-446655440000"
+ssn::"123-45-6789"
+phone::"+1-555-0123"
+url::"https://example.com"
+
+// ============================================================================
+// 14. COMPLEX REAL-WORLD EXAMPLES
+// ============================================================================
+
+// RacketCon 2025 Conference Data
+{
+  conference: "RacketCon 2025",
+  dates: {
+    start: 2025-10-04T09:00:00-05:00,
+    end: 2025-10-05T17:00:00-05:00
+  },
+  location: {
+    city: "Boston",
+    state: "MA",
+    venue: "TBD"
+  },
+  sessions: [
+    {
+      title: "Ion Fusion",
+      speaker: "Todd Jonker",
+      time: 2025-10-04T13:30:00-05:00,
+      duration: minutes::30,
+      topics: [ion, fusion, amazon, data]
+    },
+    {
+      title: "Deep Immutable Updates",
+      speaker: "Mike Delmonaco",
+      time: 2025-10-04T11:15:00-05:00,
+      duration: minutes::45,
+      topics: [lenses, optics, immutability]
+    }
+  ],
+  attendees: count::150,
+  status: confirmed
+}
+
+// API Response Example
+{
+  status: ok::200,
+  timestamp: 2025-10-04T12:00:00Z,
+  request_id: uuid::"550e8400-e29b-41d4-a716-446655440000",
+  data: {
+    users: [
+      {
+        id: 1,
+        username: "alice",
+        email: verified::"alice@example.com",
+        balance: usd::1234.56,
+        created: 2025-01-15T10:30:00Z,
+        permissions: [read, write, admin]
+      },
+      {
+        id: 2,
+        username: "bob",
+        email: pending::"bob@example.com",
+        balance: usd::567.89,
+        created: 2025-03-20T14:15:00Z,
+        permissions: [read]
+      }
+    ],
+    total: 2,
+    has_more: false
+  },
+  metadata: {
+    cache: hit::true,
+    version: "v2",
+    server: "ion-api-01"
+  }
+}
+
+// Computational Expression (S-expression as data)
+(pipeline
+  (data-source "events.ion")
+  (filter (lambda (event)
+    (and
+      (eq? (get event 'type) 'purchase)
+      (> (get event 'amount) 100.0))))
+  (group-by 'user_id)
+  (aggregate
+    (sum 'amount)
+    (count 'transactions))
+  (sort-by 'total_amount 'desc)
+  (take 10))
+
+// Configuration with S-expressions
+{
+  app: "data-processor",
+  version: "2.1.0",
+
+  // S-expression for transformation rules
+  transform: (compose
+    (map (lambda (x) (* x 2)))
+    (filter (lambda (x) (> x 10)))
+    (sort <)),
+
+  // S-expression for validation rules
+  validate: (and
+    (has-field? 'id)
+    (has-field? 'timestamp)
+    (> (get 'amount) 0)),
+
+  // Regular config values
+  workers: 8,
+  timeout: seconds::30,
+  retry_policy: {
+    max_attempts: 3,
+    backoff: exponential::(base 2 max 60)
+  }
+}
+
+// Event Log with Mixed Types
+[
+  event::{
+    type: user_login,
+    timestamp: 2025-10-04T12:00:00.000Z,
+    user_id: uuid::"550e8400-e29b-41d4-a716-446655440000",
+    ip: ipv4::"192.168.1.100",
+    success: true,
+    metadata: (login-source web geo "US-MA-Boston")
+  },
+
+  event::{
+    type: purchase,
+    timestamp: 2025-10-04T12:05:30.123Z,
+    user_id: uuid::"550e8400-e29b-41d4-a716-446655440000",
+    total: usd::99.99,
+    items: [
+      {sku: "ITEM-001", name: "Widget", qty: 2, price: usd::25.00},
+      {sku: "ITEM-042", name: "Gadget", qty: 1, price: usd::49.99}
+    ],
+    payment: {
+      method: credit_card,
+      last4: "1234",
+      processor: (stripe-charge "ch_xxx" usd::99.99)
+    }
+  },
+
+  event::{
+    type: computation,
+    timestamp: 2025-10-04T12:06:00Z,
+    operation: (reduce + (map square (range 1 100))),
+    result: 328350,
+    duration: milliseconds::42
+  }
+]
+
+// RHEA Framework Hypothesis (using Ion + S-expressions)
+{
+  hypothesis: "lens-composition-associativity",
+  description: '''
+    Lens composition should be associative:
+    (a ∘ b) ∘ c = a ∘ (b ∘ c)
+  ''',
+
+  // S-expression for test generator
+  test_generator: (for-each
+    (lambda (depth)
+      (generate-random-lenses depth 100))
+    (range 2 6)),
+
+  // S-expression for verification
+  verify: (lambda (a b c target)
+    (equal?
+      (compose (compose a b) c target)
+      (compose a (compose b c) target))),
+
+  predictions: [
+    "All compositions are associative",
+    "No counterexamples in 1000+ tests",
+    "Performance scales linearly"
+  ],
+
+  status: in_progress,
+  experiments: [41, 42, 45, 47, 48, 49]
+}
+
+// ============================================================================
+// 15. ION VERSION MARKER
+// ============================================================================
+
+// Ion version marker (should be first in file, shown here for reference)
+// $ion_1_0
+
+// End of examples.ion

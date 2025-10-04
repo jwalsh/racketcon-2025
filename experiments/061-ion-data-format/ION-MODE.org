@@ -1,0 +1,321 @@
+#+TITLE: Ion Mode for Emacs
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+~ion-mode~ is an Emacs major mode for editing Amazon Ion data format files.
+
+* Features
+
+** Syntax Highlighting
+
+- *Typed Nulls*: ~null~, ~null.int~, ~null.string~, etc.
+- *Booleans*: ~true~, ~false~
+- *Numbers*:
+  - Integers: ~42~, ~-17~, ~0xCAFE~, ~0b1010~
+  - Decimals: ~3.14~, ~1.23d-4~
+  - Floats: ~3.14e0~, ~+inf~, ~-inf~, ~nan~
+- *Timestamps*: ~2025-10-04T12:30:45Z~
+- *Strings*: ~"Hello"~, ~'''multi-line'''~
+- *Symbols*: ~name~, ~'quoted symbol'~
+- *Annotations*: ~dollars::123.45~, ~verified::user::email::"alice@example.com"~
+- *Collections*:
+  - Lists: ~[1, 2, 3]~
+  - Structs: ~{name: "Alice", age: 30}~
+  - S-expressions: ~(+ 1 2 3)~, ~(lambda (x) (* x x))~
+- *Binary Data*: Blobs ~{{aGVsbG8=}}~, CLOBs ~{{"text"}}~
+- *Comments*: ~// line comment~, ~/* block comment */~
+
+** Auto-completion
+
+Electric pairs for:
+- Double quotes ~"~
+- Single quotes ~'~
+- Brackets ~[]~
+- Braces ~{}~
+- Parentheses ~()~
+
+** Indentation
+
+Smart indentation based on nesting level of collections.
+
+* Installation
+
+** Automatic (via RacketCon config)
+
+Ion-mode loads automatically when you load ~racketcon-2025-config.el~:
+
+#+begin_src emacs-lisp
+;; In your init.el or .emacs
+(load "/Users/jasonwalsh/ghq/github.com/jwalsh/racketcon-2025/racketcon-2025-config.el")
+#+end_src
+
+** Manual
+
+#+begin_src emacs-lisp
+;; Add to your init.el or .emacs
+(add-to-list 'load-path "/Users/jasonwalsh/ghq/github.com/jwalsh/racketcon-2025/elisp")
+(require 'ion-mode)
+#+end_src
+
+* Usage
+
+** Opening Files
+
+Ion-mode activates automatically for ~.ion~ files.
+
+** Key Bindings
+
+| Key         | Command                 | Description                    |
+|-------------+-------------------------+--------------------------------|
+| ~C-c C-f~   | ~ion-format-buffer~     | Format buffer (placeholder)    |
+| ~C-c C-v~   | ~ion-validate-buffer~   | Validate syntax (placeholder)  |
+| ~C-c C-d~   | ~ion-open-documentation~ | Open Ion docs in browser       |
+| ~C-c C-g~   | ~ion-open-grammar~      | Open Ion grammar spec          |
+| ~C-c C-e~   | ~ion-jump-to-examples~  | Jump to examples.ion           |
+| ~C-c C-t~   | ~ion-jump-to-tutorial~  | Jump to Ion tutorial           |
+
+** Commands
+
+*** ~ion-open-documentation~
+Opens [[https://amazon-ion.github.io/ion-docs/][Ion Documentation]] in browser.
+
+*** ~ion-open-grammar~
+Opens [[https://amazon-ion.github.io/ion-docs/books/ion-1-1/grammar.html][Ion Grammar Specification]] in browser.
+
+*** ~ion-jump-to-examples~
+Jumps to ~experiments/061-ion-data-format/examples.ion~ file.
+
+*** ~ion-jump-to-tutorial~
+Jumps to ~experiments/061-ion-data-format/TUTORIAL.org~ file.
+
+* Examples
+
+** Simple Values
+
+#+begin_src ion
+// Nulls
+null
+null.int
+null.string
+
+// Booleans
+true
+false
+
+// Numbers
+42
+3.14
+1.23e10
+0xDEADBEEF
+0b11111111
+
+// Timestamps
+2025-10-04T12:30:45Z
+2025-10-04T12:30:45-05:00
+
+// Strings
+"Hello, Ion!"
+'''Multi-line
+string literal'''
+#+end_src
+
+** Annotations
+
+#+begin_src ion
+// Simple annotations
+dollars::123.45
+meters::100
+email::"alice@example.com"
+
+// Multiple annotations
+verified::user::email::"alice@example.com"
+validated::sanitized::user_input::"data"
+#+end_src
+
+** Collections
+
+#+begin_src ion
+// List
+[1, 2, 3, 4, 5]
+["Alice", "Bob", "Carol"]
+
+// Struct
+{
+  name: "Alice",
+  age: 30,
+  email: verified::"alice@example.com",
+  balance: usd::1234.56
+}
+
+// S-expression
+(+ 1 2 3)
+(lambda (x) (* x x))
+(map square (list 1 2 3 4 5))
+#+end_src
+
+** Complex Example
+
+#+begin_src ion
+// API Response
+{
+  status: ok::200,
+  timestamp: 2025-10-04T12:00:00Z,
+  request_id: uuid::"550e8400-e29b-41d4-a716-446655440000",
+
+  data: {
+    user_id: "alice",
+    email: verified::"alice@example.com",
+    balance: usd::1234.56,
+    permissions: [read, write, admin]
+  },
+
+  metadata: {
+    cache: hit::true,
+    version: "v2"
+  }
+}
+#+end_src
+
+* Customization
+
+** Variables
+
+#+begin_src emacs-lisp
+;; Indentation offset (default: 2)
+(setq ion-indent-offset 2)
+#+end_src
+
+** Faces
+
+Ion-mode uses standard font-lock faces:
+
+- ~font-lock-constant-face~: nulls, booleans, numbers, timestamps
+- ~font-lock-string-face~: strings
+- ~font-lock-variable-name-face~: symbols
+- ~font-lock-type-face~: annotations
+- ~font-lock-keyword-face~: S-expression keywords, blob delimiters
+
+You can customize these faces in your theme.
+
+* Extension Points
+
+** Future Enhancements
+
+The mode includes placeholders for:
+
+1. *Formatting*: ~ion-format-buffer~ - Format Ion code
+2. *Validation*: ~ion-validate-buffer~ - Validate Ion syntax
+3. *Binary Support*: Convert between text and binary Ion
+4. *Schema Support*: Validate against Ion schema
+5. *REPL Integration*: Evaluate Ion expressions
+
+** Adding Features
+
+To extend ion-mode:
+
+#+begin_src emacs-lisp
+;; Example: Add a command to convert to JSON
+(defun ion-convert-to-json ()
+  "Convert Ion buffer to JSON (placeholder)."
+  (interactive)
+  ;; Implementation here
+  (message "Converting to JSON..."))
+
+;; Add to ion-mode-map
+(define-key ion-mode-map (kbd "C-c C-j") 'ion-convert-to-json)
+#+end_src
+
+* Integration with RacketCon
+
+Ion-mode integrates seamlessly with the RacketCon 2025 project:
+
+** Jump Commands
+
+- ~C-c C-e~ jumps to ~examples.ion~ with comprehensive Ion examples
+- ~C-c C-t~ jumps to ~TUTORIAL.org~ for learning Ion
+
+** Documentation
+
+- [[file:README.org][Ion Data Format Overview]]
+- [[file:TUTORIAL.org][Ion Tutorial with Tangle Support]]
+- [[file:GRAMMAR-TUTORIAL.org][Ion Grammar Deep Dive]]
+- [[file:examples.ion][Complete Ion Examples]]
+
+** Related Experiments
+
+- [[file:../062-ion-fusion/README.org][Experiment 062: Ion Fusion]] - Language built on Ion
+- [[file:../142-here-strings/README.org][Experiment 142: Here Strings]] - For Ion literals in Racket
+
+* Syntax Highlighting Examples
+
+When editing ~.ion~ files, ion-mode provides:
+
+#+begin_example
+// Keywords and types highlighted
+null.int              <- constant face
+true                  <- constant face
+verified::user::data  <- 'verified' and 'user' in type face
+
+// Numbers
+42                    <- constant face
+3.14                  <- constant face
+0xCAFE                <- constant face
+
+// Strings
+"Hello"               <- string face
+'''multi-line'''      <- string face
+
+// Symbols
+name:                 <- variable face
+'quoted'              <- variable face
+
+// S-expressions
+(lambda (x) (* x x))  <- 'lambda' in keyword face
+
+// Annotations on structures
+person::{             <- 'person' in type face
+  name: "Alice"
+}
+#+end_example
+
+* Troubleshooting
+
+** Mode not loading
+
+Check that ion-mode is loaded:
+
+#+begin_src emacs-lisp
+M-x describe-variable RET ion-mode RET
+#+end_src
+
+** Auto-mode not working
+
+Ensure ~.ion~ files trigger ion-mode:
+
+#+begin_src emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.ion\\'" . ion-mode))
+#+end_src
+
+** Syntax highlighting issues
+
+Reload the buffer:
+
+#+begin_example
+M-x revert-buffer
+#+end_example
+
+* Resources
+
+- [[https://amazon-ion.github.io/ion-docs/][Amazon Ion Documentation]]
+- [[https://amazon-ion.github.io/ion-docs/books/ion-1-1/grammar.html][Ion 1.1 Grammar Specification]]
+- [[https://github.com/amazon-ion/ion-specification][Ion Specification Repository]]
+- [[file:../062-ion-fusion/README.org][Ion Fusion Session Prep]] (Saturday 1:30pm EDT)
+
+* Status
+
+Ion-mode v0.1.0 - Basic syntax highlighting complete
+
+Ready for Amazon Ion file editing!

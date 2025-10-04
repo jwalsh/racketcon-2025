@@ -150,12 +150,17 @@
 (defun racketcon-setup-org-babel ()
   "Configure org-babel for literate programming."
   (when (require 'org nil t)
-    (require 'ob-racket nil t)
+    ;; Try to load ob-racket, but don't fail if missing
+    (condition-case nil
+        (require 'ob-racket)
+      (error
+       (message "ob-racket not available - using ob-scheme as fallback")
+       (require 'ob-scheme nil t)))
 
-    ;; Enable Racket in org-babel
+    ;; Enable Racket/Scheme in org-babel
     (org-babel-do-load-languages
      'org-babel-load-languages
-     '((racket . t)
+     '((scheme . t)
        (emacs-lisp . t)
        (shell . t)
        (python . t)))
@@ -167,6 +172,10 @@
     (setq org-src-fontify-natively t)
     (setq org-src-tab-acts-natively t)
     (setq org-src-preserve-indentation t)
+
+    ;; Use racket for scheme if available
+    (when racketcon-racket-program
+      (setq org-babel-scheme-cmd racketcon-racket-program))
 
     (message "RacketCon 2025: Org-babel configured")))
 
@@ -183,6 +192,17 @@
         (add-hook 'racket-mode-hook #'racketcon-mode-enable)
         (add-hook 'org-mode-hook #'racketcon-mode-enable))
       (message "RacketCon 2025: Tools loaded"))))
+
+;; ============================================================================
+;; Ion Mode Integration
+;; ============================================================================
+
+(defun racketcon-setup-ion-mode ()
+  "Configure ion-mode for Amazon Ion data format files."
+  (let ((ion-mode-file (expand-file-name "ion-mode.el" racketcon-elisp-dir)))
+    (when (file-exists-p ion-mode-file)
+      (require 'ion-mode nil t)
+      (message "RacketCon 2025: Ion mode loaded"))))
 
 ;; ============================================================================
 ;; Quick Access Functions
@@ -248,6 +268,8 @@
     (princ "Tools:\n")
     (princ (format "  racketcon-tools: %s\n"
                    (if (featurep 'racketcon-tools) "Loaded ✓" "Not loaded ✗")))
+    (princ (format "  ion-mode: %s\n"
+                   (if (featurep 'ion-mode) "Loaded ✓" "Not loaded ✗")))
 
     (princ "\nReady for RacketCon 2025!\n")))
 
@@ -271,6 +293,7 @@
   (racketcon-setup-supporting-modes)
   (racketcon-setup-org-babel)
   (racketcon-load-tools)
+  (racketcon-setup-ion-mode)
   (message "RacketCon 2025: Complete setup finished!"))
 
 ;; Run setup automatically when loaded

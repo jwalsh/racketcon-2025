@@ -1,0 +1,647 @@
+#+TITLE: Ion Grammar Tutorial: Complete Syntax Specification
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+PROPERTY: header-args:racket :tangle ion-grammar.rkt :mkdirp yes :comments org
+#+STARTUP: overview
+
+* Introduction
+
+This tutorial walks through the complete Amazon Ion grammar specification, focusing on lexical structure and syntax rules.
+
+Based on: [[https://amazon-ion.github.io/ion-docs/docs/spec.html][Ion Specification]]
+
+Tangle and run:
+#+begin_example
+C-c C-v t                  # Tangle to ion-grammar.rkt
+racket ion-grammar.rkt     # Run examples
+#+end_example
+
+* Section 1: Lexical Foundations
+
+** 1.1 Character Set and Case Sensitivity
+
+Ion is:
+- Unicode-based (supports all Unicode characters)
+- Case-sensitive (~Name~ ≠ ~name~ ≠ ~NAME~)
+- Uses UTF-8 encoding in text format
+
+#+begin_src racket
+#lang racket
+
+(displayln "=== Section 1.1: Character Set ===\n")
+
+;; Ion is case-sensitive
+(define name-1 "Alice")
+(define Name-1 "Bob")
+(define NAME-1 "Carol")
+
+(displayln (format "name: ~a" name-1))
+(displayln (format "Name: ~a" Name-1))
+(displayln (format "NAME: ~a" NAME-1))
+(displayln "All three are different identifiers!")
+#+end_src
+
+** 1.2 Whitespace
+
+Whitespace is insignificant in Ion text format:
+- Space (~U+0020~)
+- Tab (~U+0009~)
+- Newline (~U+000A~, ~U+000D~)
+
+#+begin_src racket
+(displayln "\n=== Section 1.2: Whitespace ===\n")
+
+;; These are equivalent in Ion:
+(define compact "{name:\"Alice\",age:30}")
+(define spaced "{ name: \"Alice\", age: 30 }")
+(define multiline #<<ION
+{
+  name: "Alice",
+  age: 30
+}
+ION
+)
+
+(displayln "Compact: " compact)
+(displayln "Spaced: " spaced)
+(displayln "Multiline:\n" multiline)
+(displayln "\nAll represent the same Ion structure!")
+#+end_src
+
+** 1.3 Comments
+
+Ion supports two comment styles:
+
+#+begin_src racket
+(displayln "\n=== Section 1.3: Comments ===\n")
+
+;; Single-line comments: //
+(define with-line-comment #<<ION
+{
+  name: "Alice",  // This is a comment
+  age: 30         // Another comment
+}
+ION
+)
+
+;; Multi-line comments: /* */
+(define with-block-comment #<<ION
+{
+  /*
+   * User record
+   * Created: 2025-10-04
+   */
+  name: "Alice",
+  age: 30
+}
+ION
+)
+
+(displayln "With line comments:\n" with-line-comment)
+(displayln "\nWith block comments:\n" with-block-comment)
+#+end_src
+
+* Section 2: Null Values
+
+** 2.1 Generic Null
+
+#+begin_src racket
+(displayln "\n=== Section 2.1: Generic Null ===\n")
+
+;; Grammar: null
+
+(struct ion-null (type) #:transparent)
+
+(define generic-null (ion-null #f))
+
+(displayln "Generic null: " generic-null)
+(displayln "Grammar: null")
+#+end_src
+
+** 2.2 Typed Nulls
+
+#+begin_src racket
+(displayln "\n=== Section 2.2: Typed Nulls ===\n")
+
+;; Grammar: null.TYPE
+
+(define null-int (ion-null 'int))
+(define null-string (ion-null 'string))
+(define null-list (ion-null 'list))
+(define null-struct (ion-null 'struct))
+
+(displayln "null.int: " null-int)
+(displayln "null.string: " null-string)
+(displayln "null.list: " null-list)
+(displayln "null.struct: " null-struct)
+
+(displayln "\nGrammar:")
+(displayln "  null.bool")
+(displayln "  null.int")
+(displayln "  null.decimal")
+(displayln "  null.float")
+(displayln "  null.timestamp")
+(displayln "  null.string")
+(displayln "  null.symbol")
+(displayln "  null.blob")
+(displayln "  null.clob")
+(displayln "  null.list")
+(displayln "  null.sexp")
+(displayln "  null.struct")
+#+end_src
+
+* Section 3: Boolean Values
+
+** 3.1 Boolean Literals
+
+#+begin_src racket
+(displayln "\n=== Section 3.1: Boolean Literals ===\n")
+
+;; Grammar:
+;;   true
+;;   false
+;;   null.bool
+
+(define bool-true #t)
+(define bool-false #f)
+(define bool-null (ion-null 'bool))
+
+(displayln "true: " bool-true)
+(displayln "false: " bool-false)
+(displayln "null.bool: " bool-null)
+
+(displayln "\nGrammar: true | false | null.bool")
+#+end_src
+
+* Section 4: Integer Values
+
+** 4.1 Decimal Integers
+
+#+begin_src racket
+(displayln "\n=== Section 4.1: Decimal Integers ===\n")
+
+;; Grammar: [+-]? [0-9] (_? [0-9])*
+
+(define zero 0)
+(define positive 123)
+(define negative -456)
+(define with-underscores 1_234_567)
+
+(displayln "Zero: " zero)
+(displayln "Positive: " positive)
+(displayln "Negative: " negative)
+(displayln "With underscores (1_234_567): " with-underscores)
+
+(displayln "\nGrammar: [+-]? [0-9] (_? [0-9])*")
+(displayln "Examples: 0, 123, -456, 1_000_000")
+#+end_src
+
+** 4.2 Hexadecimal Integers
+
+#+begin_src racket
+(displayln "\n=== Section 4.2: Hexadecimal Integers ===\n")
+
+;; Grammar: [+-]? 0[xX] [0-9a-fA-F] (_? [0-9a-fA-F])*
+
+(define hex-beef #xBeef)
+(define hex-cafe #xCafe)
+(define hex-1234 #x1234)
+
+(displayln "0xBeef: " hex-beef " (decimal: " hex-beef ")")
+(displayln "0xCafe: " hex-cafe " (decimal: " hex-cafe ")")
+(displayln "0x1234: " hex-1234 " (decimal: " hex-1234 ")")
+
+(displayln "\nGrammar: [+-]? 0[xX] [0-9a-fA-F] (_? [0-9a-fA-F])*")
+(displayln "Examples: 0xBeef, 0xCAFE, 0x12_34")
+#+end_src
+
+** 4.3 Binary Integers
+
+#+begin_src racket
+(displayln "\n=== Section 4.3: Binary Integers ===\n")
+
+;; Grammar: [+-]? 0[bB] [01] (_? [01])*
+
+(define binary-5 #b0101)
+(define binary-15 #b1111)
+(define binary-255 #b11111111)
+
+(displayln "0b0101: " binary-5 " (decimal: " binary-5 ")")
+(displayln "0b1111: " binary-15 " (decimal: " binary-15 ")")
+(displayln "0b11111111: " binary-255 " (decimal: " binary-255 ")")
+
+(displayln "\nGrammar: [+-]? 0[bB] [01] (_? [01])*")
+(displayln "Examples: 0b0101, 0b1111, 0b1111_0000")
+#+end_src
+
+* Section 5: Real Numbers
+
+** 5.1 Decimal Numbers
+
+#+begin_src racket
+(displayln "\n=== Section 5.1: Decimal Numbers ===\n")
+
+;; Grammar: [+-]? ( [0-9]+ '.' [0-9]* | '.' [0-9]+ ) ( [dD] [+-]? [0-9]+ )?
+
+(define decimal-pi 3.14159)
+(define decimal-small 0.001)
+(define decimal-scientific 1.23e-4)
+
+(displayln "3.14159: " decimal-pi)
+(displayln "0.001: " decimal-small)
+(displayln "1.23e-4: " decimal-scientific)
+
+(displayln "\nGrammar: [+-]? DIGITS '.' DIGITS ([dD] [+-]? DIGITS)?")
+(displayln "Examples: 3.14, -0.001, 1.23d-4")
+#+end_src
+
+** 5.2 Float Numbers
+
+#+begin_src racket
+(displayln "\n=== Section 5.2: Float Numbers ===\n")
+
+;; Grammar: [+-]? ( [0-9]+ '.' [0-9]* | '.' [0-9]+ ) ( [eE] [+-]? [0-9]+ )?
+
+(define float-pi 3.14e0)
+(define float-large 1.23e10)
+(define float-small 5.67e-8)
+(define infinity +inf.0)
+(define neg-infinity -inf.0)
+(define not-a-number +nan.0)
+
+(displayln "3.14e0: " float-pi)
+(displayln "1.23e10: " float-large)
+(displayln "5.67e-8: " float-small)
+(displayln "+inf: " infinity)
+(displayln "-inf: " neg-infinity)
+(displayln "nan: " not-a-number)
+
+(displayln "\nGrammar: [+-]? DIGITS '.' DIGITS ([eE] [+-]? DIGITS)?")
+(displayln "Special: +inf, -inf, nan")
+#+end_src
+
+* Section 6: Timestamp Values
+
+** 6.1 Timestamp Formats
+
+#+begin_src racket
+(displayln "\n=== Section 6.1: Timestamp Formats ===\n")
+
+(require racket/date)
+
+;; Grammar: YYYY-MM-DDTHH:MM:SS(.fff)?[+-]HH:MM | Z
+
+(define timestamp-examples
+  (list
+   "2025-10-04T"                          ; Date only
+   "2025-10-04T12:00Z"                    ; UTC
+   "2025-10-04T12:00:00-05:00"            ; With offset
+   "2025-10-04T12:00:00.123Z"             ; With milliseconds
+   "2025-10-04T12:00:00.123456Z"))        ; With microseconds
+
+(displayln "Timestamp formats:")
+(for ([ts timestamp-examples])
+  (displayln (format "  ~a" ts)))
+
+(displayln "\nGrammar:")
+(displayln "  YYYY-MM-DD                           Date only")
+(displayln "  YYYY-MM-DDTHH:MMZ                    UTC time")
+(displayln "  YYYY-MM-DDTHH:MM:SS+HH:MM            With offset")
+(displayln "  YYYY-MM-DDTHH:MM:SS.fffZ             Milliseconds")
+#+end_src
+
+* Section 7: String Values
+
+** 7.1 Short Strings
+
+#+begin_src racket
+(displayln "\n=== Section 7.1: Short Strings ===\n")
+
+;; Grammar: '"' ( CHAR | ESCAPE )* '"'
+
+(define simple-string "Hello, Ion!")
+(define with-escapes "Line 1\nLine 2\tTabbed")
+(define with-unicode "Unicode: \u03BB \u2192 \u03C0")
+
+(displayln "Simple: " simple-string)
+(displayln "With escapes: " with-escapes)
+(displayln "Unicode: " with-unicode)
+
+(displayln "\nGrammar: \"...\"")
+(displayln "Escapes: \\n \\t \\\" \\\\ \\uXXXX")
+#+end_src
+
+** 7.2 Long Strings
+
+#+begin_src racket
+(displayln "\n=== Section 7.2: Long Strings ===\n")
+
+;; Grammar: ''' TEXT '''
+
+(define long-string #<<ION
+'''
+This is a long string.
+It can span multiple lines.
+Preserves formatting.
+'''
+ION
+)
+
+(displayln "Long string:\n" long-string)
+
+(displayln "\nGrammar: '''...'''")
+(displayln "Preserves whitespace and newlines")
+#+end_src
+
+* Section 8: Symbol Values
+
+** 8.1 Unquoted Symbols
+
+#+begin_src racket
+(displayln "\n=== Section 8.1: Unquoted Symbols ===\n")
+
+;; Grammar: [a-zA-Z_] [a-zA-Z0-9_]*
+
+(define symbols
+  '(name
+    first_name
+    lastName
+    $dollar
+    _underscore))
+
+(displayln "Valid unquoted symbols:")
+(for ([sym symbols])
+  (displayln (format "  ~a" sym)))
+
+(displayln "\nGrammar: [a-zA-Z_$] [a-zA-Z0-9_$]*")
+#+end_src
+
+** 8.2 Quoted Symbols
+
+#+begin_src racket
+(displayln "\n=== Section 8.2: Quoted Symbols ===\n")
+
+;; Grammar: '\'' TEXT '\''
+
+(define quoted-symbols
+  (list
+   "'symbol with spaces'"
+   "'123-numbers-first'"
+   "'special!@#characters'"
+   "'unicode-λ-π'"))
+
+(displayln "Quoted symbols:")
+(for ([sym quoted-symbols])
+  (displayln (format "  ~a" sym)))
+
+(displayln "\nGrammar: 'TEXT'")
+(displayln "Allows any characters")
+#+end_src
+
+* Section 9: Blob and Clob Values
+
+** 9.1 Blobs (Binary Large Objects)
+
+#+begin_src racket
+(displayln "\n=== Section 9.1: Blobs ===\n")
+
+;; Grammar: '{{' BASE64 '}}'
+
+(displayln "Blob grammar: {{BASE64}}")
+(displayln "Examples:")
+(displayln "  {{aGVsbG8=}}           'hello' in base64")
+(displayln "  {{VG8gaW5maW5pdHk=}}   'To infinity' in base64")
+
+(displayln "\nBase64 encoded binary data")
+#+end_src
+
+** 9.2 Clobs (Character Large Objects)
+
+#+begin_src racket
+(displayln "\n=== Section 9.2: Clobs ===\n")
+
+;; Grammar: '{{' '"' TEXT '"' '}}'
+
+(displayln "Clob grammar: {{\"TEXT\"}}")
+(displayln "Examples:")
+(displayln "  {{\"This is a clob\"}}")
+(displayln "  {{\"Multi-line\\nclob\"}}")
+
+(displayln "\nText stored as bytes")
+#+end_src
+
+* Section 10: Container Types
+
+** 10.1 Lists
+
+#+begin_src racket
+(displayln "\n=== Section 10.1: Lists ===\n")
+
+;; Grammar: '[' VALUE* ']'
+
+(define empty-list '())
+(define number-list '(1 2 3 4 5))
+(define mixed-list '(1 "two" 3.0 #t))
+(define nested-list '((1 2) (3 4) (5 6)))
+
+(displayln "Empty: " empty-list)
+(displayln "Numbers: " number-list)
+(displayln "Mixed types: " mixed-list)
+(displayln "Nested: " nested-list)
+
+(displayln "\nGrammar: [ VALUE (, VALUE)* ]")
+(displayln "Examples: [1,2,3], [1,\"two\",3.0], [[1,2],[3,4]]")
+#+end_src
+
+** 10.2 S-Expressions
+
+#+begin_src racket
+(displayln "\n=== Section 10.2: S-Expressions ===\n")
+
+;; Grammar: '(' VALUE* ')'
+
+(define simple-sexp '(+ 1 2 3))
+(define nested-sexp '(cons (car x) (cdr y)))
+(define function-call '(map square (list 1 2 3)))
+
+(displayln "Simple: " simple-sexp)
+(displayln "Nested: " nested-sexp)
+(displayln "Function: " function-call)
+
+(displayln "\nGrammar: ( VALUE* )")
+(displayln "Examples: (+ 1 2), (cons 'a 'b), (lambda (x) x)")
+#+end_src
+
+** 10.3 Structs
+
+#+begin_src racket
+(displayln "\n=== Section 10.3: Structs ===\n")
+
+;; Grammar: '{' ( SYMBOL ':' VALUE )* '}'
+
+(define empty-struct (hash))
+(define person (hash 'name "Alice" 'age 30))
+(define nested-struct
+  (hash 'person (hash 'name "Bob")
+        'address (hash 'city "Boston")))
+
+(displayln "Empty: " empty-struct)
+(displayln "Person: " person)
+(displayln "Nested: " nested-struct)
+
+(displayln "\nGrammar: { FIELD:VALUE (, FIELD:VALUE)* }")
+(displayln "Examples: {name:\"Alice\"}, {x:1,y:2}")
+#+end_src
+
+* Section 11: Annotations
+
+** 11.1 Single Annotation
+
+#+begin_src racket
+(displayln "\n=== Section 11.1: Single Annotation ===\n")
+
+;; Grammar: ANNOTATION '::' VALUE
+
+(struct annotated (annotations value) #:transparent)
+
+(define dollars (annotated '(dollars) 123.45))
+(define email (annotated '(email) "alice@example.com"))
+(define meters (annotated '(meters) 100))
+
+(displayln "dollars::123.45: " dollars)
+(displayln "email::\"alice@example.com\": " email)
+(displayln "meters::100: " meters)
+
+(displayln "\nGrammar: SYMBOL::VALUE")
+#+end_src
+
+** 11.2 Multiple Annotations
+
+#+begin_src racket
+(displayln "\n=== Section 11.2: Multiple Annotations ===\n")
+
+;; Grammar: ANNOTATION '::' ANNOTATION '::' ... '::' VALUE
+
+(define verified-email
+  (annotated '(verified user email) "alice@example.com"))
+
+(define validated-input
+  (annotated '(validated sanitized user-input) "data"))
+
+(displayln "verified::user::email::\"...\": " verified-email)
+(displayln "validated::sanitized::user-input::\"...\": " validated-input)
+
+(displayln "\nGrammar: ANN1::ANN2::...::VALUE")
+(displayln "Read left to right: outermost to innermost")
+#+end_src
+
+** 11.3 Structural Annotations
+
+#+begin_src racket
+(displayln "\n=== Section 11.3: Structural Annotations ===\n")
+
+;; Annotations can apply to containers
+
+(define annotated-list
+  (annotated '(test-data) '(1 2 3 4 5)))
+
+(define annotated-struct
+  (annotated '(person verified)
+             (hash 'name "Alice" 'age 30)))
+
+(displayln "test-data::[1,2,3,4,5]: " annotated-list)
+(displayln "person::verified::{...}: " annotated-struct)
+
+(displayln "\nAnnotations apply to entire structure")
+#+end_src
+
+* Section 12: Complete Grammar Summary
+
+** 12.1 BNF Summary
+
+#+begin_src racket
+(displayln "\n=== Section 12: Grammar Summary ===\n")
+
+(displayln "Ion Grammar (Simplified BNF):")
+(displayln "")
+(displayln "VALUE      ::= NULL | BOOL | INT | DECIMAL | FLOAT")
+(displayln "             | TIMESTAMP | STRING | SYMBOL")
+(displayln "             | BLOB | CLOB")
+(displayln "             | LIST | SEXP | STRUCT")
+(displayln "             | ANNOTATION* VALUE")
+(displayln "")
+(displayln "NULL       ::= 'null' | 'null.' TYPE")
+(displayln "BOOL       ::= 'true' | 'false'")
+(displayln "INT        ::= DIGIT+ | '0x' HEXDIGIT+ | '0b' BINDIGIT+")
+(displayln "DECIMAL    ::= DIGIT+ '.' DIGIT+ ('d' [+-]? DIGIT+)?")
+(displayln "FLOAT      ::= DIGIT+ '.' DIGIT+ ('e' [+-]? DIGIT+)?")
+(displayln "TIMESTAMP  ::= YYYY-MM-DD 'T' HH:MM:SS ('.' FFF)? OFFSET")
+(displayln "STRING     ::= '\"' CHAR* '\"' | \"'''\" CHAR* \"'''\"")
+(displayln "SYMBOL     ::= IDENTIFIER | \"'\" CHAR* \"'\"")
+(displayln "BLOB       ::= '{{' BASE64 '}}'")
+(displayln "CLOB       ::= '{{' '\"' CHAR* '\"' '}}'")
+(displayln "LIST       ::= '[' VALUE* ']'")
+(displayln "SEXP       ::= '(' VALUE* ')'")
+(displayln "STRUCT     ::= '{' (FIELD ':' VALUE)* '}'")
+(displayln "ANNOTATION ::= SYMBOL '::'")
+(displayln "")
+(displayln "=== Grammar Tutorial Complete! ===")
+#+end_src
+
+* Appendix: Grammar Reference
+
+** Quick Reference Table
+
+| Type | Grammar | Example |
+|------+---------+---------|
+| Null | ~null[.TYPE]~ | ~null~, ~null.int~ |
+| Bool | ~true &#x7c; false~ | ~true~ |
+| Int | ~[+-]?DIGITS~ | ~123~, ~-456~ |
+| Hex | ~0x[0-9a-fA-F]+~ | ~0xBeef~ |
+| Binary | ~0b[01]+~ | ~0b1010~ |
+| Decimal | ~DIGITS.DIGITS~ | ~3.14~ |
+| Float | ~DIGITS.DIGITSeEXP~ | ~1.23e-4~ |
+| Timestamp | ~YYYY-MM-DDTHH:MM:SSZ~ | ~2025-10-04T12:00Z~ |
+| String | ~"TEXT"~ | ~"Hello"~ |
+| Long String | ~'''TEXT'''~ | ~'''Long'''~ |
+| Symbol | ~IDENTIFIER~ | ~name~ |
+| Quoted Symbol | ~'TEXT'~ | ~'with spaces'~ |
+| Blob | ~{{BASE64}}~ | ~{{aGVsbG8=}}~ |
+| Clob | ~{{"TEXT"}}~ | ~{{"text"}}~ |
+| List | ~[VALUES]~ | ~[1,2,3]~ |
+| S-exp | ~(VALUES)~ | ~(+ 1 2)~ |
+| Struct | ~{FIELD:VALUE}~ | ~{name:"Alice"}~ |
+| Annotation | ~SYMBOL::VALUE~ | ~dollars::123~ |
+
+** Resources
+
+- [[https://amazon-ion.github.io/ion-docs/docs/spec.html][Ion Specification]]
+- [[https://amazon-ion.github.io/ion-docs/books/ion-1-1/grammar.html][Ion 1.1 Grammar]]
+- [[file:TUTORIAL.org][Ion Tutorial]]
+- [[file:README.org][Experiment Overview]]
+
+** Next Steps
+
+1. Tangle this tutorial: ~C-c C-v t~
+2. Run it: ~racket ion-grammar.rkt~
+3. Study [[file:TUTORIAL.org][complete Ion tutorial]]
+4. Build parser using grammar rules
+5. Attend Ion Fusion session
+
+* Summary
+
+This grammar tutorial covered:
+
+✓ Lexical foundations (whitespace, comments)
+✓ Null values (generic and typed)
+✓ Boolean literals
+✓ Integer formats (decimal, hex, binary)
+✓ Real numbers (decimal, float)
+✓ Timestamp syntax
+✓ String and symbol literals
+✓ Blob and clob formats
+✓ Container types (list, sexp, struct)
+✓ Annotation syntax
+✓ Complete BNF summary
+
+Ready to parse Ion data!

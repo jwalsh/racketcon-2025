@@ -1,0 +1,631 @@
+#+TITLE: Experiment 088: Racket Mode Adventures - Greg Hendershott
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Session Details
+
+*Title*: "It Works": More Adventures with Racket and Emacs
+*Speaker*: Greg Hendershott
+*Time*: Saturday, 2:00pm EDT
+*Track*: Tools & Ecosystem
+
+* Speaker Bio
+
+Greg Hendershott:
+- Background in philosophy and music software industry
+- Decade of work in open source Racket and Emacs communities
+- Maintainer of racket-mode for Emacs
+- Website: [[https://greghendershott.com][greghendershott.com]]
+
+* Session Overview
+
+Evolution of racket-mode design and features:
+1. Multiple local and remote back ends
+2. Redesigned "lossless" REPL
+3. Modern Emacs UI completion annotations
+4. Lang-driven editing
+5. Enhanced step debugger
+
+* Goals
+
+1. Understand racket-mode architecture
+2. Learn about new features
+3. Explore back end design patterns
+4. Study REPL implementation
+5. Examine debugger enhancements
+6. Apply lessons to our RacketCon tooling
+
+* Racket Mode Architecture
+
+** Overview
+
+#+begin_src
+┌─────────────────────────────────────────┐
+│         Emacs Front End                 │
+│                                         │
+│  • racket-mode.el                      │
+│  • racket-repl-mode.el                 │
+│  • racket-debug.el                     │
+│  • racket-xp-mode.el                   │
+└─────────────────────────────────────────┘
+                    ↓ (JSON-RPC)
+┌─────────────────────────────────────────┐
+│         Racket Back End                 │
+│                                         │
+│  • Command server (racket/base)        │
+│  • REPL subprocess                     │
+│  • Debugger integration                │
+│  • Language-specific handlers          │
+└─────────────────────────────────────────┘
+#+end_src
+
+** Communication Protocol
+
+- JSON-RPC between Emacs and Racket
+- Asynchronous command execution
+- Streaming output support
+- Error handling and recovery
+
+* Key Features
+
+** 1. Multiple Back Ends
+
+*** Local Back Ends
+
+#+begin_src emacs-lisp
+;; Connect to local Racket process
+;; Default behavior - works out of the box
+(racket-run)
+#+end_src
+
+*** Remote Back Ends
+
+#+begin_src emacs-lisp
+;; Connect to remote Racket instance
+;; Useful for:
+;; - Docker containers
+;; - Remote servers
+;; - Different Racket versions
+(setq racket-program "ssh user@remote racket")
+#+end_src
+
+*** Multiple Simultaneous Back Ends
+
+#+begin_src emacs-lisp
+;; Different back ends for different projects
+;; Buffer-local back end configuration
+(dir-locals-set-class-variables
+ 'project-a
+ '((racket-mode . ((racket-program . "/path/to/racket-v8.10")))))
+
+(dir-locals-set-class-variables
+ 'project-b
+ '((racket-mode . ((racket-program . "/path/to/racket-v8.15")))))
+#+end_src
+
+** 2. Lossless REPL
+
+*** Traditional REPL Issues
+
+- Output can be garbled
+- Mixed stdout/stderr
+- Lost formatting
+- Incomplete evaluation results
+
+*** Lossless Design
+
+#+begin_src racket
+;; Back end captures all output streams separately
+(struct repl-output
+  (stdout    ; Standard output
+   stderr    ; Error output
+   result    ; Evaluation result
+   values    ; Multiple values
+   exn       ; Exception if any
+   metadata) ; Source location, etc.
+  #:transparent)
+#+end_src
+
+*** Benefits
+
+1. *Separate streams*: stdout, stderr, result all distinct
+2. *Multiple values*: Display all values from expressions
+3. *Metadata*: Source locations, type info, documentation
+4. *Pretty printing*: Preserve structure and formatting
+5. *Error clarity*: Exceptions with full stack traces
+
+** 3. Completion Annotations
+
+*** Modern Emacs Completion
+
+#+begin_src emacs-lisp
+;; Completion candidates with rich annotations
+;; Example: completing "map"
+
+;; Candidate          Annotation
+;; map                (procedure? list? ...)
+;; map/c              (contract)
+;; hashmap            (struct)
+;; bitmap%            (class)
+#+end_src
+
+*** Implementation
+
+#+begin_src emacs-lisp
+;; racket-mode provides completion-at-point function
+(defun racket-complete-at-point ()
+  (when (racket-in-code-p)
+    (let* ((bounds (racket-symbol-bounds))
+           (start (car bounds))
+           (end (cdr bounds)))
+      (list start end
+            (racket--get-completions)  ; From back end
+            :annotation-function #'racket--completion-annotation
+            :company-docsig #'racket--completion-docsig
+            :company-doc-buffer #'racket--completion-doc-buffer
+            :company-location #'racket--completion-location))))
+#+end_src
+
+*** Annotations Include
+
+- Function signatures
+- Contract information
+- Type annotations (if using Typed Racket)
+- Documentation snippets
+- Module source location
+
+** 4. Lang-Driven Editing
+
+*** Concept
+
+Editor behavior adapts to ~#lang~ being edited:
+
+#+begin_src racket
+#lang racket
+;; Racket-specific features active
+
+#lang typed/racket
+;; Type-aware completion and checking
+
+#lang scribble
+;; Documentation-focused editing
+
+#lang datalog
+;; Datalog syntax and tools
+#+end_src
+
+*** Features by Language
+
+**** Racket (~#lang racket~)
+
+- Standard indentation rules
+- ~define~ form recognition
+- Contract-aware completion
+- Module-level navigation
+
+**** Typed Racket (~#lang typed/racket~)
+
+- Type signature completion
+- Type error highlighting
+- Type-guided refactoring
+
+**** Scribble (~#lang scribble~)
+
+- Documentation structure
+- Cross-reference completion
+- Preview rendering
+
+**** Custom Languages
+
+#+begin_src emacs-lisp
+;; Register lang-specific behavior
+(racket-register-lang-handler
+ "custom-lang"
+ :indent-function #'custom-lang-indent
+ :completion-function #'custom-lang-complete
+ :run-command "custom-lang-run")
+#+end_src
+
+** 5. Enhanced Step Debugger
+
+*** Debug Commands
+
+| Key | Command | Description |
+|-----+---------+-------------|
+| ~n~ | Next | Step to next expression |
+| ~s~ | Step | Step into function |
+| ~o~ | Out | Step out of function |
+| ~c~ | Continue | Run to next breakpoint |
+| ~b~ | Break | Set breakpoint |
+| ~d~ | Disable | Disable breakpoint |
+| ~e~ | Eval | Evaluate expression |
+| ~p~ | Print | Print variable |
+| ~l~ | Locals | Show local bindings |
+
+*** Debugger Features
+
+**** Visual Stepping
+
+#+begin_src racket
+#lang racket
+
+(define (factorial n)
+  (if (zero? n)
+      1
+      (* n (factorial (- n 1)))))
+
+;; When debugging, shows:
+;; → (factorial 5)          ; Current expression
+;;     (zero? 5)            ; About to evaluate
+;;     #f                   ; Result
+;;   → (* 5 (factorial 4))  ; Next step
+#+end_src
+
+**** Local Inspection
+
+#+begin_example
+Locals at (factorial 4):
+  n = 4
+  <continuation> = (* 5 ...)
+#+end_example
+
+**** Breakpoints
+
+#+begin_src emacs-lisp
+;; Set conditional breakpoint
+(racket-debug-set-breakpoint
+ :file "factorial.rkt"
+ :line 4
+ :condition "(> n 10)")
+
+;; Break on exception
+(racket-debug-break-on-exn #t)
+#+end_src
+
+**** Stack Traces
+
+#+begin_example
+Stack:
+  factorial (factorial.rkt:3:2)
+  factorial (factorial.rkt:5:7)
+  factorial (factorial.rkt:5:7)
+  factorial (factorial.rkt:5:7)
+  main (factorial.rkt:8:0)
+#+end_example
+
+* Advanced Features
+
+** XP Mode (eXPlore)
+
+Enhanced IDE features:
+
+*** Rename Refactoring
+
+#+begin_src emacs-lisp
+;; Rename symbol across project
+M-x racket-xp-rename
+;; Prompts for new name
+;; Updates all references
+;; Preserves module boundaries
+#+end_src
+
+*** Find References
+
+#+begin_src emacs-lisp
+;; Find all uses of symbol
+M-x racket-xp-find-references
+;; Shows results in *xref* buffer
+;; Jump to any reference
+#+end_src
+
+*** Hover Documentation
+
+#+begin_src emacs-lisp
+;; Show docs on hover (via eldoc)
+(add-hook 'racket-mode-hook #'racket-xp-mode)
+;; Hover over symbol → see signature and docs
+#+end_src
+
+*** Unused Requires
+
+#+begin_src emacs-lisp
+;; Highlight unused requires
+;; M-x racket-xp-annotate shows:
+;;   (require racket/list)    ; Used
+;;   (require racket/string)  ; Unused ← highlighted
+#+end_src
+
+** REPL Features
+
+*** Command History
+
+#+begin_src emacs-lisp
+;; Persistent history across sessions
+(setq racket-history-file "~/.racket-mode-repl-history")
+
+;; Search history
+M-r  ; Search backward
+M-s  ; Search forward
+#+end_src
+
+*** Input Modes
+
+**** Sexp Mode
+
+#+begin_src emacs-lisp
+;; Send complete s-expressions
+;; Handles multi-line input correctly
+(racket-repl-submit)  ; C-j or C-RET
+#+end_src
+
+**** Line Mode
+
+#+begin_src emacs-lisp
+;; Send line-by-line (like shell)
+(racket-repl-submit-line)  ; RET
+#+end_src
+
+*** Result Presentation
+
+#+begin_src racket
+;; Multiple values displayed clearly
+(values 1 2 3)
+; → 1
+; → 2
+; → 3
+
+;; Structures pretty-printed
+(struct person (name age) #:transparent)
+(person "Alice" 30)
+; → (person "Alice" 30)
+
+;; Large results paginated
+(range 1000)
+; → (0 1 2 3 4 5 6 7 8 9 ...)
+;   [100 more items]
+#+end_src
+
+** Error Handling
+
+*** Error Display
+
+#+begin_example
+Error in factorial.rkt:
+  factorial: contract violation
+    expected: exact-nonnegative-integer?
+    given: -1
+  in: the 1st argument of
+      (-> exact-nonnegative-integer? exact-nonnegative-integer?)
+  contract from: factorial.rkt:2:0
+  blaming: factorial.rkt:8:0
+
+Stack trace:
+  factorial (factorial.rkt:3:2)
+  main (factorial.rkt:8:0)
+#+end_example
+
+*** Error Navigation
+
+#+begin_src emacs-lisp
+;; Jump to error location
+;; Click on error message
+;; Or use compilation-mode bindings
+M-g n  ; Next error
+M-g p  ; Previous error
+#+end_src
+
+* Integration with RacketCon Tooling
+
+** Our Configuration
+
+Current setup in ~racketcon-2025-config.el~:
+
+#+begin_src emacs-lisp
+(defun racketcon-setup-racket-mode ()
+  "Configure racket-mode for RacketCon 2025."
+  (when (require 'racket-mode nil t)
+    ;; Enable XP mode for IDE features
+    (add-hook 'racket-mode-hook #'racket-xp-mode)
+
+    ;; Custom indentation for RHEA
+    (put 'define-hypothesis 'racket-indent-function 1)
+    (put 'run-experiment 'racket-indent-function 1)
+
+    ;; REPL settings
+    (setq racket-repl-buffer-name-function
+          #'racket-repl-buffer-name-project)
+
+    ;; Performance tuning
+    (setq racket-xp-after-change-refresh-delay 1)))
+#+end_src
+
+** Enhancements from Talk
+
+Based on Greg's talk, we should add:
+
+#+begin_src emacs-lisp
+(defun racketcon-setup-racket-mode-enhanced ()
+  "Enhanced racket-mode setup based on Greg's talk."
+
+  ;; Multiple back ends for different Racket versions
+  (dir-locals-set-class-variables
+   'racketcon-experiments
+   '((racket-mode . ((racket-program . auto-detect)))))
+
+  ;; Enable lossless REPL
+  (setq racket-repl-lossless t)
+
+  ;; Enhanced completion annotations
+  (setq racket-show-functions
+        '(racket-show-pseudo-tooltip))
+
+  ;; Step debugger configuration
+  (define-key racket-mode-map (kbd "C-c C-d") #'racket-debug)
+
+  ;; XP mode enhancements
+  (setq racket-xp-highlight-unused-requires t)
+  (setq racket-xp-eldoc t)
+
+  ;; REPL history
+  (setq racket-history-file
+        (expand-file-name ".racket-mode-repl-history"
+                         racketcon-project-root)))
+#+end_src
+
+* Comparison: Racket Mode vs Other Language Modes
+
+| Feature | Racket Mode | SLIME (Lisp) | Cider (Clojure) |
+|---------+-------------+--------------+-----------------|
+| *Back end* | JSON-RPC | Swank | nREPL |
+| *REPL* | Lossless | Standard | Enhanced |
+| *Debugger* | Step | Full | Limited |
+| *Completion* | Annotated | Basic | Annotated |
+| *Refactoring* | XP mode | Limited | Yes |
+| *Multi-version* | Yes | No | Via profiles |
+| *Remote* | Yes | Yes | Yes |
+
+* Questions for Greg's Talk
+
+1. *Back End Design*
+   - How does JSON-RPC handle large data transfers?
+   - What's the protocol for streaming output?
+   - How are back end crashes handled?
+
+2. *Lossless REPL*
+   - How is output captured separately?
+   - Performance impact of lossless design?
+   - Handling of very large results?
+
+3. *Lang-Driven Editing*
+   - How does racket-mode detect ~#lang~?
+   - API for adding new language support?
+   - Performance with many custom languages?
+
+4. *Debugger*
+   - Implementation using errortrace?
+   - Overhead of debugging instrumentation?
+   - Interaction with contracts/types?
+
+5. *Future Plans*
+   - LSP protocol support?
+   - DAP (Debug Adapter Protocol)?
+   - Integration with other tools?
+
+* Practical Exercises
+
+** Exercise 1: Multi-Version Setup
+
+#+begin_src emacs-lisp
+;; Configure different Racket versions per project
+(dir-locals-set-directory-class
+ "/path/to/old-project" 'racket-8-0)
+(dir-locals-set-directory-class
+ "/path/to/new-project" 'racket-8-15)
+
+(dir-locals-set-class-variables
+ 'racket-8-0
+ '((racket-mode . ((racket-program . "/usr/local/racket-8.0/bin/racket")))))
+
+(dir-locals-set-class-variables
+ 'racket-8-15
+ '((racket-mode . ((racket-program . "/usr/local/racket-8.15/bin/racket")))))
+#+end_src
+
+** Exercise 2: Custom Lang Support
+
+#+begin_src emacs-lisp
+;; Add support for custom #lang
+(defun my-custom-lang-indent (indent-point state)
+  ;; Custom indentation logic
+  ...)
+
+(defun my-custom-lang-setup ()
+  (setq-local racket-indent-function #'my-custom-lang-indent))
+
+(add-hook 'racket-mode-hook
+          (lambda ()
+            (when (save-excursion
+                    (goto-char (point-min))
+                    (looking-at "#lang my-custom-lang"))
+              (my-custom-lang-setup))))
+#+end_src
+
+** Exercise 3: Enhanced Debugging
+
+#+begin_src racket
+#lang racket
+
+;; File: debug-example.rkt
+(define (buggy-function x)
+  (cond
+    [(zero? x) (error "Cannot be zero")]  ; Breakpoint here
+    [(negative? x) (* x -1)]
+    [else x]))
+
+;; In Emacs:
+;; 1. C-c C-d (start debugger)
+;; 2. Set breakpoint on error line
+;; 3. Call (buggy-function 0)
+;; 4. Inspect locals, step through
+#+end_src
+
+* Files Structure
+
+#+begin_example
+088-racket-mode-adventures/
+├── README.org                  # This file
+├── 01-backend-design.org      # Back end architecture study
+├── 02-lossless-repl.org       # REPL implementation details
+├── 03-lang-driven.org         # Lang-specific editing
+├── 04-debugger-deep-dive.org  # Debugger internals
+├── 05-completion-system.org   # Completion annotations
+├── 06-xp-mode-features.org    # XP mode exploration
+└── config-enhancements.el     # Enhanced configuration
+#+end_example
+
+* Resources
+
+** Official
+
+- [[https://github.com/greghendershott/racket-mode][racket-mode on GitHub]]
+- [[https://www.racket-mode.com/][Racket Mode Website]]
+- [[https://greghendershott.com/][Greg Hendershott's Website]]
+
+** Documentation
+
+- [[https://github.com/greghendershott/racket-mode/blob/master/doc/racket-mode.org][racket-mode Manual]]
+- [[https://github.com/greghendershott/racket-mode/wiki][racket-mode Wiki]]
+
+** Related
+
+- [[file:../061-ion-data-format/ION-MODE.org][Experiment 061: Ion Mode]] - Our custom mode
+- [[file:../../elisp/racketcon-tools.el][RacketCon Tools]] - Our tooling
+- [[file:../../racketcon-2025-config.el][RacketCon Config]] - Our setup
+
+* RacketCon Application
+
+** Before Talk
+
+- Review current racket-mode setup
+- Test multi-back end configuration
+- Prepare questions about:
+  - Back end protocol details
+  - Performance optimization
+  - Future roadmap
+
+** During Talk
+
+- Note new features
+- Ask about implementation details
+- Explore debugger demo
+
+** After Talk
+
+- Update our configuration
+- Implement new features
+- Share learnings with experiments
+
+* Status
+
+EXPERIMENT ready for Saturday 2:00pm EDT session with Greg Hendershott

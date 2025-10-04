@@ -1,0 +1,614 @@
+#+TITLE: Reading Guide: Lisp in Small Pieces
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Introduction
+
+*Lisp in Small Pieces* by Christian Queinnec is the definitive guide to Lisp implementation, covering interpreters, compilers, and language design.
+
+This reading guide provides a structured approach for RacketCon 2025 preparation.
+
+* Book Overview
+
+** Full Title
+/Lisp in Small Pieces/
+
+** Author
+Christian Queinnec (Université Paris 6)
+
+** Key Topics
+- Lisp interpreters (multiple implementations)
+- Compilation techniques
+- Continuations and control
+- Object systems
+- Macros and metaprogramming
+- Denotational semantics
+
+** Why Read This for RacketCon?
+
+1. *Deep Understanding*: Understand Racket's foundations
+2. *Implementation Techniques*: Learn interpreter/compiler design
+3. *Historical Context*: See evolution of Scheme/Lisp
+4. *Practical Application*: Build your own language constructs
+
+* Reading Strategy
+
+** Three Approaches
+
+*** 1. Sequential (Complete Study)
+Read cover-to-cover over 12-16 weeks.
+
+Best for: Deep language implementers, compiler writers.
+
+*** 2. Topic-Focused (Targeted Learning)
+Jump to specific chapters based on RacketCon sessions.
+
+Best for: Preparing for specific talks, targeted exploration.
+
+*** 3. Project-Driven (Learning by Doing)
+Read chapters as needed while building a project.
+
+Best for: Hands-on learners, side project builders.
+
+* Chapter-by-Chapter Guide
+
+** Chapter 1: The Basics of Interpretation
+
+*** Topics
+- Read-eval-print loop (REPL)
+- Environment model
+- First interpreter implementation
+
+*** Key Concepts
+- ~eval~ function design
+- Environment representation
+- Variable lookup
+
+*** RacketCon Connections
+- Understanding Racket's evaluation model
+- REPL design patterns
+- Foundation for all later chapters
+
+*** Recommended Approach
+☑ Read carefully - foundation for everything
+☑ Implement the basic interpreter in Racket
+☑ Compare to Racket's actual ~eval~
+
+*** Exercises
+1. Implement the basic interpreter
+2. Add error checking
+3. Add special forms (~if~, ~let~, etc.)
+
+** Chapter 2: Lisp 1, 2, ..., ω
+
+*** Topics
+- Lisp-1 vs Lisp-2 namespaces
+- Multiple interpreters with variations
+- Lexical vs dynamic scoping
+
+*** Key Concepts
+- Namespace design decisions
+- Scoping rules
+- Environment implementation strategies
+
+*** RacketCon Connections
+- Racket is Lisp-1 (single namespace)
+- Scheme heritage
+- Module system foundations
+
+*** Recommended Approach
+☐ Skim if not interested in namespacing details
+☑ Focus on lexical scoping sections
+☐ Compare Racket vs Common Lisp namespace models
+
+*** Exercises
+1. Implement both Lisp-1 and Lisp-2 interpreters
+2. Add dynamic scoping
+3. Benchmark performance differences
+
+** Chapter 3: Escape and Return
+
+*** Topics
+- Continuations
+- ~call/cc~ (call-with-current-continuation)
+- Non-local exits
+- Exception handling
+
+*** Key Concepts
+- First-class continuations
+- Control flow manipulation
+- Exception implementation
+
+*** RacketCon Connections
+- Racket's continuation support
+- Exception handling mechanisms
+- Control operators
+
+*** Recommended Approach
+☑☑☑ **ESSENTIAL CHAPTER**
+☑ Study carefully - continuations are powerful
+☑ Implement ~call/cc~
+☑ Work through all examples
+
+*** Exercises
+1. Implement continuations
+2. Build exception system with continuations
+3. Create generators using continuations
+4. Implement backtracking search
+
+** Chapter 4: Assignment and Side Effects
+
+*** Topics
+- Mutation in functional languages
+- ~set!~ implementation
+- Reference cells
+- Memory models
+
+*** Key Concepts
+- Mutable environments
+- Box/reference types
+- Side effects in pure code
+
+*** RacketCon Connections
+- Racket's ~set!~ and boxes
+- Functional vs imperative style
+- State management
+
+*** Recommended Approach
+☑ Important for understanding mutation
+☐ Can skim if focusing on pure functional
+☑ Study environment mutation techniques
+
+*** Exercises
+1. Add ~set!~ to interpreter
+2. Implement boxes
+3. Create memoization using mutation
+
+** Chapter 5: Delineating Evaluation
+
+*** Topics
+- Evaluation strategies
+- Lazy evaluation
+- Strict vs non-strict semantics
+- Delay and force
+
+*** Key Concepts
+- Thunks
+- Promise implementation
+- Stream processing
+
+*** RacketCon Connections
+- Racket's lazy language
+- Stream libraries
+- Performance optimization
+
+*** Recommended Approach
+☑ Valuable for lazy evaluation understanding
+☑ Implement streams
+☐ Skip if not interested in laziness
+
+*** Exercises
+1. Add lazy evaluation to interpreter
+2. Implement streams
+3. Build infinite data structures
+
+** Chapter 6: Fast Interpretation
+
+*** Topics
+- Optimization techniques
+- Register machines
+- Stack-based evaluation
+- Performance improvements
+
+*** Key Concepts
+- Instruction optimization
+- Memory management
+- Speed vs simplicity tradeoffs
+
+*** RacketCon Connections
+- Racket's bytecode compilation
+- JIT compilation
+- Performance tuning
+
+*** Recommended Approach
+☑ Important for performance understanding
+☐ Can defer if focusing on correctness first
+☑ Study for production systems
+
+*** Exercises
+1. Profile interpreter performance
+2. Add instruction optimizations
+3. Implement register allocation
+
+** Chapter 7: Compilation
+
+*** Topics
+- Compiling to bytecode
+- Target language design
+- Code generation
+- Optimization passes
+
+*** Key Concepts
+- Abstract syntax trees
+- Intermediate representations
+- Code emission
+
+*** RacketCon Connections
+- Racket's compiler
+- ~#lang~ implementation
+- Macro expansion
+
+*** Recommended Approach
+☑☑ **HIGHLY VALUABLE**
+☑ Essential for ~#lang~ creators
+☑ Study before RacketCon compiler talks
+
+*** Exercises
+1. Write simple compiler to bytecode
+2. Add optimization passes
+3. Target different backends
+
+** Chapter 8: Evaluation and Reflection
+
+*** Topics
+- Reflective interpreters
+- Towers of interpreters
+- Meta-circular evaluation
+- Reflection facilities
+
+*** Key Concepts
+- Self-hosting
+- Meta-levels
+- Reflective capabilities
+
+*** RacketCon Connections
+- Racket's reflection system
+- Syntax objects
+- Macro expansion
+
+*** Recommended Approach
+☑ Mind-bending but valuable
+☑ Study for deep understanding
+☐ Can skip for practical work
+
+*** Exercises
+1. Write meta-circular evaluator
+2. Implement reflection primitives
+3. Build debugging tools
+
+** Chapter 9: Macros
+
+*** Topics
+- Macro systems
+- Hygiene
+- Pattern matching
+- Syntax transformers
+
+*** Key Concepts
+- Macro expansion
+- Hygiene and capture
+- Pattern-based macros
+
+*** RacketCon Connections
+- Racket's macro system
+- ~syntax-parse~
+- DSL creation
+
+*** Recommended Approach
+☑☑☑ **ESSENTIAL FOR RACKETCON**
+☑ Study before macro-related talks
+☑ Implement pattern matcher
+☑ Create your own macros
+
+*** Exercises
+1. Implement simple macro system
+2. Add hygiene
+3. Build pattern matcher
+4. Create DSL with macros
+
+** Chapter 10: Compiling into C
+
+*** Topics
+- C code generation
+- Foreign function interface
+- Performance optimization
+- Memory management
+
+*** Key Concepts
+- Low-level code generation
+- C interop
+- GC interaction
+
+*** RacketCon Connections
+- Racket's FFI
+- Native code generation
+- Performance critical code
+
+*** Recommended Approach
+☐ Optional unless doing FFI work
+☑ Valuable for systems programming
+☐ Skip for high-level work
+
+** Chapter 11: Object-Oriented Programming
+
+*** Topics
+- Object systems in Lisp
+- CLOS (Common Lisp Object System)
+- Multiple dispatch
+- Method combination
+
+*** Key Concepts
+- Generic functions
+- Multiple inheritance
+- Method resolution
+
+*** RacketCon Connections
+- Racket's class system
+- Generic interfaces
+- François-René Rideau's talk on OOP
+
+*** Recommended Approach
+☑☑ **PREPARE FOR RIDEAU TALK**
+☑ Study before Saturday 10:15am session
+☑ Understand generic functions
+
+*** Exercises
+1. Implement simple object system
+2. Add multiple dispatch
+3. Create generic functions
+
+* RacketCon 2025 Reading Plan
+
+** Pre-Conference (2 weeks before)
+
+*** Week 1: Essentials
+- [ ] Chapter 1: The Basics (foundation)
+- [ ] Chapter 3: Continuations (essential)
+- [ ] Chapter 9: Macros (RacketCon focus)
+
+*** Week 2: Deep Dives
+- [ ] Chapter 7: Compilation (~#lang~ talks)
+- [ ] Chapter 11: OOP (Rideau's talk)
+- [ ] Chapter 2: Namespaces (background)
+
+** During Conference
+
+*** Saturday Sessions
+*Morning:*
+- Keynote (Cloudflare/Rosette): Review Chapter 7
+- 10:15am (Rideau OOP): Review Chapter 11
+- 11:15am (Delmonaco Lenses): Read optics literature
+
+*Afternoon:*
+- 1:30pm (Jonker Ion Fusion): Review Chapters 1, 9
+- Evening: Read relevant chapters for Sunday
+
+*** Sunday Sessions
+Review as needed based on talks
+
+** Post-Conference
+
+*** Month 1: Deep Study
+- [ ] Complete all unread chapters
+- [ ] Implement full interpreter
+- [ ] Build a ~#lang~ language
+
+*** Month 2: Application
+- [ ] Apply techniques to real projects
+- [ ] Write blog posts about learnings
+- [ ] Contribute to Racket ecosystem
+
+* Topic-Based Reading Paths
+
+** Path 1: Macro Systems
+Focus: DSL creation, ~#lang~ implementation
+
+Reading order:
+1. Chapter 1 (basics)
+2. Chapter 9 (macros)
+3. Chapter 7 (compilation)
+4. Chapter 8 (reflection)
+
+Time: 4-6 weeks
+
+** Path 2: Continuations and Control
+Focus: Advanced control flow
+
+Reading order:
+1. Chapter 1 (basics)
+2. Chapter 3 (continuations)
+3. Chapter 4 (side effects)
+4. Chapter 8 (reflection)
+
+Time: 3-4 weeks
+
+** Path 3: Object Systems
+Focus: OOP in functional languages
+
+Reading order:
+1. Chapter 1 (basics)
+2. Chapter 11 (objects)
+3. Chapter 9 (macros for DSLs)
+
+Time: 2-3 weeks
+
+** Path 4: Compilation
+Focus: Building compilers
+
+Reading order:
+1. Chapter 1 (basics)
+2. Chapter 6 (fast interpretation)
+3. Chapter 7 (compilation)
+4. Chapter 10 (C generation)
+
+Time: 6-8 weeks
+
+** Path 5: Complete Implementation
+Focus: Build production interpreter/compiler
+
+Reading order:
+1-11 in sequence
+
+Time: 12-16 weeks
+
+* Practical Exercises
+
+** Build-Along Projects
+
+*** Project 1: Scheme Subset Interpreter
+Implements: Chapters 1-5
+
+Features:
+- Basic evaluation
+- Lexical scoping
+- Continuations
+- Side effects
+- Lazy evaluation
+
+Time: 4-6 weeks
+
+*** Project 2: Macro Expander
+Implements: Chapter 9
+
+Features:
+- Pattern matching
+- Hygienic macros
+- Syntax objects
+
+Time: 2-3 weeks
+
+*** Project 3: Simple Compiler
+Implements: Chapters 6-7
+
+Features:
+- Bytecode generation
+- Optimization passes
+- Virtual machine
+
+Time: 4-6 weeks
+
+*** Project 4: Object System
+Implements: Chapter 11
+
+Features:
+- Classes and instances
+- Multiple dispatch
+- Generic functions
+
+Time: 2-3 weeks
+
+* Study Resources
+
+** Companion Materials
+
+*** Code Repository
+Implement examples in Racket:
+#+begin_src bash
+mkdir -p ~/racket/lisp-in-small-pieces
+cd ~/racket/lisp-in-small-pieces
+#+end_src
+
+*** Study Group
+- Weekly discussions
+- Code reviews
+- Shared implementations
+
+*** Online Resources
+- Scheme specification
+- Racket documentation
+- SICP (complementary text)
+
+** Tools
+
+*** Racket REPL
+Test all examples interactively
+
+*** DrRacket
+Visual debugging of interpreters
+
+*** Git
+Track implementation progress
+
+* Connection to RacketCon Topics
+
+** Rosette (Cloudflare Talk)
+Read: Chapters 1, 7, 8
+Focus: Evaluation models, compilation
+
+** OOP (Rideau Talk)
+Read: Chapter 11
+Focus: Object systems, generic functions
+
+** Lenses (Delmonaco Talk)
+External: Optics literature
+LiSP connection: Functional updates (Ch 4)
+
+** Ion Fusion (Jonker Talk)
+Read: Chapters 1, 9
+Focus: Data/code unification, macros
+
+* Quick Reference
+
+** Essential Chapters
+Priority reading for RacketCon:
+
+| Chapter | Title | Priority | Time |
+|---------+-------+----------+------|
+| 1 | Basics | ★★★★★ | 1 week |
+| 3 | Continuations | ★★★★★ | 1 week |
+| 9 | Macros | ★★★★★ | 1-2 weeks |
+| 7 | Compilation | ★★★★☆ | 1-2 weeks |
+| 11 | OOP | ★★★★☆ | 1 week |
+| 2 | Lisp variants | ★★★☆☆ | 3 days |
+| 4 | Side effects | ★★★☆☆ | 3 days |
+
+** Skip If Time-Constrained
+- Chapter 5 (Lazy evaluation) - unless interested
+- Chapter 6 (Performance) - defer to later
+- Chapter 8 (Reflection) - advanced topic
+- Chapter 10 (C generation) - specialized
+
+* Recommended Schedule
+
+** 2-Week Intensive (Pre-RacketCon)
+
+*Week 1:*
+- Mon-Tue: Chapter 1
+- Wed-Thu: Chapter 3
+- Fri-Sat: Chapter 9 (part 1)
+- Sun: Review & exercises
+
+*Week 2:*
+- Mon-Tue: Chapter 9 (part 2)
+- Wed: Chapter 7
+- Thu: Chapter 11
+- Fri: Review all
+- Sat-Sun: RacketCon!
+
+** 4-Week Deep Dive
+
+Add to 2-week plan:
+- Weeks 3-4: Chapters 2, 4, 5, 6
+- Implement full interpreter
+- Build sample ~#lang~
+
+** 3-Month Mastery
+
+- Month 1: Chapters 1-6
+- Month 2: Chapters 7-11
+- Month 3: Projects & applications
+
+* Next Steps
+
+1. [ ] Obtain book (physical or PDF)
+2. [ ] Choose reading path (sequential/topic/project)
+3. [ ] Set up code repository
+4. [ ] Schedule reading time
+5. [ ] Join or create study group
+6. [ ] Plan RacketCon connections
+7. [ ] Start with Chapter 1
+
+* Status
+
+Reading guide complete - Ready for Lisp in Small Pieces study!

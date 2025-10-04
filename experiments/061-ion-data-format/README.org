@@ -1,0 +1,488 @@
+#+TITLE: Experiment 061: Amazon Ion Data Format
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+
+* Overview
+
+Deep dive into Amazon Ion, a richly-typed, self-describing data serialization format designed for large-scale, service-oriented architectures.
+
+* Goals
+
+1. Understand Ion's type system and features
+2. Compare Ion to JSON, Protobuf, and other formats
+3. Implement Ion-like structures in Racket
+4. Explore Ion's use in Amazon systems
+5. Create Ion parser/writer prototypes
+6. Prepare for Ion Fusion session (Experiment 062)
+
+* Key Features
+
+** 1. Dual Encoding
+
+- *Text Format*: Human-readable (superset of JSON)
+- *Binary Format*: Compact, efficient parsing
+
+** 2. Rich Type System
+
+| Type | Description | Example |
+|------+-------------+---------|
+| ~null~ | Typed nulls | ~null.int~, ~null.string~ |
+| ~bool~ | Boolean | ~true~, ~false~ |
+| ~int~ | Unlimited precision | ~42~, ~-17~ |
+| ~decimal~ | Exact decimals | ~3.14~, ~1.23e-4~ |
+| ~float~ | IEEE-754 | ~3.14e0~, ~+inf~ |
+| ~timestamp~ | Arbitrary precision | ~2025-10-04T12:00:00Z~ |
+| ~string~ | Unicode text | ~"Hello"~ |
+| ~symbol~ | Efficient strings | ~name~, ~'quoted'~ |
+| ~blob~ | Binary data | ~{{aGVsbG8=}}~ |
+| ~clob~ | Character LOB | ~{{"text"}}~ |
+| ~list~ | Ordered collection | ~[1, 2, 3]~ |
+| ~sexp~ | S-expression | ~(+ 1 2)~ |
+| ~struct~ | Key-value pairs | ~{name: "Alice"}~ |
+
+** 3. Annotations
+
+Add metadata to any value:
+
+#+begin_src ion
+// Single annotation
+dollars::123.45
+
+// Multiple annotations
+verified::user::email::"alice@example.com"
+
+// On structures
+person::{name: "Alice", age: 30}
+#+end_src
+
+** 4. Self-Describing
+
+No external schema required - data describes itself.
+
+* File Structure
+
+#+begin_example
+061-ion-data-format/
+├── README.org                    # This file
+├── 01-ion-basics.org            # Core concepts
+├── 02-type-system.org           # Detailed types
+├── 03-annotations.org           # Annotation patterns
+├── 04-ion-in-racket.rkt        # Racket implementation
+├── 05-parser-prototype.rkt      # Simple parser
+├── 06-writer-prototype.rkt      # Simple writer
+├── 07-json-comparison.org       # Ion vs JSON
+├── 08-use-cases.org            # Practical applications
+├── 09-amazon-systems.org        # Amazon usage
+└── TUTORIAL.org                 # Complete walkthrough
+#+end_example
+
+* Ion vs JSON
+
+** JSON Example
+
+#+begin_src json
+{
+  "name": "Fido",
+  "age": 4,
+  "birthday": "2012-03-01",
+  "toys": ["ball", "rope"],
+  "weight": 41.2
+}
+#+end_src
+
+Problems:
+- No type for age unit (years? months?)
+- Birthday is a string
+- Weight has no unit
+- Ambiguous semantics
+
+** Ion Example
+
+#+begin_src ion
+{
+  name: "Fido",
+  age: years::4,                    // Annotated with unit
+  birthday: 2012-03-01T,            // Native timestamp
+  toys: [ball, rope],               // Symbols (unquoted)
+  weight: pounds::41.2              // Annotated with unit
+}
+#+end_src
+
+Benefits:
+- Unambiguous semantics
+- Type preservation
+- Efficient symbols
+- Native timestamps
+
+* Ion Type Details
+
+** Null Types
+
+#+begin_src ion
+null              // Generic null
+null.int          // Typed null for integer
+null.string       // Typed null for string
+null.list         // Typed null for list
+#+end_src
+
+** Numbers
+
+#+begin_src ion
+// Integers (arbitrary precision)
+42
+-17
+9999999999999999999999
+
+// Decimals (exact)
+3.14
+-0.001
+1.23d-4               // Scientific notation
+
+// Floats (IEEE-754)
+3.14e0
++inf
+-inf
+nan
+#+end_src
+
+** Timestamps
+
+#+begin_src ion
+// Full precision with timezone
+2025-10-04T12:30:45.123-05:00
+
+// UTC
+2025-10-04T12:30:45Z
+
+// Date only
+2025-10-04
+
+// Year and month
+2025-10
+#+end_src
+
+** Strings and Symbols
+
+#+begin_src ion
+// Strings (quoted)
+"Hello, world!"
+"Multi\nline"
+'''
+  Multi-line
+  string literal
+'''
+
+// Symbols (unquoted identifiers)
+name
+first_name
+$ion_symbol
+'quoted symbol'
+#+end_src
+
+** Collections
+
+#+begin_src ion
+// List (ordered, heterogeneous)
+[1, "two", 3.0, true]
+
+// S-expression (Lisp-like)
+(+ 1 2 3)
+(cons 'a 'b)
+
+// Struct (key-value)
+{
+  name: "Alice",
+  age: 30,
+  email: "alice@example.com"
+}
+#+end_src
+
+* Annotations in Depth
+
+** Purpose
+
+Annotations provide semantic metadata without changing structure:
+
+#+begin_src ion
+// Domain-specific types
+email::"alice@example.com"
+phone::"+1-555-0123"
+ssn::"123-45-6789"
+
+// Units
+meters::100
+seconds::30
+dollars::123.45
+
+// Validation states
+verified::validated::user_input::"data"
+#+end_src
+
+** Multiple Annotations
+
+Stack left to right:
+
+#+begin_src ion
+// Read as: verified (user (email "alice@example.com"))
+verified::user::email::"alice@example.com"
+#+end_src
+
+** Structural Annotations
+
+#+begin_src ion
+// Annotate entire structures
+person::{
+  name: "Alice",
+  age: 30,
+  role: admin::verified::"administrator"
+}
+
+// Annotate lists
+validated::[1, 2, 3, 4, 5]
+#+end_src
+
+* Practical Examples
+
+** Configuration File
+
+#+begin_src ion
+// Application configuration
+app::{
+  name: "MyApp",
+  version: "1.2.3",
+
+  server: {
+    host: "localhost",
+    port: 8080,
+    timeout: seconds::30,
+    max_connections: 100
+  },
+
+  database: {
+    url: "postgresql://localhost/mydb",
+    pool_size: 10,
+    timeout: seconds::5
+  },
+
+  features: [
+    enabled::analytics,
+    enabled::caching,
+    disabled::beta_features
+  ]
+}
+#+end_src
+
+** API Response
+
+#+begin_src ion
+// REST API response
+{
+  status: ok::200,
+  timestamp: 2025-10-04T12:00:00Z,
+
+  data: {
+    user_id: uuid::"550e8400-e29b-41d4-a716-446655440000",
+    username: "alice",
+    email: verified::"alice@example.com",
+    created: 2025-01-15T10:30:00Z,
+    balance: usd::1234.56,
+
+    permissions: [
+      admin::write,
+      user::read
+    ]
+  },
+
+  metadata: {
+    request_id: "req-12345",
+    version: "v2",
+    cache: hit::true
+  }
+}
+#+end_src
+
+** Event Log
+
+#+begin_src ion
+// Structured event stream
+[
+  event::{
+    type: user_login,
+    timestamp: 2025-10-04T12:00:00.000Z,
+    user_id: "alice",
+    ip: ipv4::"192.168.1.1",
+    success: true
+  },
+
+  event::{
+    type: purchase,
+    timestamp: 2025-10-04T12:05:30.123Z,
+    user_id: "alice",
+    total: usd::99.99,
+    items: [
+      {sku: "ITEM-001", qty: 2, price: usd::25.00},
+      {sku: "ITEM-042", qty: 1, price: usd::49.99}
+    ],
+    payment: {
+      method: credit_card,
+      last4: "1234"
+    }
+  },
+
+  event::{
+    type: error,
+    timestamp: 2025-10-04T12:06:00Z,
+    level: error,
+    message: "Connection timeout",
+    stack_trace: {{"Full stack trace..."}}
+  }
+]
+#+end_src
+
+* Amazon Use Cases
+
+** Where Ion is Used
+
+1. *Retail Systems*
+   - Product catalogs
+   - Order processing
+   - Inventory management
+   - Pricing engines
+
+2. *Consumer Products*
+   - Alexa device configuration
+   - Kindle content delivery
+   - AWS service APIs
+
+3. *Internal Services*
+   - Data pipelines
+   - Analytics systems
+   - Workflow orchestration
+   - Configuration management
+
+** Why Amazon Chose Ion
+
+- *Scale*: Handle billions of records
+- *Evolution*: Add fields without breaking systems
+- *Efficiency*: Binary format reduces bandwidth
+- *Semantics*: Unambiguous data meaning
+- *Flexibility*: Annotations for domain concepts
+
+* Ion vs Other Formats
+
+| Feature | JSON | Protobuf | Avro | MessagePack | Ion |
+|---------+------+----------+------+-------------+-----|
+| Self-describing | ✓ | ✗ | ✗ | ✗ | ✓ |
+| Schema-free | ✓ | ✗ | ✗ | ✓ | ✓ |
+| Rich types | ✗ | ✓ | ✓ | ✗ | ✓ |
+| Binary format | ✗ | ✓ | ✓ | ✓ | ✓ |
+| Text format | ✓ | ✗ | ✗ | ✗ | ✓ |
+| Annotations | ✗ | ✗ | ✗ | ✗ | ✓ |
+| Timestamps | ✗ | ✗ | ✓ | ✗ | ✓ |
+| Decimals | ✗ | ✗ | ✓ | ✗ | ✓ |
+| Symbols | ✗ | ✗ | ✗ | ✗ | ✓ |
+| S-expressions | ✗ | ✗ | ✗ | ✗ | ✓ |
+
+* Language Support
+
+** Official Libraries
+
+- C
+- C#
+- Go
+- Java
+- JavaScript/TypeScript
+- Python
+- Rust
+
+** Community Libraries
+
+- D
+- PHP
+- .NET Object Mapper
+
+** Racket Implementation
+
+Currently no official Ion library for Racket. This experiment will create prototypes!
+
+* Implementation in Racket
+
+See [[file:04-ion-in-racket.rkt][Ion in Racket]] for a prototype implementation.
+
+Key concepts to implement:
+
+#+begin_src racket
+;; Ion value representation
+(struct ion-value (type data annotations) #:transparent)
+
+;; Type constructors
+(define (ion-int n [annotations '()])
+  (ion-value 'int n annotations))
+
+(define (ion-timestamp ts [annotations '()])
+  (ion-value 'timestamp ts annotations))
+
+;; Annotated values
+(define balance
+  (ion-value 'decimal 1234.56 '(dollars)))
+#+end_src
+
+* Emacs Support
+
+** Ion Mode
+
+Created ~ion-mode.el~ - Emacs major mode for Ion files with:
+
+- Syntax highlighting for all Ion types
+- Auto-completion with electric pairs
+- Smart indentation
+- Quick access commands
+- Integration with RacketCon tools
+
+See [[file:ION-MODE.org][Ion Mode Documentation]] for details.
+
+*** Installation
+
+Ion-mode loads automatically with ~racketcon-2025-config.el~.
+
+*** Features
+
+- Highlights: nulls, booleans, numbers, timestamps, strings, symbols
+- Annotations: ~dollars::123.45~, ~verified::user::email::"alice@example.com"~
+- S-expressions: ~(lambda (x) (* x x))~, ~(map square numbers)~
+- Collections: lists ~[]~, structs ~{}~, sexps ~()~
+- Comments: ~// line~ and ~/* block */~
+
+*** Key Bindings
+
+| Key       | Command                   |
+|-----------+---------------------------|
+| ~C-c C-d~ | Open Ion documentation    |
+| ~C-c C-g~ | Open Ion grammar spec     |
+| ~C-c C-e~ | Jump to examples.ion      |
+| ~C-c C-t~ | Jump to Ion tutorial      |
+
+* Resources
+
+- [[https://amazon-ion.github.io/ion-docs/][Ion Documentation]]
+- [[https://github.com/amazon-ion/ion-specification][Ion Specification]]
+- [[https://github.com/amazon-ion][Ion GitHub Organization]]
+- [[https://amazon-ion.github.io/ion-docs/guides/cookbook.html][Ion Cookbook]]
+
+* Related Experiments
+
+- [[file:../062-ion-fusion/README.org][Experiment 062: Ion Fusion]] - Language built on Ion
+- [[file:../142-here-strings/README.org][Experiment 142: Here Strings]] - For Ion literals
+- [[file:../999-rhea-framework/README.org][Experiment 999: RHEA]] - Workflow patterns
+
+* Next Steps
+
+1. Read [[file:TUTORIAL.org][Complete Tutorial]]
+2. Implement [[file:04-ion-in-racket.rkt][Ion structures in Racket]]
+3. Create [[file:05-parser-prototype.rkt][simple parser]]
+4. Build [[file:06-writer-prototype.rkt][simple writer]]
+5. Prepare for Ion Fusion session
+
+* Status
+
+EXPERIMENT ready for exploration - Complete Ion data format study

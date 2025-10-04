@@ -1,0 +1,596 @@
+#+TITLE: Experiment 087: Java on Truffle (Espresso) & Language Implementation
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Deep dive into GraalVM's Java on Truffle (Espresso) and the Truffle language implementation framework, exploring how to build efficient interpreters and polyglot systems.
+
+* Goals
+
+1. Understand Espresso - Java VM implemented on Truffle
+2. Learn Truffle framework for language implementation
+3. Compare to Racket's language implementation patterns
+4. Explore polyglot interoperability
+5. Build Truffle-inspired interpreter concepts in Racket
+6. Apply lessons to RacketCon ~#lang~ development
+
+* What is Java on Truffle (Espresso)?
+
+** Core Definition
+
+Espresso is a complete implementation of the Java Virtual Machine Specification built as a Truffle interpreter.
+
+- *Full JVM*: Implements Java SE 8 and 11 specifications
+- *Truffle-based*: Built using the Truffle language implementation framework
+- *Polyglot-ready*: Enables direct interoperability with other GraalVM languages
+- *Isolated*: Runs Java in separate contexts from host JVM
+
+** Key Characteristics
+
+| Feature | Description |
+|---------+-------------|
+| *Meta-circular* | Java VM implemented in Java |
+| *Experimental* | Currently 2-3x slower than HotSpot |
+| *Compatible* | Passes Java Compatibility Kit (JCK) |
+| *Polyglot* | Interoperates with JS, Ruby, Python, R |
+| *Multi-version* | Run Java 8, 11, 17 simultaneously |
+| *Isolated* | Separate contexts for host/guest VMs |
+
+** Why This Matters for RacketCon
+
+Connection to Racket language implementation:
+
+1. *Meta-circular Evaluation*: Like Racket's ~#lang~ tower
+2. *Language Interop*: Similar to Racket's FFI and module system
+3. *AST Interpretation*: Parallels to Racket's expansion and evaluation
+4. *Specialization*: Like Racket's JIT and contract optimization
+
+* The Truffle Framework
+
+** Architecture
+
+#+begin_src
+┌─────────────────────────────────────────┐
+│         Language Implementation         │
+│  (JavaScript, Ruby, Python, Java, etc.) │
+│                                         │
+│  Built by extending TruffleLanguage    │
+└─────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────┐
+│         Truffle Framework               │
+│                                         │
+│  • Self-modifying AST interpretation   │
+│  • Specialization & profiling          │
+│  • Polyglot API                        │
+└─────────────────────────────────────────┘
+                    ↓
+┌─────────────────────────────────────────┐
+│         Graal Compiler                  │
+│                                         │
+│  • Partial evaluation                  │
+│  • Aggressive optimization             │
+│  • Native code generation              │
+└─────────────────────────────────────────┘
+#+end_src
+
+** Core Concepts
+
+*** Self-Modifying ASTs
+
+Truffle uses ASTs that rewrite themselves based on runtime feedback:
+
+#+begin_src java
+// Initial generic node
+class AddNode extends BinaryNode {
+  @Override
+  Object execute(VirtualFrame frame) {
+    Object left = leftNode.execute(frame);
+    Object right = rightNode.execute(frame);
+
+    // Generic addition - slow
+    return add(left, right);
+  }
+}
+
+// After profiling, specializes to:
+class IntAddNode extends BinaryNode {
+  @Override
+  int execute(VirtualFrame frame) {
+    int left = leftNode.executeInt(frame);
+    int right = rightNode.executeInt(frame);
+
+    // Specialized int addition - fast
+    return left + right;
+  }
+}
+#+end_src
+
+*** Specialization
+
+Truffle nodes specialize based on observed types:
+
+1. *Uninitialized*: First execution
+2. *Monomorphic*: Sees one type consistently
+3. *Polymorphic*: Sees 2-3 types
+4. *Megamorphic*: Sees many types, gives up specializing
+
+*** Partial Evaluation
+
+Graal compiler performs partial evaluation on hot AST paths:
+
+1. Inline method calls
+2. Constant fold known values
+3. Eliminate dead code
+4. Specialize on profile data
+
+** Truffle vs Racket
+
+| Aspect | Truffle | Racket |
+|--------+---------|--------|
+| *Language Tower* | TruffleLanguage | ~#lang~ reader |
+| *AST* | Self-modifying nodes | Syntax objects |
+| *Specialization* | Type profiling | Contract optimization |
+| *Compilation* | Graal JIT | Racket JIT (Chez) |
+| *Interop* | Polyglot API | FFI + modules |
+| *Reflection* | Limited | Full (syntax-parse) |
+| *Macros* | No | Yes (hygenic) |
+
+* Espresso Implementation Details
+
+** Installation
+
+#+begin_src bash
+# Install GraalVM
+# Then install Espresso
+gu install espresso
+
+# Run Java on Truffle
+java -truffle HelloWorld
+java -truffle -jar application.jar
+java -truffle -m module/main.Class
+#+end_src
+
+** Execution Modes
+
+*** Class File Execution
+
+#+begin_src bash
+# Compile Java
+javac HelloWorld.java
+
+# Run on Truffle
+java -truffle HelloWorld
+#+end_src
+
+*** JAR Execution
+
+#+begin_src bash
+# Run JAR on Truffle
+java -truffle -jar myapp.jar
+#+end_src
+
+*** Module-based Applications
+
+#+begin_src bash
+# Run Java module
+java -truffle -m com.example.mymodule/com.example.Main
+#+end_src
+
+** Polyglot Interoperability
+
+*** Java Calling JavaScript
+
+#+begin_src java
+import org.graalvm.polyglot.*;
+
+public class JavaJS {
+    public static void main(String[] args) {
+        try (Context context = Context.create()) {
+            // Evaluate JavaScript from Java
+            Value result = context.eval("js", "40 + 2");
+            System.out.println(result.asInt()); // 42
+
+            // Call JS function from Java
+            context.eval("js", "function add(a, b) { return a + b; }");
+            Value addFunction = context.getBindings("js").getMember("add");
+            int sum = addFunction.execute(10, 32).asInt();
+            System.out.println(sum); // 42
+        }
+    }
+}
+#+end_src
+
+*** JavaScript Calling Java
+
+#+begin_src javascript
+// In JavaScript running on GraalVM
+const ArrayList = Java.type('java.util.ArrayList');
+const list = new ArrayList();
+list.add('Hello');
+list.add('from');
+list.add('JavaScript');
+console.log(list.toString());
+#+end_src
+
+* Truffle Language Implementation
+
+** Building a Simple Language
+
+*** Language Structure
+
+#+begin_src java
+@TruffleLanguage.Registration(
+    id = "simplelang",
+    name = "Simple Language",
+    version = "0.1"
+)
+public class SimpleLangLanguage extends TruffleLanguage<SimpleLangContext> {
+
+    @Override
+    protected SimpleLangContext createContext(Env env) {
+        return new SimpleLangContext(env);
+    }
+
+    @Override
+    protected CallTarget parse(ParsingRequest request) {
+        Source source = request.getSource();
+        SimpleLangParser parser = new SimpleLangParser(source);
+        SimpleLangNode program = parser.parse();
+        RootNode rootNode = new SimpleLangRootNode(this, program);
+        return rootNode.getCallTarget();
+    }
+}
+#+end_src
+
+*** AST Nodes
+
+#+begin_src java
+// Base node
+public abstract class SimpleLangNode extends Node {
+    public abstract Object execute(VirtualFrame frame);
+}
+
+// Literal node
+public class LiteralNode extends SimpleLangNode {
+    private final Object value;
+
+    public LiteralNode(Object value) {
+        this.value = value;
+    }
+
+    @Override
+    public Object execute(VirtualFrame frame) {
+        return value;
+    }
+}
+
+// Addition with specialization
+public abstract class AddNode extends SimpleLangNode {
+    @Child private SimpleLangNode left;
+    @Child private SimpleLangNode right;
+
+    // Specialized for integers
+    @Specialization
+    protected int addInts(int left, int right) {
+        return left + right;
+    }
+
+    // Specialized for strings
+    @Specialization
+    protected String addStrings(String left, String right) {
+        return left + right;
+    }
+
+    // Generic fallback
+    @Specialization
+    protected Object addGeneric(Object left, Object right) {
+        // Handle other cases
+        return String.valueOf(left) + String.valueOf(right);
+    }
+}
+#+end_src
+
+* Racket Implementation Parallels
+
+** Truffle Concepts in Racket
+
+*** Self-Modifying ASTs → Syntax Objects
+
+#+begin_src racket
+#lang racket
+
+;; Racket syntax objects are immutable, but can be transformed
+(define-syntax (optimize-add stx)
+  (syntax-parse stx
+    ;; Constant folding
+    [(_ n:number m:number)
+     #:when (and (exact-integer? (syntax-e #'n))
+                 (exact-integer? (syntax-e #'m)))
+     (datum->syntax stx (+ (syntax-e #'n) (syntax-e #'m)))]
+
+    ;; Identity optimization
+    [(_ x 0) #'x]
+    [(_ 0 x) #'x]
+
+    ;; General case
+    [(_ x y) #'(+ x y)]))
+
+(optimize-add 10 32)  ; → 42 (compile-time)
+(optimize-add x 0)    ; → x  (optimized)
+#+end_src
+
+*** Specialization → Contracts + Chaperones
+
+#+begin_src racket
+#lang racket
+
+;; Use contracts to specialize behavior
+(define/contract (fast-add a b)
+  (-> exact-integer? exact-integer? exact-integer?)
+  ;; JIT can optimize this to machine code
+  (+ a b))
+
+;; Generic version
+(define (generic-add a b)
+  (cond
+    [(and (number? a) (number? b)) (+ a b)]
+    [(and (string? a) (string? b)) (string-append a b)]
+    [(and (list? a) (list? b)) (append a b)]
+    [else (error "Cannot add" a b)]))
+
+;; Chaperone for profiling/specialization
+(define (profiling-add a b)
+  (define profile (make-hash))
+  (hash-update! profile (cons (type-of a) (type-of b)) add1 0)
+  ;; Use profile data to specialize...
+  (generic-add a b))
+#+end_src
+
+*** Polyglot API → FFI + Modules
+
+#+begin_src racket
+#lang racket
+
+(require ffi/unsafe)
+
+;; Call C from Racket (like Truffle polyglot)
+(define libc (ffi-lib #f))
+(define c-strlen
+  (get-ffi-obj 'strlen libc
+    (_fun _string -> _int)))
+
+(c-strlen "Hello")  ; → 5
+
+;; Cross-language modules
+(module python-like racket
+  (provide (rename-out [my-print print]))
+
+  (define (my-print . args)
+    (displayln (string-join (map ~a args) " "))))
+
+(require 'python-like)
+(print "Hello" "from" "Python-style")
+#+end_src
+
+** Building a Truffle-Inspired Interpreter
+
+See [[file:01-truffle-interpreter.rkt][Truffle-style interpreter in Racket]].
+
+* Use Cases
+
+** Espresso Use Cases
+
+1. *Polyglot Applications*
+   - Embed Java in JavaScript/Python applications
+   - Call JavaScript libraries from Java
+   - Mix languages in single application
+
+2. *Multiple Java Versions*
+   - Run Java 8 and Java 11 code simultaneously
+   - Test compatibility across versions
+   - Gradual migration strategies
+
+3. *Sandboxing*
+   - Isolated Java contexts
+   - Security boundaries
+   - Multi-tenant applications
+
+4. *Research & Experimentation*
+   - JVM implementation research
+   - Language interoperability studies
+   - Performance analysis
+
+** Truffle Use Cases
+
+1. *Language Implementation*
+   - Rapid language prototyping
+   - DSL development
+   - Research languages
+
+2. *Polyglot Systems*
+   - Multi-language applications
+   - Language-agnostic tools
+   - Cross-language libraries
+
+3. *Optimization Research*
+   - JIT compilation studies
+   - Specialization techniques
+   - Profile-guided optimization
+
+* Performance Characteristics
+
+** Espresso Performance
+
+| Metric | Value |
+|--------+-------|
+| Warmup | Slower than HotSpot |
+| Peak | 2-3x slower than HotSpot |
+| Memory | Higher overhead |
+| Startup | Slower (interpreter startup) |
+| Interop | Near-native (same VM) |
+
+** Truffle Optimization Pipeline
+
+1. *Interpretation* (slow)
+   - Generic AST execution
+   - No optimization
+
+2. *Profiling* (learning)
+   - Type feedback collection
+   - Branch prediction
+   - Call site profiling
+
+3. *Specialization* (faster)
+   - Type-specialized nodes
+   - Monomorphic optimizations
+   - Inline caching
+
+4. *Compilation* (fast)
+   - Graal partial evaluation
+   - Aggressive inlining
+   - Native code generation
+
+* Comparison: Truffle vs Racket Language Tower
+
+** Similarities
+
+1. *Meta-circular*: Both implement languages in themselves
+2. *Staged*: Both have interpretation → compilation pipeline
+3. *Modular*: Both support language composition
+4. *Reflective*: Both allow introspection (Racket more so)
+
+** Differences
+
+| Aspect | Truffle | Racket |
+|--------+---------|--------|
+| *Foundation* | AST interpretation | S-expressions |
+| *Optimization* | Profile-guided | Contract-guided |
+| *Macros* | No | Yes (hygenic) |
+| *Type System* | Gradual (optional) | Gradual (Typed Racket) |
+| *Interop* | Polyglot API | FFI + modules |
+| *Tooling* | Graal tools | DrRacket, raco |
+
+** Lessons for Racket
+
+1. *Self-specialization*
+   - Racket could use more aggressive type profiling
+   - JIT could specialize on observed types like Truffle
+
+2. *Polyglot improvements*
+   - Better FFI for language interop
+   - Shared module protocol across ~#lang~s
+
+3. *AST optimization*
+   - Syntax objects could carry profiling data
+   - Compiler could use runtime feedback
+
+4. *Tool uniformity*
+   - Language-agnostic debugging (Truffle model)
+   - Profiling across ~#lang~ boundaries
+
+* Truffle-Inspired Racket Patterns
+
+** Pattern 1: Self-Specializing Functions
+
+#+begin_src racket
+#lang racket
+
+(struct profiled-function (proc profile) #:transparent)
+
+(define (make-adaptive-function base-proc)
+  (define profile (make-hash))
+
+  (define (specialized-proc . args)
+    ;; Record type signature
+    (define sig (map type-of args))
+    (hash-update! profile sig add1 0)
+
+    ;; If we've seen this signature enough, specialize
+    (when (> (hash-ref profile sig 0) 100)
+      (displayln (format "Specializing for ~a" sig)))
+
+    ;; Execute
+    (apply base-proc args))
+
+  (profiled-function specialized-proc profile))
+
+;; Usage
+(define adaptive-add
+  (make-adaptive-function
+   (lambda (a b)
+     (cond
+       [(and (number? a) (number? b)) (+ a b)]
+       [(and (string? a) (string? b)) (string-append a b)]
+       [else (error "Cannot add")]))))
+
+;; After 100 calls with integers, it could compile specialized version
+#+end_src
+
+** Pattern 2: Polyglot Modules
+
+See [[file:02-polyglot-modules.rkt][Polyglot module system]].
+
+** Pattern 3: AST Specialization
+
+See [[file:03-ast-specialization.rkt][AST specialization example]].
+
+* Experiment Files
+
+#+begin_example
+087-truffle-espresso/
+├── README.org                    # This file
+├── 01-truffle-interpreter.rkt   # Truffle-style interpreter
+├── 02-polyglot-modules.rkt      # Polyglot interop
+├── 03-ast-specialization.rkt    # AST optimization
+├── 04-espresso-examples.org     # Espresso usage examples
+├── 05-performance-study.org     # Performance comparison
+├── 06-language-impl.org         # Language implementation guide
+└── TRUFFLE-TUTORIAL.org         # Complete Truffle tutorial
+#+end_example
+
+* Resources
+
+** Official Documentation
+
+- [[https://www.graalvm.org/22.3/reference-manual/java-on-truffle/][Java on Truffle (Espresso)]]
+- [[https://www.graalvm.org/latest/graalvm-as-a-platform/language-implementation-framework/][Truffle Language Implementation Framework]]
+- [[https://github.com/graalvm/simplelanguage][SimpleLanguage Example]]
+
+** Academic Papers
+
+- "One VM to Rule Them All" (Würthinger et al.)
+- "Practical Partial Evaluation for High-Performance Dynamic Language Runtimes" (Würthinger et al.)
+- "Self-Optimizing AST Interpreters" (Würthinger et al.)
+
+** Related Experiments
+
+- [[file:../062-ion-fusion/README.org][Experiment 062: Ion Fusion]] - Data/code unification
+- [[file:../049-ocular-optics-guide/README.org][Experiment 049: Optics]] - Compositional transformations
+- [[file:../999-rhea-framework/README.org][Experiment 999: RHEA]] - Scientific method
+
+* Next Steps
+
+1. Install GraalVM and Espresso
+2. Build simple Truffle language
+3. Implement Truffle patterns in Racket
+4. Compare performance characteristics
+5. Apply to RacketCon ~#lang~ development
+
+* RacketCon Connections
+
+** Saturday Sessions
+
+- *9:00am Keynote*: Rosette formal methods → Truffle optimization verification
+- *1:30pm Ion Fusion*: S-expressions as data → Truffle AST representation
+
+** Sunday Sessions
+
+- Language implementation talks → Truffle framework comparison
+- Performance optimization → Specialization techniques
+
+* Status
+
+EXPERIMENT ready - Deep dive into Truffle/Espresso for language implementation insights
