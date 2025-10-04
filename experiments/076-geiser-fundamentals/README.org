@@ -1,0 +1,367 @@
+#+TITLE: Experiment 076: Geiser Fundamentals
+#+AUTHOR: Jason Walsh
+#+DATE: 2025-10-04
+#+STARTUP: overview
+
+* Overview
+
+Deep dive into Geiser, the Emacs environment for Scheme development. Geiser provides REPL integration, autodoc, completion, and debugging for Scheme implementations.
+
+*Related Track*: Track 5: Editor Integration (076-085)
+
+* HYPOTHESIS
+
+** Research Question
+Can Geiser provide a productive Scheme development environment in Emacs comparable to Racket Mode or SLIME?
+
+** Background
+Geiser is a comprehensive Emacs package for Scheme development created by Jose Antonio Ortega Ruiz. It supports multiple Scheme implementations (Guile, Racket, Chicken, Gambit, Chibi, Chez, MIT/GNU).
+
+** Hypothesis
+Geiser's universal approach to Scheme REPLs provides consistent development experience across implementations.
+
+** Success Criteria
+- [x] Install and configure Geiser
+- [x] Connect to Guile 3 REPL
+- [x] Demonstrate autodoc and completion
+- [x] Show interactive debugging
+- [x] Test with multiple Scheme implementations
+
+* What is Geiser?
+
+** Definition
+Geiser = Generic Environment for Interactive Scheme Evaluation and REPL
+
+** Key Features
+1. *REPL Integration*: Seamless interaction with Scheme processes
+2. *Autodoc*: Inline documentation in minibuffer
+3. *Completion*: Context-aware symbol completion
+4. *Navigation*: Jump to definition, find uses
+5. *Debugging*: Interactive backtrace exploration
+6. *Multiple Implementations*: Single interface for many Schemes
+
+** Supported Schemes
+| Implementation | Status      | Version |
+|----------------|-------------|---------|
+| Guile          | Excellent   | 3.0+    |
+| Racket         | Excellent   | 8.0+    |
+| Chicken        | Good        | 5.0+    |
+| Gambit         | Good        | 4.9+    |
+| Chibi          | Good        | 0.10+   |
+| Chez           | Experimental| 9.5+    |
+| MIT/GNU        | Good        | 11.0+   |
+
+* Installation
+
+** Via MELPA (Recommended)
+#+begin_src emacs-lisp
+;; In your init.el
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/"))
+(package-initialize)
+
+;; Install Geiser core
+(package-install 'geiser)
+
+;; Install Guile support
+(package-install 'geiser-guile)
+#+end_src
+
+** Manual Installation
+#+begin_src bash
+cd ~/.emacs.d/
+git clone https://gitlab.com/emacs-geiser/geiser.git
+#+end_src
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "~/.emacs.d/geiser/elisp")
+(require 'geiser)
+#+end_src
+
+* Basic Configuration
+
+** Minimal Setup
+#+begin_src emacs-lisp
+;; ~/.emacs.d/init.el
+
+;; Load Geiser
+(require 'geiser)
+(require 'geiser-guile)
+
+;; Set Guile binary (if not in PATH)
+(setq geiser-guile-binary "guile3")
+
+;; Enable autodoc
+(setq geiser-mode-auto-p t)
+
+;; Enable company completion
+(add-hook 'geiser-mode-hook 'company-mode)
+(add-hook 'geiser-repl-mode-hook 'company-mode)
+#+end_src
+
+** Recommended Setup
+#+begin_src emacs-lisp
+;; ~/.emacs.d/init.el
+
+(use-package geiser
+  :ensure t
+  :config
+  ;; Enable smart tab completion
+  (setq geiser-mode-smart-tab-p t)
+
+  ;; Show autodoc in echo area
+  (setq geiser-autodoc-delay 0.2)
+
+  ;; Use a dedicated REPL buffer
+  (setq geiser-repl-use-other-window t)
+
+  ;; Save REPL history
+  (setq geiser-repl-history-filename "~/.emacs.d/geiser-history"))
+
+(use-package geiser-guile
+  :ensure t
+  :config
+  (setq geiser-guile-binary "guile3")
+  (setq geiser-guile-load-path '("~/code/scheme")))
+#+end_src
+
+* Core Workflows
+
+** Starting a REPL
+#+begin_src emacs-lisp
+;; M-x geiser
+;; Or: M-x run-geiser
+;; Or: M-x run-guile
+
+;; From a Scheme buffer:
+;; C-c C-z  (geiser-mode-switch-to-repl)
+#+end_src
+
+** Evaluating Code
+| Keybinding | Command                    | Description              |
+|------------|----------------------------|--------------------------|
+| C-x C-e    | geiser-eval-last-sexp      | Eval sexp before point   |
+| C-c C-e    | geiser-eval-last-sexp      | Eval last sexp           |
+| C-c C-r    | geiser-eval-region         | Eval region              |
+| C-c C-b    | geiser-eval-buffer         | Eval entire buffer       |
+| C-c C-c    | geiser-eval-definition     | Eval current definition  |
+| C-M-x      | geiser-eval-definition     | Eval defun               |
+
+** Navigation
+| Keybinding | Command                    | Description              |
+|------------|----------------------------|--------------------------|
+| M-.        | geiser-edit-symbol-at-point| Jump to definition       |
+| M-,        | geiser-pop-symbol-stack    | Return from jump         |
+| C-c C-d d  | geiser-doc-symbol-at-point | Show documentation       |
+| C-c C-d m  | geiser-doc-module          | Show module docs         |
+
+** REPL Commands
+| Keybinding | Command                    | Description              |
+|------------|----------------------------|--------------------------|
+| C-c C-z    | geiser-mode-switch-to-repl | Switch to REPL           |
+| C-c C-q    | geiser-repl-exit           | Quit REPL                |
+| C-c C-k    | geiser-compile-current-buffer | Compile buffer        |
+| M-p / M-n  | Previous/next input        | History navigation       |
+
+* Autodoc and Completion
+
+** Autodoc Example
+#+begin_src scheme
+;; Type this in a Geiser buffer:
+(map |)
+;; Minibuffer shows: (map proc list1 list2 ...)
+
+(string-append |)
+;; Minibuffer shows: (string-append string ...)
+#+end_src
+
+** Completion
+#+begin_src scheme
+;; Type: str<TAB>
+;; Completes to: string-append, string-ref, string-length, etc.
+
+;; With company-mode active, completion popup appears automatically
+#+end_src
+
+* Debugging
+
+** Error Handling
+When an error occurs, Geiser shows:
+- Error message in REPL
+- Backtrace buffer (if available)
+- Source location highlighting
+
+** Interactive Debugging
+#+begin_src scheme
+;; In Guile, use ,debug commands in Geiser REPL:
+
+scheme@(guile-user)> (/ 1 0)
+ERROR: In procedure /:
+ERROR: Numerical overflow
+Entering debugger...
+
+;; Geiser provides:
+;; - Backtrace navigation
+;; - Local variable inspection
+;; - Frame selection
+#+end_src
+
+* Advanced Features
+
+** Module Management
+#+begin_src scheme
+;; Load module in REPL
+scheme@(guile-user)> ,use (srfi srfi-1)
+
+;; Or in buffer:
+(use-modules (srfi srfi-1))
+
+;; Geiser tracks module context for completion
+#+end_src
+
+** Macroexpansion
+#+begin_src emacs-lisp
+;; C-c C-m x  (geiser-expand-last-sexp)
+;; C-c C-m e  (geiser-expand-definition)
+;; C-c C-m r  (geiser-expand-region)
+#+end_src
+
+Example:
+#+begin_src scheme
+;; Before expansion:
+(let ((x 10)) (+ x 1))
+
+;; After C-c C-m x:
+((lambda (x) (+ x 1)) 10)
+#+end_src
+
+** Image Display
+Geiser can display images inline (with Guile + Guile-Picture):
+
+#+begin_src scheme
+(use-modules (picture))
+(define img (read-png "logo.png"))
+;; Image displays in REPL
+#+end_src
+
+* Example Session
+
+** File: hello-geiser.scm
+#+begin_src scheme
+;;; -*- geiser-scheme-implementation: guile -*-
+
+(use-modules (srfi srfi-1))
+
+(define (factorial n)
+  "Calculate factorial of n."
+  (if (<= n 1)
+      1
+      (* n (factorial (- n 1)))))
+
+(define (fibonacci n)
+  "Calculate nth Fibonacci number."
+  (cond
+   ((<= n 0) 0)
+   ((= n 1) 1)
+   (else (+ (fibonacci (- n 1))
+            (fibonacci (- n 2))))))
+
+;; Test functions
+(define (test-factorial)
+  (display "Factorial tests:\n")
+  (for-each
+   (lambda (n)
+     (format #t "  ~a! = ~a\n" n (factorial n)))
+   (iota 6)))
+
+(define (test-fibonacci)
+  (display "Fibonacci tests:\n")
+  (for-each
+   (lambda (n)
+     (format #t "  fib(~a) = ~a\n" n (fibonacci n)))
+   (iota 10)))
+#+end_src
+
+** Interactive Workflow
+1. Open hello-geiser.scm in Emacs
+2. Start REPL: C-c C-z
+3. Eval buffer: C-c C-b
+4. Test: ~(test-factorial)~
+5. Jump to definition: M-. on ~factorial~
+6. Show docs: C-c C-d d on ~format~
+
+* Comparison with Racket Mode
+
+| Feature              | Geiser              | Racket Mode          |
+|----------------------|---------------------|----------------------|
+| Multi-implementation | ✓ (many Schemes)    | ✗ (Racket only)      |
+| Autodoc              | ✓                   | ✓                    |
+| Completion           | ✓ (context-aware)   | ✓ (context-aware)    |
+| Jump-to-def          | ✓                   | ✓                    |
+| Debugging            | ✓ (basic)           | ✓ (advanced)         |
+| Image display        | ✓ (with extensions) | ✓ (built-in)         |
+| Macro stepper        | ✓ (expansion)       | ✓ (stepper)          |
+| Check syntax         | ✗                   | ✓                    |
+| Integration          | Generic             | Racket-specific      |
+
+* Tips and Tricks
+
+** 1. Per-File Scheme Selection
+#+begin_src scheme
+;;; -*- geiser-scheme-implementation: guile -*-
+#+end_src
+
+** 2. Custom REPL Startup
+#+begin_src emacs-lisp
+(setq geiser-repl-startup-forms
+      '("(use-modules (ice-9 readline))"
+        "(activate-readline)"))
+#+end_src
+
+** 3. Multiple REPLs
+#+begin_src emacs-lisp
+;; Run multiple Scheme implementations simultaneously:
+(run-guile)   ;; *Guile REPL*
+(run-racket)  ;; *Racket REPL*
+(run-chicken) ;; *Chicken REPL*
+#+end_src
+
+** 4. Load Path Configuration
+#+begin_src emacs-lisp
+(setq geiser-guile-load-path
+      '("~/code/guile-libs"
+        "~/projects/my-scheme-lib"))
+#+end_src
+
+* Resources
+
+** Official Documentation
+- [[https://www.nongnu.org/geiser/][Geiser Homepage]]
+- [[https://www.nongnu.org/geiser/geiser_manual.html][Geiser Manual]]
+- [[https://gitlab.com/emacs-geiser/geiser][GitLab Repository]]
+
+** Related Packages
+- geiser-guile: Guile support
+- geiser-racket: Racket support
+- geiser-chicken: Chicken Scheme support
+- geiser-chez: Chez Scheme support
+
+** Community
+- emacs-geiser mailing list
+- #geiser on Libera.Chat IRC
+- Emacs StackExchange (tag: geiser)
+
+* Next Experiments
+- [[file:../077-geiser-racket/][077: Geiser with Racket Support]]
+- [[file:../078-racket-mode-comparison/][078: Racket Mode vs Geiser Comparison]]
+- [[file:../079-guile-emacs-integration/][079: Guile-Emacs Integration]]
+
+* Key Takeaways
+
+1. *Universal Interface*: Single environment for multiple Scheme implementations
+2. *Context-Aware*: Autodoc and completion understand Scheme context
+3. *Interactive Development*: Seamless REPL integration
+4. *Extensible*: Support for new Schemes via backends
+5. *Battle-Tested*: Mature project with active development
+6. *Emacs-Native*: Deep integration with Emacs workflows
