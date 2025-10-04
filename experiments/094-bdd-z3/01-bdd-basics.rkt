@@ -160,10 +160,10 @@
      (define high-result (bdd-satisfy (bdd-node-high bdd)))
      (if high-result
          (cons (cons (bdd-node-var bdd) #t) high-result)
-         (define low-result (bdd-satisfy (bdd-node-low bdd)))
-         (if low-result
-             (cons (cons (bdd-node-var bdd) #f) low-result)
-             #f))]))
+         (let ((low-result (bdd-satisfy (bdd-node-low bdd))))
+           (if low-result
+               (cons (cons (bdd-node-var bdd) #f) low-result)
+               #f)))]))
 
 ;; ============================================================================
 ;; Count satisfying assignments

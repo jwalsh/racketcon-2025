@@ -1,6 +1,6 @@
 #+TITLE: RacketCon 2025 - Experiment Status
 #+AUTHOR: Generated from GitHub Issues
-#+DATE: Saturday, October 4th, 2025 6:10:51pm
+#+DATE: Saturday, October 4th, 2025 6:15:32pm
 #+STARTUP: overview
 
 * Overview
@@ -9,8 +9,8 @@ This document is auto-generated from GitHub issues.
 
 * Statistics
 
-- Total Issues: 28
-- Open: 28
+- Total Issues: 35
+- Open: 35
 - Closed: 0
 - With Assignees: 5
 
@@ -18,6 +18,13 @@ This document is auto-generated from GitHub issues.
 
 | Issue | Title | State | Assignees |
 |-------|-------|-------|-----------|
+| #35 | Experiment 095: Probabilistic microKanren - Logic + Probability | OPEN |  |
+| #34 | Experiment 094: BDD and Z3 for Formal Verification | OPEN |  |
+| #33 | Experiment 093: Weightmaps - Probability Distribution Visualizations | OPEN |  |
+| #32 | Experiment 092: Continuation-Based Universe Forking - AMB Operator | OPEN |  |
+| #31 | Experiment 091: Probabilistic Chaos Engineering & System Failure Models | OPEN |  |
+| #30 | Experiment 090: Saturday 3:00pm EDT Session Placeholder | OPEN |  |
+| #29 | Experiment 089: Roulette for Racketeers - Deep Dive | OPEN |  |
 | #28 | Experiment 097: Tonart - Music Composition as Racket Programming | OPEN |  |
 | #27 | Experiment 096: Advanced Macro Patterns - syntax-spec | OPEN |  |
 | #26 | Experiment 142: Here Strings - Multi-Line String Literals | OPEN |  |
