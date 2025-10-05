@@ -1,0 +1,135 @@
+#+TITLE: RacketCon 2025 Test Suite
+#+AUTHOR: RacketCon 2025 Project
+#+STARTUP: overview indent
+
+* Overview
+
+This directory contains ERT (Emacs Lisp Regression Testing) tests for the RacketCon 2025 project.
+
+* Running Tests
+
+** Interactive Mode (within Emacs)
+
+#+BEGIN_SRC elisp :eval never
+;; Load the test file
+(load-file "test/racketcon-test.el")
+
+;; Run all tests
+M-x racketcon-run-all-tests
+
+;; Or run specific tests
+M-x ert RET racketcon-test- RET
+
+;; View test summary
+M-x racketcon-test-summary
+#+END_SRC
+
+** Batch Mode (command line)
+
+#+BEGIN_SRC bash :eval never
+# Run all tests
+emacs --batch -l racketcon-2025-config.el -l test/racketcon-test.el \
+  -f ert-run-tests-batch-and-exit
+
+# Run with more verbose output
+emacs --batch -l racketcon-2025-config.el -l test/racketcon-test.el \
+  --eval '(ert-run-tests-batch-and-exit t)'
+#+END_SRC
+
+** Using the Test Script
+
+#+BEGIN_SRC bash :eval never
+./test/run-tests.sh
+#+END_SRC
+
+* Test Categories
+
+** System Detection Tests
+- =racketcon-test-system-detection= :: Verify system type detection
+- =racketcon-test-freebsd-detection= :: FreeBSD-specific detection
+
+** Path Tests
+- =racketcon-test-project-root-exists= :: Project root directory
+- =racketcon-test-elisp-dir-exists= :: Elisp directory
+- =racketcon-test-experiments-dir-exists= :: Experiments directory
+
+** Executable Tests
+- =racketcon-test-racket-program-found= :: Racket executable
+- =racketcon-test-raco-program-found= :: Raco executable
+
+** Loader Tests
+- =racketcon-test-loader-variables= :: Loader variables defined
+- =racketcon-test-loader-functions= :: Loader functions defined
+- =racketcon-test-loader-load-nonexistent= :: Error handling
+
+** Configuration Tests
+- =racketcon-test-setup-functions-exist= :: Setup functions defined
+- =racketcon-test-utility-functions-exist= :: Utility functions defined
+- =racketcon-test-key-bindings= :: Key bindings configured
+
+** Mode Tests
+- =racketcon-test-racket-mode-available= :: Racket mode availability
+- =racketcon-test-geiser-available= :: Geiser availability
+
+** Integration Tests
+- =racketcon-test-goto-project= :: Project navigation
+- =racketcon-test-verify-setup-callable= :: Setup verification
+
+** File Tests
+- =racketcon-test-config-file-exists= :: Main config file
+- =racketcon-test-dir-locals-exists= :: Directory locals file
+- =racketcon-test-sessions-org-exists= :: Sessions file
+
+* Test Results
+
+Current test status:
+
+| Status  | Count |
+|---------+-------|
+| Passed  |    18 |
+| Failed  |     3 |
+| Total   |    21 |
+
+** Known Failing Tests
+
+*** racket-mode and geiser not available in batch mode
+Tests fail when packages aren't loaded in batch mode:
+- =racketcon-test-racket-mode-available=
+- =racketcon-test-geiser-available=
+
+*Fix:* Install packages via =install-packages.el= first
+
+*** sessions.org doesn't exist yet
+Test fails: =racketcon-test-sessions-org-exists=
+
+*Fix:* Create the sessions.org file
+
+* Adding New Tests
+
+** Test Template
+
+#+BEGIN_SRC elisp :eval never
+(ert-deftest racketcon-test-your-feature ()
+  "Test description here."
+  (should (your-condition-here)))
+#+END_SRC
+
+** Test Naming Convention
+
+All tests should:
+- Start with =racketcon-test-=
+- Have descriptive names
+- Include docstrings
+
+* Continuous Integration
+
+Tests can be integrated into CI/CD pipelines:
+
+#+BEGIN_SRC yaml :eval never
+# Example GitHub Actions workflow
+- name: Run Emacs tests
+  run: |
+    emacs --batch -l racketcon-2025-config.el \
+      -l test/racketcon-test.el \
+      -f ert-run-tests-batch-and-exit
+#+END_SRC

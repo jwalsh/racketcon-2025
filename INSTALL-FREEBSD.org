@@ -1,0 +1,278 @@
+#+TITLE: RacketCon 2025 Installation Guide - FreeBSD 14.3-RELEASE
+#+AUTHOR: RacketCon 2025 Project
+#+DATE: [2025-10-05 Sat]
+#+STARTUP: overview indent
+#+OPTIONS: toc:2 num:nil
+
+* System Information
+
+#+BEGIN_SRC bash :results output :exports both
+uname -a
+#+END_SRC
+
+#+RESULTS:
+: FreeBSD hydra 14.3-RELEASE FreeBSD 14.3-RELEASE releng/14.3-n271432-8c9ce319fef7 GENERIC amd64
+
+* Installation Date
+  :PROPERTIES:
+  :INSTALLED: [2025-10-05 Sat]
+  :END:
+
+October 5, 2025
+
+* System Requirements
+- FreeBSD 14.3-RELEASE or later
+- Emacs 30.1 or later
+- sudo privileges for package installation
+
+* Tools Installed
+
+** System Package Installation (via pkg)
+
+#+BEGIN_SRC bash :eval never
+sudo pkg install -y racket-minimal ruby guile3 ghc
+#+END_SRC
+
+*** Packages Installed
+- =racket-minimal= (v8.17) - Racket programming language
+- =ruby= (v3.3.9,1) - Ruby programming language
+- =guile3= (v3.0.10) - GNU Guile Scheme implementation
+- =ghc= (v9.8.4) - Glasgow Haskell Compiler
+
+*** Dependencies Automatically Installed
+- =guile-aclocal= (v3.0.10)
+- =libunwind= (20240221_2)
+- =libyaml= (v0.2.5)
+
+*** Resource Requirements
+| Metric          | Value    |
+|-----------------+----------|
+| Total Space     | ~2 GiB   |
+| Download Size   | ~246 MiB |
+
+** Racket Package Installation (via raco)
+
+#+BEGIN_SRC bash :eval never
+raco pkg install rhombus
+#+END_SRC
+
+*** Rhombus and Dependencies Installed
+- rhombus
+- rhombus-lib
+- shrubbery
+- rhombus-draw
+- rhombus-gui
+- rhombus-pict
+- rhombus-scribble
+- at-exp-lib
+- racket-doc
+- scribble-lib
+- shrubbery-lib
+- rhombus-scribble-lib
+- compiler-lib
+- pretty-expressive
+- enforest-lib
+- syntax-color-lib
+- parser-tools-lib
+
+### 3. Emacs Package Installation (via MELPA/ELPA)
+
+```bash
+emacs --batch -l install-packages.el
+```
+
+**Core Racket/Scheme Support:**
+- `racket-mode` (20250830.1625) - Full-featured Racket IDE
+- `geiser` (20250922.2344) - Generic Scheme REPL interface
+- `geiser-racket` (20210421.125) - Racket backend for Geiser
+- `geiser-guile` (20240920.35) - Guile backend for Geiser
+
+**Structural Editing:**
+- `paredit` (20241103.2046) - Parenthesis editing mode
+- `smartparens` (20250612.1050) - Smart parenthesis handling
+- `rainbow-delimiters` (20210515.1254) - Visual delimiter matching
+
+**Development Tools:**
+- `company` (20250911.129) - Completion framework
+- `projectile` (20250704.908) - Project management
+- `magit` (and dependencies) - Git integration
+- `flycheck` - Syntax checking
+- `which-key` - Key binding discoverability
+
+**Optional Enhancements:**
+- `helm` - Incremental completion
+- `counsel` - Counsel completion
+- `ivy` - Ivy completion
+- `org` - Org mode
+- `ob-racket` - Org-babel Racket support
+
+## Verification Commands
+
+### Verify System Tools
+
+```bash
+# Check Racket
+racket --version
+# Output: Welcome to Racket v8.17 [cs].
+
+# Check Ruby
+ruby --version
+# Output: ruby 3.3.9 (2025-07-24 revision f5c772fc7c) [amd64-freebsd14]
+
+# Check Guile
+guile3 --version
+# Output: guile (GNU Guile) 3.0.10
+
+# Check GHC
+ghc --version
+# Output: The Glorious Glasgow Haskell Compilation System, version 9.8.4
+```
+
+### Verify Emacs Version
+
+```bash
+emacs --version
+# Output: GNU Emacs 30.1
+```
+
+### Verify Emacs Configuration
+
+In Emacs:
+```elisp
+M-x racketcon-verify-setup
+```
+
+Or load the configuration file:
+```elisp
+(load "/home/jwalsh/ghq/github.com/jwalsh/racketcon-2025/racketcon-2025-config.el")
+```
+
+## Configuration Files
+
+### Main Configuration
+- **Location:** `/home/jwalsh/ghq/github.com/jwalsh/racketcon-2025/racketcon-2025-config.el`
+- **Features:**
+  - Auto-detects FreeBSD vs macOS paths
+  - Configures Geiser for Racket and Guile3
+  - Sets up racket-mode with IDE features
+  - Configures org-babel for literate programming
+  - Custom key bindings (C-c R prefix)
+
+### Key Bindings
+- `C-c R p` - Go to project root
+- `C-c R e` - Go to experiments directory
+- `C-c R s` - Open sessions.org
+- `C-c R v` - Verify setup
+
+## Usage
+
+### Loading Configuration in Emacs
+
+Add to your `~/.emacs` or `~/.emacs.d/init.el`:
+
+```elisp
+;; Load RacketCon 2025 configuration
+(when (file-exists-p "/home/jwalsh/ghq/github.com/jwalsh/racketcon-2025/racketcon-2025-config.el")
+  (load "/home/jwalsh/ghq/github.com/jwalsh/racketcon-2025/racketcon-2025-config.el"))
+```
+
+### Starting a Racket REPL
+
+In Emacs:
+1. Open a `.rkt` file
+2. `M-x racket-repl`
+3. Or use Geiser: `M-x geiser-racket`
+
+### Starting a Guile REPL
+
+In Emacs:
+1. `M-x geiser-guile`
+
+## Troubleshooting
+
+### Package Not Found Errors
+
+If you see "Cannot open load file" errors, ensure packages are installed:
+
+```bash
+emacs --batch -l install-packages.el
+```
+
+### Racket Binary Not Found
+
+Update the path in `racketcon-2025-config.el`:
+
+```elisp
+(setq racketcon-racket-program "/usr/local/bin/racket")
+```
+
+### Rhombus Installation Timeout
+
+The Rhombus installation may take 10+ minutes due to compilation. Be patient or check status:
+
+```bash
+raco pkg show --all | grep rhombus
+```
+
+## Post-Installation
+
+### Test Racket Installation
+
+```bash
+racket -e '(displayln "Hello, RacketCon!")'
+```
+
+### Test Rhombus Installation
+
+```bash
+racket -l rhombus/repl
+```
+
+### Install Additional Racket Packages
+
+```bash
+# Common packages
+raco pkg install threading
+raco pkg install sugar
+raco pkg install beautiful-racket
+```
+
+## Notes for FreeBSD Specifics
+
+1. **Package Manager:** Uses FreeBSD `pkg` system (not `apt`, `brew`, etc.)
+2. **Binary Locations:** Most binaries install to `/usr/local/bin/`
+3. **Guile:** Package is named `guile3` (not just `guile`)
+4. **Racket:** Only `racket-minimal` available in pkg (full Racket needs source build or raco packages)
+5. **Permissions:** May need to be in `wheel` group for sudo access
+
+## Installation Script
+
+For automated installation, run:
+
+```bash
+# Install system packages
+sudo pkg install -y racket-minimal ruby guile3 ghc
+
+# Verify installations
+racket --version && ruby --version && guile3 --version && ghc --version
+
+# Install Rhombus (takes 10+ minutes)
+yes | raco pkg install rhombus
+
+# Install Emacs packages
+emacs --batch -l /home/jwalsh/ghq/github.com/jwalsh/racketcon-2025/install-packages.el
+```
+
+## References
+
+- [FreeBSD Handbook](https://docs.freebsd.org/en/books/handbook/)
+- [Racket Documentation](https://docs.racket-lang.org/)
+- [Rhombus Documentation](https://docs.racket-lang.org/rhombus/)
+- [Geiser Manual](https://www.nongnu.org/geiser/)
+- [racket-mode Documentation](https://www.racket-mode.com/)
+
+---
+
+**Installation completed successfully on:** October 5, 2025
+**System:** FreeBSD 14.3-RELEASE (hydra)
+**Emacs:** GNU Emacs 30.1

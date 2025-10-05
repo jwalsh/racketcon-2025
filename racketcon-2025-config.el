@@ -66,7 +66,10 @@
 ;; ============================================================================
 
 (defvar racketcon-project-root
-  "/Users/jasonwalsh/ghq/github.com/jwalsh/racketcon-2025"
+  (cond
+   (racketcon-on-macos "/Users/jasonwalsh/ghq/github.com/jwalsh/racketcon-2025")
+   (racketcon-on-freebsd "/home/jwalsh/ghq/github.com/jwalsh/racketcon-2025")
+   (t (expand-file-name "~/ghq/github.com/jwalsh/racketcon-2025")))
   "Root directory of RacketCon 2025 project.")
 
 (defvar racketcon-experiments-dir
@@ -83,6 +86,29 @@
 
 (when (file-directory-p racketcon-elisp-dir)
   (add-to-list 'load-path racketcon-elisp-dir))
+
+;; ============================================================================
+;; Geiser Configuration
+;; ============================================================================
+
+(defun racketcon-setup-geiser ()
+  "Configure Geiser for Racket and Guile."
+  (when (require 'geiser nil t)
+    (setq geiser-active-implementations '(racket guile))
+
+    ;; Geiser Racket
+    (when (require 'geiser-racket nil t)
+      (when racketcon-racket-program
+        (setq geiser-racket-binary racketcon-racket-program))
+      (setq geiser-racket-use-gracket-p nil))
+
+    ;; Geiser Guile
+    (when (require 'geiser-guile nil t)
+      (let ((guile-bin (executable-find "guile3")))
+        (when guile-bin
+          (setq geiser-guile-binary guile-bin))))
+
+    (message "RacketCon 2025: Geiser configured")))
 
 ;; ============================================================================
 ;; Racket Mode Configuration
@@ -180,29 +206,33 @@
     (message "RacketCon 2025: Org-babel configured")))
 
 ;; ============================================================================
-;; RacketCon Tools Integration
+;; Module Loading via racketcon-loader
 ;; ============================================================================
 
 (defun racketcon-load-tools ()
-  "Load racketcon-tools.el if available."
-  (let ((tools-file (expand-file-name "racketcon-tools.el" racketcon-elisp-dir)))
-    (when (file-exists-p tools-file)
-      (load tools-file)
-      (when (fboundp 'racketcon-mode-enable)
-        (add-hook 'racket-mode-hook #'racketcon-mode-enable)
-        (add-hook 'org-mode-hook #'racketcon-mode-enable))
-      (message "RacketCon 2025: Tools loaded"))))
+  "Load all RacketCon tools using the incremental loader."
+  (let ((loader-file (expand-file-name "racketcon-loader.el" racketcon-elisp-dir)))
+    (if (file-exists-p loader-file)
+        (progn
+          (load loader-file)
+          (racketcon-loader-load-all)
+          ;; Set up hooks for racketcon-tools if loaded
+          (when (fboundp 'racketcon-mode-enable)
+            (add-hook 'racket-mode-hook #'racketcon-mode-enable)
+            (add-hook 'org-mode-hook #'racketcon-mode-enable))
+          (message "RacketCon 2025: Modules loaded via racketcon-loader"))
+      (message "RacketCon 2025: racketcon-loader.el not found"))))
 
 ;; ============================================================================
-;; Ion Mode Integration
+;; Ion Mode Integration (legacy compatibility)
 ;; ============================================================================
 
 (defun racketcon-setup-ion-mode ()
-  "Configure ion-mode for Amazon Ion data format files."
-  (let ((ion-mode-file (expand-file-name "ion-mode.el" racketcon-elisp-dir)))
-    (when (file-exists-p ion-mode-file)
-      (require 'ion-mode nil t)
-      (message "RacketCon 2025: Ion mode loaded"))))
+  "Configure ion-mode (handled by loader now)."
+  ;; This is now a no-op since loader handles it
+  ;; Kept for backward compatibility
+  (when (featurep 'ion-mode)
+    (message "RacketCon 2025: Ion mode available")))
 
 ;; ============================================================================
 ;; Quick Access Functions
@@ -289,6 +319,7 @@
 (defun racketcon-setup-all ()
   "Run all RacketCon 2025 setup functions."
   (interactive)
+  (racketcon-setup-geiser)
   (racketcon-setup-racket-mode)
   (racketcon-setup-supporting-modes)
   (racketcon-setup-org-babel)

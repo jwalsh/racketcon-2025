@@ -1,0 +1,288 @@
+#+TITLE: RacketCon 2025 Video Transcription Guide
+#+AUTHOR: RacketCon 2025 Project
+#+DATE: [2025-10-05 Sat]
+#+STARTUP: overview indent
+#+OPTIONS: toc:2 num:nil
+
+* RacketCon Day 2 Video
+
+** Video Information
+- *URL*: https://boxcast.tv/view-embed/xtihxdvdmgttkttsp2gj
+- *Title*: Racketcon Day2
+- *Date*: October 5, 2025
+- *Time*: 12:00 PM - 10:00 PM Mountain Time
+- *Duration*: ~10 hours (full day)
+
+* Transcription Tools
+
+** Option 1: yt-dlp + Whisper (Recommended)
+
+*** Installation
+#+BEGIN_SRC bash :eval never
+# Install yt-dlp
+sudo pkg install yt-dlp
+
+# Install ffmpeg (dependency)
+sudo pkg install ffmpeg
+
+# Install Python and Whisper
+sudo pkg install python39 py39-pip
+pip install openai-whisper
+#+END_SRC
+
+*** Download Video/Audio
+#+BEGIN_SRC bash :eval never
+# Download best quality
+yt-dlp https://boxcast.tv/view-embed/xtihxdvdmgttkttsp2gj
+
+# Or just audio
+yt-dlp -x --audio-format mp3 \
+  https://boxcast.tv/view-embed/xtihxdvdmgttkttsp2gj \
+  -o "racketcon-day2.%(ext)s"
+#+END_SRC
+
+*** Transcribe with Whisper
+#+BEGIN_SRC bash :eval never
+# Base model (fast, less accurate)
+whisper racketcon-day2.mp3 --model base --language en
+
+# Medium model (balanced)
+whisper racketcon-day2.mp3 --model medium --language en
+
+# Large model (slow, most accurate)
+whisper racketcon-day2.mp3 --model large --language en
+
+# With multiple output formats
+whisper racketcon-day2.mp3 \
+  --model medium \
+  --language en \
+  --output_format txt \
+  --output_format vtt \
+  --output_format srt \
+  --output_format json
+#+END_SRC
+
+*** Whisper Model Comparison
+| Model  | Size   | Speed | Accuracy | Use Case              |
+|--------+--------+-------+----------+-----------------------|
+| tiny   | 39 MB  | Fast  | 60%      | Quick preview         |
+| base   | 74 MB  | Fast  | 70%      | Draft transcription   |
+| small  | 244 MB | Med   | 80%      | Good balance          |
+| medium | 769 MB | Slow  | 85%      | Production quality    |
+| large  | 1.5 GB | V.Slow| 90%      | Best quality          |
+
+** Option 2: FFmpeg Segmentation + Parallel Processing
+
+For a 10-hour video, segment and process in parallel:
+
+#+BEGIN_SRC bash :eval never
+#!/bin/sh
+# Split into 1-hour segments
+ffmpeg -i racketcon-day2.mp4 -f segment -segment_time 3600 -c copy segment_%03d.mp4
+
+# Process each segment in parallel
+for seg in segment_*.mp4; do
+    whisper "$seg" --model medium --language en &
+done
+wait
+
+# Combine transcriptions
+cat segment_*.txt > racketcon-day2-full-transcript.txt
+#+END_SRC
+
+** Option 3: Cloud-based Services
+
+*** OpenAI Whisper API
+#+BEGIN_SRC python :eval never
+import openai
+
+with open("racketcon-day2.mp3", "rb") as audio_file:
+    transcript = openai.Audio.transcribe(
+        model="whisper-1",
+        file=audio_file,
+        language="en"
+    )
+print(transcript["text"])
+#+END_SRC
+
+*** Google Cloud Speech-to-Text
+#+BEGIN_SRC bash :eval never
+# Upload to Google Cloud Storage
+gsutil cp racketcon-day2.mp3 gs://your-bucket/
+
+# Transcribe
+gcloud ml speech recognize-long-running \
+  gs://your-bucket/racketcon-day2.mp3 \
+  --language-code=en-US \
+  --output-uri=gs://your-bucket/transcript.json
+#+END_SRC
+
+** Option 4: Browser-based Tools
+
+*** Otter.ai
+1. Download audio: =yt-dlp -x --audio-format mp3 URL=
+2. Upload to https://otter.ai
+3. Let it auto-transcribe
+4. Export as TXT/DOCX
+
+*** Rev.com (Paid, Human)
+1. Upload video/audio
+2. ~$1.50/minute for human transcription
+3. 12-hour turnaround
+4. 99% accuracy
+
+* Post-Processing
+
+** Clean Up Transcription
+
+#+BEGIN_SRC bash :eval never
+# Remove timestamps and speaker labels
+sed 's/\[.*\]//g' transcript.txt > clean-transcript.txt
+
+# Convert to Org mode
+cat transcript.txt | sed 's/^Speaker [0-9]:/\n** Speaker \1:\n/' > transcript.org
+#+END_SRC
+
+** Extract Session Information
+
+#+BEGIN_SRC bash :eval never
+# Find session titles (look for capitalized phrases)
+grep -E '^[A-Z][A-Za-z\s]+:' transcript.txt
+
+# Extract timestamps
+grep -oE '[0-9]{2}:[0-9]{2}:[0-9]{2}' transcript.txt
+#+END_SRC
+
+** Create Session Index
+
+#+BEGIN_SRC elisp :eval never
+;; Emacs Lisp function to parse transcript
+(defun racketcon-parse-transcript (file)
+  "Parse transcript FILE into session structure."
+  (interactive "fTranscript file: ")
+  (with-temp-buffer
+    (insert-file-contents file)
+    (goto-char (point-min))
+    (let ((sessions '()))
+      (while (re-search-forward "\\([0-9:]+\\) - \\(.*\\)" nil t)
+        (push (list :time (match-string 1)
+                    :title (match-string 2))
+              sessions))
+      (nreverse sessions))))
+#+END_SRC
+
+* Integration with Project
+
+** Save Transcripts in Project
+
+#+BEGIN_SRC bash :eval never
+# Create transcripts directory
+mkdir -p transcripts/day2
+
+# Save outputs
+mv racketcon-day2*.txt transcripts/day2/
+mv racketcon-day2*.vtt transcripts/day2/
+mv racketcon-day2*.srt transcripts/day2/
+#+END_SRC
+
+** Link to Sessions.org
+
+#+BEGIN_SRC org
+,* RacketCon Day 2 Sessions
+
+,** Session 1: Opening Keynote
+:PROPERTIES:
+:VIDEO_URL: https://boxcast.tv/view-embed/xtihxdvdmgttkttsp2gj
+:TIMESTAMP: 00:00:00
+:TRANSCRIPT: [[file:transcripts/day2/session-01.txt]]
+:END:
+
+,** Session 2: Rhombus Deep Dive
+:PROPERTIES:
+:TIMESTAMP: 01:15:00
+:TRANSCRIPT: [[file:transcripts/day2/session-02.txt]]
+:END:
+#+END_SRC
+
+* Automation Script
+
+** Complete Transcription Pipeline
+
+#+BEGIN_SRC bash :tangle transcripts/transcribe-boxcast.sh :shebang "#!/bin/sh"
+#!/bin/sh
+# transcribe-boxcast.sh - Automated BoxCast transcription
+
+set -e
+
+VIDEO_URL="$1"
+OUTPUT_DIR="${2:-transcripts}"
+
+if [ -z "$VIDEO_URL" ]; then
+    echo "Usage: $0 <boxcast-url> [output-dir]"
+    exit 1
+fi
+
+# Create output directory
+mkdir -p "$OUTPUT_DIR"
+
+# Extract video ID from URL
+VIDEO_ID=$(basename "$VIDEO_URL")
+
+echo "Downloading video: $VIDEO_ID"
+yt-dlp -x --audio-format mp3 "$VIDEO_URL" -o "$OUTPUT_DIR/${VIDEO_ID}.%(ext)s"
+
+echo "Transcribing with Whisper..."
+whisper "$OUTPUT_DIR/${VIDEO_ID}.mp3" \
+    --model medium \
+    --language en \
+    --output_format txt \
+    --output_format vtt \
+    --output_format srt \
+    --output_dir "$OUTPUT_DIR"
+
+echo "Creating org-mode version..."
+cat "$OUTPUT_DIR/${VIDEO_ID}.txt" | \
+    sed 's/^\[/\n* /' | \
+    sed 's/\]//' > "$OUTPUT_DIR/${VIDEO_ID}.org"
+
+echo "Done! Outputs in $OUTPUT_DIR/"
+ls -lh "$OUTPUT_DIR/${VIDEO_ID}."*
+#+END_SRC
+
+** Usage
+
+#+BEGIN_SRC bash :eval never
+chmod +x transcripts/transcribe-boxcast.sh
+
+./transcripts/transcribe-boxcast.sh \
+  https://boxcast.tv/view-embed/xtihxdvdmgttkttsp2gj \
+  transcripts/day2
+#+END_SRC
+
+* Quick Start
+
+For immediate transcription of RacketCon Day 2:
+
+#+BEGIN_SRC bash :eval never
+# Install tools
+sudo pkg install yt-dlp ffmpeg python39 py39-pip
+pip install openai-whisper
+
+# Download and transcribe
+yt-dlp -x --audio-format mp3 \
+  https://boxcast.tv/view-embed/xtihxdvdmgttkttsp2gj \
+  -o "racketcon-day2.%(ext)s"
+
+whisper racketcon-day2.mp3 --model medium --language en
+
+# View results
+cat racketcon-day2.txt
+#+END_SRC
+
+* Resources
+
+- [[https://github.com/openai/whisper][OpenAI Whisper]]
+- [[https://github.com/yt-dlp/yt-dlp][yt-dlp]]
+- [[https://ffmpeg.org/][FFmpeg]]
+- [[https://otter.ai][Otter.ai]]
+- [[https://www.rev.com][Rev.com]]

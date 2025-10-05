@@ -1,0 +1,274 @@
+#+TITLE: RacketCon 2025 Configuration Guide
+#+AUTHOR: RacketCon 2025 Project
+#+DATE: [2025-10-05 Sat]
+#+STARTUP: overview indent
+#+OPTIONS: toc:2 num:nil
+
+* Overview
+
+This document describes the Emacs configuration system for RacketCon 2025.
+
+* Architecture
+
+** Clean, Modular Design
+
+The configuration system uses a clean, layered architecture:
+
+#+BEGIN_SRC
+.
+├── .dir-locals.el                 # Simple loader (just loads main config)
+├── racketcon-2025-config.el       # Main configuration file
+├── elisp/
+│   ├── racketcon-loader.el        # Incremental module loader
+│   ├── racketcon-tools.el         # Project-specific tools
+│   └── ion-mode.el                # Ion format support
+└── test/
+    ├── racketcon-test.el          # ERT test suite
+    ├── run-tests.sh               # Test runner script
+    └── README.org                 # Test documentation
+#+END_SRC
+
+** Key Principles
+
+1. *Simplicity*: =.dir-locals.el= is minimal—just loads main config
+2. *Modularity*: Support files loaded incrementally via loader
+3. *Testability*: Comprehensive ERT tests for all functionality
+4. *Documentation*: Everything documented in Org mode
+
+* Configuration Files
+
+** .dir-locals.el
+
+Minimal file that just loads =racketcon-2025-config.el=:
+
+#+BEGIN_SRC elisp :eval never
+((nil . ((eval . (let ((config-file (expand-file-name "racketcon-2025-config.el"
+                                                       (locate-dominating-file
+                                                        default-directory
+                                                        ".dir-locals.el"))))
+                   (when (file-exists-p config-file)
+                     (load config-file)))))))
+#+END_SRC
+
+** racketcon-2025-config.el
+
+Main configuration file providing:
+
+*** System Detection
+#+BEGIN_SRC elisp :eval never
+(defconst racketcon-system-type
+  (cond ((eq system-type 'darwin) 'macos)
+        ((eq system-type 'gnu/linux) 'linux)
+        ((eq system-type 'berkeley-unix) 'freebsd)
+        (t 'unknown)))
+#+END_SRC
+
+*** Path Configuration
+- Auto-detects paths based on system type
+- Supports macOS, FreeBSD, and Linux
+- Finds Racket, Guile, and other tools
+
+*** Setup Functions
+| Function                         | Purpose                          |
+|----------------------------------+----------------------------------|
+| =racketcon-setup-geiser=         | Configure Geiser for REPL        |
+| =racketcon-setup-racket-mode=    | Configure racket-mode            |
+| =racketcon-setup-supporting-modes= | Enable paredit, rainbow, etc.  |
+| =racketcon-setup-org-babel=      | Configure literate programming   |
+| =racketcon-load-tools=           | Load tools via loader            |
+| =racketcon-setup-all=            | Run all setup                    |
+
+*** Key Bindings
+
+| Key       | Function                      |
+|-----------+-------------------------------|
+| =C-c R p= | Go to project root            |
+| =C-c R e= | Go to experiments directory   |
+| =C-c R s= | Open sessions.org             |
+| =C-c R v= | Verify setup                  |
+
+** elisp/racketcon-loader.el
+
+Incremental module loader with:
+
+*** Loading Functions
+#+BEGIN_SRC elisp :eval never
+;; Load a single module
+(racketcon-loader-load-module "module-name" &optional required)
+
+;; Load all modules
+(racketcon-loader-load-all)
+
+;; Check loading status
+(racketcon-loader-status)
+#+END_SRC
+
+*** Error Handling
+- Optional modules don't fail the whole system
+- Tracks loaded and failed modules
+- Provides detailed error messages
+
+*** Status Tracking
+#+BEGIN_SRC elisp :eval never
+racketcon-loader-loaded-modules   ; List of loaded modules
+racketcon-loader-failed-modules   ; List of failed modules with errors
+#+END_SRC
+
+* Testing
+
+** Running Tests
+
+*** Interactive (in Emacs)
+#+BEGIN_SRC elisp :eval never
+M-x racketcon-run-all-tests
+M-x racketcon-test-summary
+#+END_SRC
+
+*** Batch Mode
+#+BEGIN_SRC bash :eval never
+./test/run-tests.sh
+
+# Or manually:
+emacs --batch -l racketcon-2025-config.el -l test/racketcon-test.el \
+  -f ert-run-tests-batch-and-exit
+#+END_SRC
+
+** Test Coverage
+
+The test suite covers:
+
+- [ ] System detection (FreeBSD, macOS, Linux)
+- [ ] Path configuration and validation
+- [ ] Executable discovery (racket, raco, guile3, ghc)
+- [ ] Loader functionality and error handling
+- [ ] Function availability
+- [ ] Key binding setup
+- [ ] Mode configuration
+- [ ] Integration tests
+
+** Current Test Status
+
+#+BEGIN_SRC bash :results output :exports both
+cd /home/jwalsh/ghq/github.com/jwalsh/racketcon-2025
+emacs --batch -l racketcon-2025-config.el -l test/racketcon-test.el \
+  -f ert-run-tests-batch-and-exit 2>&1 | grep -E "(passed|failed|Running)"
+#+END_SRC
+
+* Usage
+
+** Initial Setup
+
+1. Install system packages (see [[file:INSTALL-FREEBSD.org][INSTALL-FREEBSD.org]])
+2. Install Emacs packages: =emacs --batch -l install-packages.el=
+3. Load configuration automatically via =.dir-locals.el=
+
+** Manual Loading
+
+#+BEGIN_SRC elisp :eval never
+;; In your ~/.emacs or ~/.emacs.d/init.el
+(let ((config-file "/home/jwalsh/ghq/github.com/jwalsh/racketcon-2025/racketcon-2025-config.el"))
+  (when (file-exists-p config-file)
+    (load config-file)))
+#+END_SRC
+
+** Verifying Setup
+
+#+BEGIN_SRC elisp :eval never
+M-x racketcon-verify-setup
+#+END_SRC
+
+Output shows:
+- System information
+- Racket/Raco paths
+- Project directories
+- Loaded modes
+- Available tools
+
+* Troubleshooting
+
+** Configuration Not Loading
+
+Check =.dir-locals.el= is being processed:
+
+#+BEGIN_SRC elisp :eval never
+M-x describe-variable RET dir-locals-file RET
+#+END_SRC
+
+** Modules Not Loading
+
+Check loader status:
+
+#+BEGIN_SRC elisp :eval never
+M-x racketcon-loader-status
+#+END_SRC
+
+** Tests Failing
+
+Common issues:
+
+1. *Missing packages*: Run =install-packages.el=
+2. *Wrong paths*: Check =racketcon-project-root=
+3. *Missing files*: Ensure all config files exist
+
+** Package Installation
+
+If packages fail to load:
+
+#+BEGIN_SRC bash :eval never
+emacs --batch -l install-packages.el
+#+END_SRC
+
+* Development
+
+** Adding New Modules
+
+1. Create =elisp/your-module.el=
+2. Add to loader in =racketcon-loader-load-all=:
+   #+BEGIN_SRC elisp :eval never
+   (racketcon-loader-load-module "your-module" nil)
+   #+END_SRC
+3. Add tests in =test/racketcon-test.el=
+4. Run tests to verify
+
+** Adding New Tests
+
+#+BEGIN_SRC elisp :eval never
+(ert-deftest racketcon-test-your-feature ()
+  "Test your feature here."
+  (should (your-test-condition)))
+#+END_SRC
+
+** Code Style
+
+- Use =lexical-binding: t=
+- Include docstrings
+- Follow Emacs Lisp conventions
+- Add headers and footers
+
+* Benefits of This Architecture
+
+** vs. Original .dir-locals.el
+
+| Old Approach                     | New Approach                      |
+|----------------------------------+-----------------------------------|
+| 115 lines of inline config       | 17 lines, loads external config  |
+| Hard to test                     | Full ERT test suite               |
+| Mode-specific settings mixed     | Clean separation of concerns      |
+| No error handling                | Graceful degradation              |
+| No status reporting              | Detailed status and diagnostics   |
+
+** Advantages
+
+1. *Testable*: ERT tests verify everything works
+2. *Maintainable*: Clean module structure
+3. *Debuggable*: Loader tracks success/failure
+4. *Portable*: Works on FreeBSD, macOS, Linux
+5. *Documented*: Everything in Org mode
+6. *Extensible*: Easy to add new modules
+
+* See Also
+
+- [[file:INSTALL-FREEBSD.org][Installation Guide (FreeBSD)]]
+- [[file:test/README.org][Test Documentation]]
+- [[file:sessions.org][RacketCon Sessions]]
+- [[file:README.org][Project README]]

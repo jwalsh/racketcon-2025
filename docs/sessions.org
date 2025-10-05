@@ -91,12 +91,30 @@ Evening Social • Lord Hobo Brewery
 ** 8:30am EDT
 Doors Open • Breakfast not served (eat before coming)
 
-** [#A] 9:00am EDT Advanced Macrology: 5 Macro Programming Patterns You (No Longer) Need to Know
+** INPROGRESS [#A] 9:00am EDT Advanced Macrology: 5 Macro Programming Patterns You (No Longer) Need to Know
 Michael Ballantyne
 
 Racket's macros make creating small extensions to the language remarkably simple. But when you step up to creating DSLs with static semantics and compiler optimizations, you need new tools to integrate your DSL implementation with Racket's expansion process. In this talk I'll demonstrate 5 macro design patterns that sophisticated DSLs like match, syntax-parse, and Typed Racket use to validate syntax, communicate static information, and integrate with DrRacket. But as any good language-oriented programmer knows, a design pattern usually indicates a missing linguistic abstraction! And in fact, my syntax-spec metalanguage abstracts over all of these design patterns, generating implementations from a declarative specification of your DSL syntax. So I'll also show how you can more easily achieve the same results with syntax-spec, design-pattern-free.
 
 *Bio*: Michael Ballantyne recently completed his Ph.D. at Northeastern University, advised by Matthias Felleisen. His research works towards a future where mainstream programmers regularly create, extend, and fluidly intermix domain-specific languages, with excellent support from their programming language and environment.
+
+*Links*:
+- [[https://github.com/michaelballantyne][GitHub: @michaelballantyne]]
+- [[http://mballantyne.net][Personal Website]]
+- [[https://github.com/michaelballantyne/syntax-spec][syntax-spec]] - Metalanguage for creating DSLs
+- [[https://github.com/michaelballantyne/faster-minikanren][faster-minikanren]] - Fast miniKanren implementation
+- [[https://nuprl.khoury.northeastern.edu/][NUPRL Research Group]]
+
+*Related Projects*:
+- ~syntax-spec~ - Declarative DSL specification
+- ~faster-minikanren~ - Optimized logic programming
+- ~meta-minikanren~ - Relational miniKanren interpreter
+
+*Experiments*: [[file:experiments/141-macro-patterns/][141]] [[file:experiments/142-syntax-spec-basics/][142]]
+
+*Video*: https://boxcast.tv/view-embed/xtihxdvdmgttkttsp2gj (Day 2 stream)
+
+*Transcription*: See [[file:../TRANSCRIPTION.org][TRANSCRIPTION.org]] for how to transcribe this talk
 
 *Links*: [[https://docs.racket-lang.org/syntax-spec/][syntax-spec]] • [[https://www.ccs.neu.edu/home/mballantyne/][Homepage]]
 
