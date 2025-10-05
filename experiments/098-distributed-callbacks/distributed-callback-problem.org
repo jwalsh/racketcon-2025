@@ -1,0 +1,433 @@
+#+TITLE: Distributed Queue Callback Problem
+#+AUTHOR: System Design Analysis
+#+DATE: 2025-10-05
+#+PROPERTY: header-args :mkdirp t
+
+* Problem Overview
+
+When a load-balanced system with server-local state (Redis) makes external API calls with callbacks, 
+the callback may route to a different server instance, causing a lookup failure.
+
+* System Architecture
+
+** Initial Request Flow
+
+#+begin_src mermaid :file diagrams/architecture-flow.png
+sequenceDiagram
+    participant U as User
+    participant LB as Load Balancer
+    participant A as Server A
+    participant B as Server B
+    participant RA as Redis A
+    participant RB as Redis B
+    participant FP as Fraud Platform
+
+    U->>LB: POST /order
+    Note over LB: 50% probability split
+    alt Route to Server A
+        LB->>A: Forward request
+        A->>RA: Store order (order_id: 123)
+        A->>FP: Check fraud (callback: https://lb.example.com/callback)
+        Note over FP: Processing...
+    else Route to Server B
+        LB->>B: Forward request
+        B->>RB: Store order (order_id: 456)
+        B->>FP: Check fraud (callback: https://lb.example.com/callback)
+        Note over FP: Processing...
+    end
+#+end_src
+
+** The Callback Problem
+
+#+begin_src mermaid :file diagrams/callback-problem.png
+sequenceDiagram
+    participant FP as Fraud Platform
+    participant LB as Load Balancer
+    participant A as Server A
+    participant B as Server B
+    participant RA as Redis A
+    participant RB as Redis B
+
+    Note over FP,RB: Scenario: Order created on Server A
+    FP->>LB: POST /callback (order_id: 123)
+    
+    alt Callback routes to Server A (50% - SUCCESS)
+        LB->>A: Forward callback
+        A->>RA: GET order 123
+        RA-->>A: ✓ Order found
+        A-->>FP: 200 OK
+        Note over A: Order processed successfully
+    else Callback routes to Server B (50% - FAILURE)
+        LB->>B: Forward callback
+        B->>RB: GET order 123
+        RB-->>B: ✗ Order not found
+        B-->>FP: 404 Not Found
+        Note over B: ERROR: Order not in local Redis
+    end
+#+end_src
+
+** State Distribution Problem
+
+#+begin_src mermaid :file diagrams/state-problem.png
+graph TB
+    subgraph "Initial Request"
+        U[User] -->|1. POST /order| LB[Load Balancer]
+        LB -->|2. Routes to A| A[Server A]
+        A -->|3. Store| RA[(Redis A<br/>order_id: 123)]
+        A -->|4. Fraud check| FP[Fraud Platform]
+    end
+    
+    subgraph "Callback Problem"
+        FP -->|5. Callback| LB2[Load Balancer]
+        LB2 -.->|6a. 50% chance| A2[Server A ✓]
+        LB2 -.->|6b. 50% chance| B[Server B ✗]
+        A2 -.-> RA
+        B -.->|Order not found| RB[(Redis B<br/>empty)]
+    end
+    
+    style B fill:#f99,stroke:#f00
+    style RB fill:#fcc,stroke:#f00
+    style A2 fill:#9f9,stroke:#0f0
+    style RA fill:#cfc,stroke:#0f0
+#+end_src
+
+* Probabilistic Analysis
+
+The system has two independent 50/50 coin flips:
+1. Initial routing: User → Load Balancer → {Server A, Server B}
+2. Callback routing: Fraud Platform → Load Balancer → {Server A, Server B}
+
+Success occurs when both route to the same server.
+
+** Probability Distribution
+
+| Initial Route | Callback Route | Outcome | Probability |
+|---------------+----------------+---------+-------------|
+| Server A      | Server A       | SUCCESS | 0.25        |
+| Server A      | Server B       | FAILURE | 0.25        |
+| Server B      | Server A       | FAILURE | 0.25        |
+| Server B      | Server B       | SUCCESS | 0.25        |
+
+*Overall Success Rate: 50%*
+*Overall Failure Rate: 50%*
+
+* Simulation with Racket Roulette
+
+#+begin_src racket :tangle simulation/callback-simulation.rkt :mkdirp t
+#lang roulette/example/disrupt
+
+;; Simulate initial server routing (50/50 split)
+(define routes-to-server-a (flip 0.5))
+
+;; Simulate callback routing (independent 50/50 split)
+(define callback-routes-to-server-a (flip 0.5))
+
+;; Success only when both route to same server
+;; Case 1: Both route to Server A
+(define both-route-to-a (and routes-to-server-a callback-routes-to-server-a))
+
+;; Case 2: Both route to Server B
+(define both-route-to-b (and (not routes-to-server-a) 
+                               (not callback-routes-to-server-a)))
+
+;; Overall success is when either case succeeds
+(define callback-succeeds (or both-route-to-a both-route-to-b))
+
+;; Display results
+(displayln "=== Distributed Callback Simulation ===")
+(displayln "")
+(displayln "Initial routing to Server A:")
+routes-to-server-a
+(displayln "")
+(displayln "Callback routing to Server A:")
+callback-routes-to-server-a
+(displayln "")
+(displayln "Both route to Server A (success case 1):")
+both-route-to-a
+(displayln "")
+(displayln "Both route to Server B (success case 2):")
+both-route-to-b
+(displayln "")
+(displayln "Callback succeeds (overall):")
+callback-succeeds
+#+end_src
+
+** Expected Output Analysis
+
+When running the simulation:
+
+#+begin_example
+Welcome to Racket v8.15 [cs].
+————— run callback-simulation.rkt —————
+=== Distributed Callback Simulation ===
+
+Initial routing to Server A:
+(pmf | #t ↦ 0.5 | #f ↦ 0.5)
+
+Callback routing to Server A:
+(pmf | #t ↦ 0.5 | #f ↦ 0.5)
+
+Both route to Server A (success case 1):
+(pmf | #t ↦ 0.25 | #f ↦ 0.75)
+
+Both route to Server B (success case 2):
+(pmf | #t ↦ 0.25 | #f ↦ 0.75)
+
+Callback succeeds (overall):
+(pmf | #t ↦ 0.5 | #f ↦ 0.5)
+#+end_example
+
+* Solutions to Consider
+
+** 1. Shared State (Centralized Redis)
+
+#+begin_src mermaid :file diagrams/solution-shared-redis.png
+graph LR
+    LB[Load Balancer] --> A[Server A]
+    LB --> B[Server B]
+    A --> R[(Shared Redis)]
+    B --> R
+    style R fill:#9f9,stroke:#0f0
+#+end_src
+
+** 2. Sticky Sessions
+
+Include server identifier in callback URL:
+- ~https://lb.example.com/callback?server=A~
+
+** 3. Distributed Cache Replication
+
+Replicate order data across both Redis instances.
+
+** 4. Session Affinity
+
+Use consistent hashing on order_id to ensure same server handles both request and callback.
+
+** 5. Message Queue
+
+Use a shared message queue instead of direct callbacks:
+- Server A publishes to queue
+- Any server can consume from queue with access to shared state
+
+* Extended Scenarios
+
+** Scenario 2: Stable/Canary Deployment (90/10 Split)
+
+In a stable/canary deployment, traffic is split 90% to stable, 10% to canary.
+
+*** Probability Analysis
+
+| Initial Route | Callback Route | Outcome | Probability |
+|---------------+----------------+---------+-------------|
+| Stable (90%)  | Stable (90%)   | SUCCESS | 0.81        |
+| Stable (90%)  | Canary (10%)   | FAILURE | 0.09        |
+| Canary (10%)  | Stable (90%)   | FAILURE | 0.09        |
+| Canary (10%)  | Canary (10%)   | SUCCESS | 0.01        |
+
+*Overall Success Rate: 82%*
+*Overall Failure Rate: 18%*
+
+#+begin_src racket :tangle simulation/stable-canary-simulation.rkt :mkdirp t
+#lang roulette/example/disrupt
+
+;; Stable/Canary Deployment (90/10 split)
+;; Models callback routing with unbalanced traffic distribution
+
+;; 90% probability routes to stable, 10% to canary
+(define initial-routes-to-stable (flip 0.9))
+(define callback-routes-to-stable (flip 0.9))
+
+;; Success when both route to same environment
+(define both-stable (and initial-routes-to-stable callback-routes-to-stable))
+(define both-canary (and (not initial-routes-to-stable) 
+                          (not callback-routes-to-stable)))
+
+(define success (or both-stable both-canary))
+(define failure (not success))
+
+(displayln "╔═══════════════════════════════════════════════════════════╗")
+(displayln "║  Stable/Canary Deployment (90/10 Split)                  ║")
+(displayln "╚═══════════════════════════════════════════════════════════╝")
+(displayln "")
+
+(displayln "Initial routes to Stable (90%):")
+initial-routes-to-stable
+(displayln "")
+
+(displayln "Callback routes to Stable (90%):")
+callback-routes-to-stable
+(displayln "")
+
+(displayln "Both route to Stable:")
+both-stable
+(displayln "")
+
+(displayln "Both route to Canary:")
+both-canary
+(displayln "")
+
+(displayln "Overall SUCCESS (routes match):")
+success
+(displayln "")
+
+(displayln "Overall FAILURE (routes don't match):")
+failure
+(displayln "")
+
+(displayln "═══════════════════════════════════════════════════════════")
+(displayln "Expected: Success = 82%, Failure = 18%")
+(displayln "═══════════════════════════════════════════════════════════")
+#+end_src
+
+** Scenario 3: Full Load Balancer (10 Servers)
+
+With 10 servers, each handling 10% of traffic, the failure rate becomes extreme.
+
+*** Probability Analysis
+
+With N servers, each receiving 1/N of the traffic:
+- P(same server) = N × (1/N × 1/N) = 1/N
+- P(different server) = 1 - 1/N
+
+For N=10:
+- P(same server) = 1/10 = 0.1 = *10% success*
+- P(different server) = 9/10 = 0.9 = *90% failure*
+
+*** Visualization
+
+#+begin_src mermaid :file diagrams/ten-server-problem.png
+graph TB
+    subgraph "10 Server Load Balancer"
+        LB[Load Balancer<br/>10% each]
+        LB --> S1[Server 1]
+        LB --> S2[Server 2]
+        LB --> S3[Server 3]
+        LB --> S4[Server 4]
+        LB --> S5[Server 5]
+        LB --> S6[Server 6]
+        LB --> S7[Server 7]
+        LB --> S8[Server 8]
+        LB --> S9[Server 9]
+        LB --> S10[Server 10]
+    end
+    
+    subgraph "Success Rate"
+        SR[1/10 = 10%]
+    end
+    
+    subgraph "Failure Rate"
+        FR[9/10 = 90%]
+    end
+    
+    style SR fill:#9f9,stroke:#0f0
+    style FR fill:#f99,stroke:#f00
+#+end_src
+
+*** Simulation with Roulette
+
+#+begin_src racket :tangle simulation/ten-server-simulation.rkt :mkdirp t
+#lang roulette/example/disrupt
+
+;; 10 Server Load Balancer Simulation
+;; Each server gets 10% of traffic
+
+;; Use categorical distribution for 10 servers
+;; Returns a number 0-9 representing which server
+(define (pick-server)
+  (categorical '(0 1 2 3 4 5 6 7 8 9)))
+
+;; Initial request picks a server
+(define initial-server (pick-server))
+
+;; Callback independently picks a server
+(define callback-server (pick-server))
+
+;; Success only when same server is picked
+(define same-server (equal? initial-server callback-server))
+
+(displayln "╔═══════════════════════════════════════════════════════════╗")
+(displayln "║  10 Server Load Balancer Simulation                      ║")
+(displayln "╚═══════════════════════════════════════════════════════════╝")
+(displayln "")
+
+(displayln "Initial request routed to server:")
+initial-server
+(displayln "")
+
+(displayln "Callback routed to server:")
+callback-server
+(displayln "")
+
+(displayln "Routes to SAME server (SUCCESS):")
+same-server
+(displayln "")
+
+(displayln "═══════════════════════════════════════════════════════════")
+(displayln "Expected: Success = 10%, Failure = 90%")
+(displayln "═══════════════════════════════════════════════════════════")
+#+end_src
+
+*** Generalized N-Server Analysis
+
+#+begin_src racket :tangle simulation/n-server-analysis.rkt :mkdirp t
+#lang roulette/example/disrupt
+
+;; Generalized analysis for N servers
+;; Shows how failure rate scales with number of servers
+
+(define (analyze-n-servers n)
+  (displayln (format "═══ ~a Servers ═══" n))
+  (displayln (format "  Success probability: 1/~a = ~a%" n (exact->inexact (/ 100 n))))
+  (displayln (format "  Failure probability: ~a/~a = ~a%" (- n 1) n 
+                     (exact->inexact (* 100 (/ (- n 1) n)))))
+  (displayln ""))
+
+(displayln "╔═══════════════════════════════════════════════════════════╗")
+(displayln "║  N-Server Failure Rate Analysis                          ║")
+(displayln "╚═══════════════════════════════════════════════════════════╝")
+(displayln "")
+
+(analyze-n-servers 2)   ;; Original 50/50
+(analyze-n-servers 3)
+(analyze-n-servers 5)
+(analyze-n-servers 10)  ;; Full load balancer
+(analyze-n-servers 20)
+(analyze-n-servers 50)
+(analyze-n-servers 100)
+
+(displayln "═══════════════════════════════════════════════════════════")
+(displayln "Conclusion: As N increases, failure rate approaches 100%")
+(displayln "═══════════════════════════════════════════════════════════")
+#+end_src
+
+** Comparative Analysis
+
+| Deployment Type | Servers | Traffic Split | Success Rate | Failure Rate |
+|-----------------+---------+---------------+--------------+--------------|
+| Blue/Green      |       2 | 50/50         | 50%          | 50%          |
+| Stable/Canary   |       2 | 90/10         | 82%          | 18%          |
+| Load Balanced   |      10 | 10% each      | 10%          | 90%          |
+| Large Cluster   |     100 | 1% each       | 1%           | 99%          |
+
+*Key Insight*: The more servers you have, the worse the problem becomes!
+
+* Conclusion
+
+This architecture demonstrates a fundamental problem in distributed systems: *locality of state vs. 
+stateless routing*. 
+
+** Failure Rate Scales with Server Count
+
+- 2 servers (50/50): 50% failure rate
+- 2 servers (90/10): 18% failure rate  
+- 10 servers: *90% failure rate*
+- N servers: (N-1)/N failure rate
+
+** Root Causes
+
+1. State is stored locally per server instance
+2. Routing decisions are independent and stateless
+3. Callback has no knowledge of which server originated the request
+4. As you scale horizontally, the problem gets exponentially worse
+
+The probabilistic simulations confirm the theoretical analysis across all scenarios.

@@ -1,0 +1,144 @@
+#+TITLE: Experiment 098: Distributed Callback Problem
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-05
+#+STARTUP: overview
+
+* Overview
+
+Probabilistic analysis of distributed callback failures in load-balanced systems with server-local state using Roulette.
+
+* The Problem
+
+When a load-balanced system with server-local state (Redis) makes external API calls with callbacks, the callback may route to a different server instance, causing a lookup failure.
+
+** Architecture
+- Load balancer distributes requests across N servers
+- Each server has local Redis instance
+- External fraud platform makes async callbacks
+- Callback may route to different server than original request
+
+** Failure Scenario
+1. User request → Load Balancer → Server A
+2. Server A stores order in Redis A
+3. Server A calls fraud API with callback URL
+4. Fraud API responds → Load Balancer → Server B (50% probability)
+5. Server B looks up order in Redis B → NOT FOUND ❌
+
+* Probabilistic Analysis with Roulette
+
+Using Roulette to model exact failure probabilities:
+
+#+begin_src racket
+#lang roulette
+
+;; 2-server system
+(define server-choice (discrete-uniform '(A B)))
+
+;; Request goes to server A, callback probability
+(define (callback-matches? initial-server)
+  (equal? initial-server (discrete-uniform '(A B))))
+
+;; Failure rate for 2 servers
+(probability (not (callback-matches? 'A)))
+;; → 0.5 (50% failure rate)
+#+end_src
+
+* File Structure
+
+#+begin_example
+098-distributed-callbacks/
+├── README.org                          # This file
+├── distributed-callback-problem.org    # Complete problem analysis
+├── COMPLETE_SUMMARY.org               # Summary of findings
+├── RACKETCON_INTEGRATION.org          # RacketCon presentation notes
+├── FAILURE_RATES_VISUAL.md            # Visualization of failure rates
+├── ORIGINAL_README.md                 # Original problem description
+├── simulation/                        # Roulette simulations
+│   ├── callback-simulation.rkt       # Basic 2-server simulation
+│   ├── n-server-analysis.rkt         # Generalized N-server analysis
+│   ├── ten-server-simulation.rkt     # 10-server scenario
+│   ├── stable-canary-simulation.rkt  # Canary deployment analysis
+│   ├── callback-simulation-detailed.rkt
+│   └── comparison-all-scenarios.rkt  # Compare all approaches
+└── run-all-simulations.sh            # Run all Racket simulations
+#+end_example
+
+* Key Results
+
+** Failure Rates by Server Count
+
+| Servers | Failure Rate | Formula          |
+|---------+--------------+------------------|
+|       2 | 50.0%        | 1 - 1/2 = 0.500 |
+|       3 | 66.7%        | 1 - 1/3 = 0.667 |
+|       5 | 80.0%        | 1 - 1/5 = 0.800 |
+|      10 | 90.0%        | 1 - 1/10 = 0.90 |
+|     100 | 99.0%        | 1 - 1/100 = 0.99|
+
+** Solutions
+
+1. *Shared State* (Recommended)
+   - Use shared Redis/database
+   - Failure rate: 0%
+   - Complexity: Low
+
+2. *Session Affinity*
+   - Sticky sessions based on order_id
+   - Failure rate: 0%
+   - Complexity: Medium (load balancer config)
+
+3. *Broadcast to All Servers*
+   - Store state on all servers
+   - Failure rate: 0%
+   - Complexity: High (network overhead)
+
+4. *Canary with Fallback*
+   - 1% canary traffic
+   - Stable receives both requests and callbacks
+   - Failure rate for canary: 99%
+   - Failure rate for stable: 0%
+
+* Connection to RacketCon
+
+** Roulette Talk (Saturday 2:30pm)
+- Exact discrete inference
+- RSDD for probability computation
+- Real-world distributed systems analysis
+
+** Chaos Engineering (Experiment 091)
+- Probabilistic failure modeling
+- System reliability analysis
+- Error budget calculation
+
+* Running the Simulations
+
+#+begin_src bash
+# Run all simulations
+./run-all-simulations.sh
+
+# Individual simulations
+racket simulation/callback-simulation.rkt
+racket simulation/n-server-analysis.rkt
+racket simulation/ten-server-simulation.rkt
+racket simulation/stable-canary-simulation.rkt
+racket simulation/comparison-all-scenarios.rkt
+#+end_src
+
+* Key Insights
+
+1. **Failure rate = 1 - 1/N** for N servers
+2. More servers → higher failure rate (counterintuitive!)
+3. Canary deployments have 99% callback failure rate
+4. Shared state eliminates the problem entirely
+5. Roulette provides exact probabilities, not approximations
+
+* Resources
+
+- [[file:distributed-callback-problem.org][Complete Problem Analysis]]
+- [[file:COMPLETE_SUMMARY.org][Summary of Findings]]
+- [[file:RACKETCON_INTEGRATION.org][RacketCon Integration Notes]]
+- [[file:FAILURE_RATES_VISUAL.md][Failure Rate Visualizations]]
+
+* Status
+
+EXPERIMENT complete - Distributed callback problem analyzed with Roulette!

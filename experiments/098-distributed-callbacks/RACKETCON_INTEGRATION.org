@@ -1,0 +1,182 @@
+#+TITLE: RacketCon 2025 - Distributed Callback Problem Demo
+#+AUTHOR: Integration Guide
+#+DATE: 2025-10-05
+
+* Overview
+
+This demonstration uses Roulette (probabilistic programming in Racket) to model and analyze
+a distributed systems failure pattern that occurs in production load-balanced architectures.
+
+* For Your RacketCon 2025 Presentation
+
+** Key Talking Points
+
+1. *Real Production Bug*: This isn't theoretical - companies lose millions to this pattern
+2. *Probabilistic Modeling*: Roulette makes the failure rates explicit and verifiable
+3. *Scaling Paradox*: Horizontal scaling makes this problem WORSE, not better
+4. *Mathematical Proof*: PMF distributions prove the failure rates
+
+** Demo Flow
+
+#+begin_src bash
+# Start with the simple case
+racket simulation/callback-simulation.rkt
+
+# Show how it changes with traffic split
+racket simulation/stable-canary-simulation.rkt
+
+# Reveal the disaster with scale
+racket simulation/ten-server-simulation.rkt
+
+# Show the general pattern
+racket simulation/n-server-analysis.rkt
+#+end_src
+
+** Audience Takeaways
+
+- Probabilistic programming reveals hidden failure modes
+- Roulette's PMF notation makes probabilities concrete
+- Distributed systems have counterintuitive failure patterns
+- Models help us reason about complex systems
+
+* Integration with Your Tutorial
+
+Based on your directory structure:
+#+begin_example
+/Users/jasonwalsh/ghq/github.com/jwalsh/racketcon-2025/experiments/086-roulette-tutorial
+#+end_example
+
+** Suggested Structure
+
+#+begin_src
+086-roulette-tutorial/
+├── README.org                         # Your existing overview
+├── TUTORIAL.org                       # Your existing tutorial
+├── coins.rkt                          # Your coin flip example
+├── tutorial.rkt                       # Your tutorial code
+├── distributed-callback-problem.org   # ADD: This case study
+└── examples/
+    ├── basic/
+    │   └── coins.rkt                  # Move existing here
+    └── distributed-systems/           # ADD: New section
+        ├── callback-simulation.rkt
+        ├── stable-canary-simulation.rkt
+        ├── ten-server-simulation.rkt
+        ├── n-server-analysis.rkt
+        └── comparison-all-scenarios.rkt
+#+end_src
+
+** Adding to Your Tutorial
+
+*** Section: "Real-World Applications"
+
+Add this after your basic coin flip examples:
+
+#+begin_src org
+,*** Case Study: Distributed Systems Failure Analysis
+
+Roulette excels at modeling systems with independent random events.
+Consider a load-balanced API with callback webhooks...
+
+[Include diagram]
+
+The failure rate scales with server count:
+- 2 servers: 50% failure
+- 10 servers: 90% failure
+- N servers: (N-1)/N failure
+
+See ~examples/distributed-systems/~ for complete analysis.
+#+end_src
+
+*** Live Coding Demo
+
+#+begin_src racket
+#lang roulette/example/disrupt
+
+;; Start simple: 2 servers
+(define server-a? (flip 0.5))
+(define callback-a? (flip 0.5))
+(define success? (equal? server-a? callback-a?))
+
+;; Show PMF
+success?  ; (pmf | #t ↦ 0.5 | #f ↦ 0.5)
+
+;; Scale to 10 servers
+(define initial (categorical '(0 1 2 3 4 5 6 7 8 9)))
+(define callback (categorical '(0 1 2 3 4 5 6 7 8 9)))
+(define match? (equal? initial callback))
+
+;; Show the disaster
+match?  ; (pmf | #t ↦ 0.1 | #f ↦ 0.9)
+#+end_src
+
+* Extending the Analysis
+
+** Additional Scenarios You Could Add
+
+1. *Retry Logic*
+   #+begin_src racket
+   ;; What if we retry failed callbacks?
+   (define first-attempt (equal? initial callback))
+   (define second-attempt (equal? initial (pick-server)))
+   (define success-with-retry (or first-attempt second-attempt))
+   #+end_src
+
+2. *Partial Replication*
+   #+begin_src racket
+   ;; What if we replicate to 2 random servers?
+   (define server-has-data? 
+     (lambda (s) (or (equal? s initial)
+                     (equal? s replicated-to))))
+   #+end_src
+
+3. *Consistent Hashing*
+   #+begin_src racket
+   ;; Model consistent hashing with order-id
+   (define (hash-to-server order-id)
+     (modulo order-id 10))
+   #+end_src
+
+** Discussion Questions
+
+1. How would you model network partitions?
+2. What's the probability of success with 2 retries?
+3. How does caching affect this?
+4. Can you model eventual consistency?
+
+* Running the Complete Demo
+
+#+begin_src bash
+# One command runs everything
+./run-all-simulations.sh
+
+# Or individually for presentation:
+racket simulation/comparison-all-scenarios.rkt
+#+end_src
+
+* Bibliography
+
+** Roulette Papers
+- "Roulette: A Library for Discrete Probabilistic Programming in Racket"
+- RacketCon talks on probabilistic programming
+
+** Distributed Systems
+- "Designing Data-Intensive Applications" (Kleppmann)
+- CAP Theorem and eventual consistency
+- Load balancing algorithms
+
+** Related Work
+- TLA+ for formal verification
+- Property-based testing with QuickCheck
+- Chaos engineering (Netflix)
+
+* Questions for Audience
+
+1. Have you encountered this pattern in production?
+2. How would you debug this without probabilistic modeling?
+3. What other distributed systems patterns could Roulette model?
+4. How would you extend this to model geographic distribution?
+
+* License
+
+Public Domain / CC0 - Use freely in your presentation!

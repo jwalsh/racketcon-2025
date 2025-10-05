@@ -1,0 +1,283 @@
+#+TITLE: Distributed Callback Problem - Complete Analysis
+#+SUBTITLE: From 50/50 to 90% Failure Rates
+#+AUTHOR: System Design with Roulette
+#+DATE: 2025-10-05
+
+* Executive Summary
+
+This analysis demonstrates how a seemingly simple architectural pattern—load-balanced servers
+with local state and external callbacks—creates failure rates that *worsen with scale*.
+
+** The Numbers
+
+| Configuration      | Success Rate | Failure Rate | Impact              |
+|--------------------+--------------+--------------+---------------------|
+| Blue/Green (50/50) | 50%          | 50%          | Manageable          |
+| Stable/Canary      | 82%          | *18%*        | Noticeable          |
+| 10 Servers         | 10%          | *90%*        | Production disaster |
+| 100 Servers        | 1%           | *99%*        | Business ending     |
+
+* The Architecture
+
+** System Components
+
+#+begin_src mermaid :file diagrams/system-overview.png
+graph LR
+    U[User] --> LB[Load Balancer]
+    LB --> S1[Server 1 + Redis 1]
+    LB --> S2[Server 2 + Redis 2]
+    LB --> SN[Server N + Redis N]
+    
+    S1 -.Callback URL.-> FP[Fraud Platform]
+    S2 -.Callback URL.-> FP
+    SN -.Callback URL.-> FP
+    
+    FP -.Callback.-> LB
+#+end_src
+
+** The Bug
+
+1. User hits Load Balancer → routes to Server A
+2. Server A stores order in Redis A
+3. Server A calls Fraud Platform with callback URL
+4. Fraud Platform processes, calls back to Load Balancer
+5. Load Balancer routes to Server B (50% chance with 2 servers)
+6. Server B checks Redis B → *ORDER NOT FOUND* ❌
+
+* Mathematical Analysis
+
+** Formula
+
+For N servers with equal traffic distribution:
+- P(callback hits same server) = 1/N
+- P(callback hits different server) = (N-1)/N
+
+** Proof by Roulette
+
+#+begin_src racket
+#lang roulette/example/disrupt
+
+;; Two independent random choices
+(define initial-server (categorical '(0 1 ... N-1)))
+(define callback-server (categorical '(0 1 ... N-1)))
+
+;; Success only when they match
+(define success (equal? initial-server callback-server))
+
+;; Result: (pmf | #t ↦ 1/N | #f ↦ (N-1)/N)
+#+end_src
+
+* Three Scenarios Analyzed
+
+** Scenario 1: Blue/Green (50/50)
+
+Traditional A/B deployment.
+
+#+begin_src racket
+(define initial (flip 0.5))
+(define callback (flip 0.5))
+(define success (equal? initial callback))
+;; → (pmf | #t ↦ 0.5 | #f ↦ 0.5)
+#+end_src
+
+*Result*: 50% success, 50% failure
+
+** Scenario 2: Stable/Canary (90/10)
+
+Gradual rollout pattern.
+
+#+begin_src racket
+(define initial (flip 0.9))  ; 90% stable
+(define callback (flip 0.9))
+(define success (equal? initial callback))
+;; → (pmf | #t ↦ 0.82 | #f ↦ 0.18)
+#+end_src
+
+*Result*: 82% success, *18% failure*
+
+Breakdown:
+- Both Stable: 0.9 × 0.9 = 81%
+- Both Canary: 0.1 × 0.1 = 1%
+- Stable→Canary: 0.9 × 0.1 = 9%
+- Canary→Stable: 0.1 × 0.9 = 9%
+
+** Scenario 3: Load Balancer (10 Servers)
+
+Production-scale deployment.
+
+#+begin_src racket
+(define initial (categorical '(0 1 2 3 4 5 6 7 8 9)))
+(define callback (categorical '(0 1 2 3 4 5 6 7 8 9)))
+(define success (equal? initial callback))
+;; → (pmf | #t ↦ 0.1 | #f ↦ 0.9)
+#+end_src
+
+*Result*: 10% success, *90% failure* 🔥
+
+* Why This Matters
+
+** At Scale
+
+1000 orders/minute with 10 servers:
+- 100 successful orders (10%)
+- *900 failed orders (90%)*
+- At $10/order: *$9,000/min in lost revenue*
+- *$12.96M/year in losses*
+
+** The Counterintuitive Insight
+
+#+begin_quote
+Horizontal scaling—the solution to most problems—
+makes this problem EXPONENTIALLY WORSE.
+#+end_quote
+
+More servers = Higher availability ✓
+More servers = Better performance ✓  
+More servers = More callback failures ✗
+
+* Solutions
+
+** 1. Shared State ✓
+
+Replace per-server Redis with centralized store:
+
+#+begin_src
+[Server 1] ────┐
+               ├──→ [Shared Redis]
+[Server 2] ────┘
+#+end_src
+
+** 2. Sticky Sessions ✓
+
+Include server ID in callback URL:
+- ~https://api.example.com/callback?server=a~
+
+** 3. Consistent Hashing ✓
+
+Hash order_id to always route to same server:
+
+#+begin_src racket
+(define (server-for-order id)
+  (modulo (hash id) num-servers))
+#+end_src
+
+** 4. Message Queue ✓
+
+Decouple callback from HTTP:
+
+#+begin_src
+[Server 1] ──→ [Queue] ←── [Any Server]
+[Server 2] ──→ [Queue] ←── [Any Server]
+#+end_src
+
+** 5. State Replication ⚠
+
+Replicate to multiple servers (complex, eventual consistency issues)
+
+* Files in This Package
+
+** Documentation
+- ~README.md~ - Quick start guide
+- ~distributed-callback-problem.org~ - Full analysis with diagrams
+- ~FAILURE_RATES_VISUAL.md~ - ASCII art visualizations
+- ~RACKETCON_INTEGRATION.org~ - RacketCon 2025 integration guide
+
+** Simulations (All Roulette)
+- ~simulation/callback-simulation.rkt~ - Basic 50/50
+- ~simulation/callback-simulation-detailed.rkt~ - All 4 scenarios
+- ~simulation/stable-canary-simulation.rkt~ - 90/10 split (18% failure)
+- ~simulation/ten-server-simulation.rkt~ - 10 servers (90% failure)
+- ~simulation/n-server-analysis.rkt~ - General N-server analysis
+- ~simulation/comparison-all-scenarios.rkt~ - Side-by-side comparison
+
+** Utilities
+- ~run-all-simulations.sh~ - Run all demos in sequence
+
+* Running the Demos
+
+** Quick Start
+
+#+begin_src bash
+# Install dependencies
+brew install racket        # or apt-get install racket
+raco pkg install roulette
+
+# Run individual scenarios
+racket simulation/callback-simulation.rkt
+racket simulation/stable-canary-simulation.rkt
+racket simulation/ten-server-simulation.rkt
+
+# Or run all at once
+./run-all-simulations.sh
+#+end_src
+
+** Expected Output
+
+Each simulation shows PMF (Probability Mass Function) distributions:
+
+#+begin_example
+Initial routing:
+(pmf | #t ↦ 0.9 | #f ↦ 0.1)
+
+Callback routing:
+(pmf | #t ↦ 0.9 | #f ↦ 0.1)
+
+SUCCESS:
+(pmf | #t ↦ 0.82 | #f ↦ 0.18)
+#+end_example
+
+* Key Takeaways
+
+1. *Probabilistic Programming Reveals Hidden Bugs*
+   - Roulette makes failure probabilities explicit
+   - PMF notation proves the math
+
+2. *Scale Can Break Things*
+   - Not all bugs show up in small deployments
+   - Horizontal scaling can amplify certain failure modes
+
+3. *Model Before You Build*
+   - Probabilistic models catch issues in design phase
+   - Cheaper than discovering in production
+
+4. *Shared State vs. Stateless Services*
+   - Fundamental tension in distributed systems
+   - Must be explicit about this trade-off
+
+* Further Reading
+
+** Papers
+- "Roulette: Discrete Probabilistic Programming in Racket"
+- "Designing Data-Intensive Applications" (Kleppmann)
+
+** Related Techniques
+- TLA+ for formal verification
+- Chaos engineering (Netflix)
+- Property-based testing
+
+** Distributed Systems Patterns
+- CAP Theorem
+- Eventual Consistency
+- CQRS (Command Query Responsibility Segregation)
+
+* For RacketCon 2025
+
+This case study demonstrates:
+- Real-world application of probabilistic programming
+- Roulette's power for systems modeling
+- Why functional thinking helps reason about distributed systems
+
+Perfect for a tutorial section on "Roulette in Practice"!
+
+* License
+
+Public Domain / CC0 - Free to use, modify, and present!
+
+* Questions?
+
+This analysis was generated to demonstrate:
+1. How Roulette models real production bugs
+2. Why probabilistic reasoning matters in systems design
+3. That scaling isn't always the answer
+
+Ready for your RacketCon presentation! 🎉
