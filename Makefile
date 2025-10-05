@@ -1,7 +1,7 @@
 # Makefile for RacketCon 2025 experiments
 # Use gmake (GNU Make) not BSD make
 
-.PHONY: help download-papers clean-papers rosette-paper
+.PHONY: help download-papers clean-papers rosette-paper lint-org
 
 # Default target
 help:
@@ -10,6 +10,7 @@ help:
 	@echo "  download-papers - Download all research papers"
 	@echo "  rosette-paper   - Download Rosette PLDI 2014 paper"
 	@echo "  clean-papers    - Remove downloaded papers"
+	@echo "  lint-org        - Lint all org files with org-lint"
 	@echo "  help            - Show this help message"
 	@echo ""
 
@@ -47,3 +48,8 @@ download-papers: rosette-paper
 clean-papers:
 	rm -rf $(PAPERS_DIR)
 	@echo "Papers directory removed"
+
+# Lint org files
+lint-org:
+	@echo "Linting all org files..."
+	@REPO_ROOT=$(shell pwd) emacs --batch --script scripts/lint-org.el

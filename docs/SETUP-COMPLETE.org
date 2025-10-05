@@ -139,7 +139,7 @@ racket 08-rhea-integration.rkt
 
 ** RacketCon 2025 Preparation
 
-1. Review [[file:sessions.org][sessions.org]] for schedule
+1. Review [[file:sessions.org][Conference Schedule]] for session details
 2. Work through tutorials with tangle support
 3. Explore experiments 001-049
 4. Use RHEA framework for new experiments
