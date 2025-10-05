@@ -1,0 +1,115 @@
+#+TITLE: Experiment 088: Markov Chains with Roulette
+#+AUTHOR: RacketCon 2025
+#+DATE: [2025-10-05 Sun]
+#+PROPERTY: header-args:racket :session *racket-088* :results output
+
+* Experiment Overview
+
+Implementing and analyzing Markov chains using Roulette's probabilistic programming capabilities.
+
+* Markov Chain Basics
+
+A Markov chain is a stochastic model where:
+1. System has discrete states
+2. Transitions between states are probabilistic
+3. Future state depends only on current state (Markov property)
+
+* Simple Weather Model
+
+#+BEGIN_SRC racket :eval never
+#lang roulette
+
+;; States: sunny, rainy
+;; Transition probabilities:
+;;   sunny -> sunny: 0.8
+;;   sunny -> rainy: 0.2
+;;   rainy -> rainy: 0.6
+;;   rainy -> sunny: 0.4
+
+(define (next-weather current)
+  (case current
+    [(sunny) (if (flip 0.8) 'sunny 'rainy)]
+    [(rainy) (if (flip 0.6) 'rainy 'sunny)]))
+
+;; Run chain for n steps
+(define (weather-chain n state)
+  (if (= n 0)
+      '()
+      (cons state
+            (weather-chain (- n 1)
+                          (next-weather state)))))
+
+;; Simulate 10 days starting sunny
+(define forecast (weather-chain 10 'sunny))
+
+;; What's probability of rain on day 5?
+(query (list-ref forecast 5))
+#+END_SRC
+
+* Random Walk on Graph
+
+#+BEGIN_SRC racket :eval never
+#lang roulette
+
+;; Graph: nodes 1, 2, 3, 4 in a square
+;; Random walk: move to random neighbor
+
+(define (neighbors node)
+  (case node
+    [(1) '(2 4)]
+    [(2) '(1 3)]
+    [(3) '(2 4)]
+    [(4) '(1 3)]))
+
+(define (random-step node)
+  (define nbrs (neighbors node))
+  (list-ref nbrs (uniform-discrete-idx (length nbrs))))
+
+(define (random-walk steps start)
+  (if (= steps 0)
+      start
+      (random-walk (- steps 1)
+                   (random-step start))))
+
+;; Where are we after 100 steps?
+(query (random-walk 100 1))
+#+END_SRC
+
+* PageRank Simulation
+
+#+BEGIN_SRC racket :eval never
+#lang roulette
+
+;; Simplified PageRank as Markov chain
+;; Web graph with link structure
+
+(define (web-navigate page damping)
+  (if (flip damping)
+      ;; Follow link
+      (case page
+        [(page-a) (if (flip 0.5) 'page-b 'page-c)]
+        [(page-b) 'page-a]
+        [(page-c) (uniform-discrete 'page-a 'page-b)])
+      ;; Jump to random page
+      (uniform-discrete 'page-a 'page-b 'page-c)))
+
+;; Stationary distribution approximates PageRank
+(define (simulate-pagerank steps)
+  (let loop ([step 0] [page 'page-a] [counts #hash()])
+    (if (= step steps)
+        counts
+        (loop (+ step 1)
+              (web-navigate page 0.85)
+              (hash-update counts page add1 0)))))
+
+;; Estimate PageRank
+(query (simulate-pagerank 1000))
+#+END_SRC
+
+* Related Experiments
+- [[file:../086-discrete-probability/][Experiment 086]]: Discrete Probability
+- [[file:../089-roulette-inference/][Experiment 089]]: Roulette Inference
+
+* References
+- [[file:../../references/neuppl-roulette/][Roulette Repository]]
+- [[file:../../resources/papers/roulette.pdf][Roulette Paper]]

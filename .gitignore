@@ -35,6 +35,12 @@ Thumbs.db
 tmp/
 temp/
 
-# Papers and Downloads
+# Papers and Downloads (managed via Makefile)
 papers/
+resources/
 *.pdf
+*.tar.gz
+*.zip
+
+# But allow resources directory structure
+!resources/.gitkeep

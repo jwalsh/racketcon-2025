@@ -75,7 +75,21 @@ Evolution of the Emacs "racket-mode" package.
 ** [#A] 2:30pm EDT Roulette for Racketeers
 Cameron Moy
 
-Discusses a new discrete probabilistic programming language.
+Roulette is an inference-aided host language built on top of Rosette that provides first-class support for measurable values. The programmer-facing interface is nearly the same as Rosette, except values can be associated with probability measures. Instead of an SMT solver, Roulette uses specialized solvers for probabilistic inference.
+
+*Links*:
+- [[https://docs.racket-lang.org/roulette][Roulette Documentation]]
+- [[file:../resources/papers/roulette.pdf][Roulette Paper]] (Cameron Moy)
+- [[file:../references/neuppl-roulette/][Local Repository]] (submodule)
+- [[https://github.com/neuppl/roulette][GitHub Repository]]
+- [[https://github.com/camoy][GitHub: @camoy]]
+
+*Key Features*:
+- First-class measurable values (probability distributions)
+- Built on Rosette's symbolic execution framework
+- Specialized inference solvers
+- Natural Bayesian inference syntax
+- Composable probabilistic programs
 
 *Experiments*: [[file:experiments/086-discrete-probability/][086]] [[file:experiments/088-markov-chains/][088]]
 

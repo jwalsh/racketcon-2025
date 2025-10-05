@@ -4,3 +4,6 @@
 [submodule "references/greghendershott-racket-mode"]
 	path = references/greghendershott-racket-mode
 	url = https://github.com/greghendershott/racket-mode
+[submodule "references/neuppl-roulette"]
+	path = references/neuppl-roulette
+	url = https://github.com/neuppl/roulette

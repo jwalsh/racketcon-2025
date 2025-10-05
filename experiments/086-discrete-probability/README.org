@@ -1,0 +1,318 @@
+#+TITLE: Experiment 086: Discrete Probability with Roulette
+#+AUTHOR: RacketCon 2025
+#+DATE: [2025-10-05 Sun]
+#+PROPERTY: header-args:racket :session *racket-086* :results output
+#+STARTUP: overview indent
+
+* Experiment Overview
+
+Exploring Roulette - a discrete probabilistic programming language built on Rosette.
+
+* Context
+
+From Cameron Moy's talk "Roulette for Racketeers":
+
+Roulette is an inference-aided host language that provides first-class support for
+measurable values (probability distributions). Unlike Rosette which uses SMT solvers,
+Roulette uses specialized solvers for probabilistic inference.
+
+* Resources
+
+** Paper
+- [[file:../../resources/papers/roulette.pdf][Roulette Paper (Cameron Moy)]]
+- [[https://docs.racket-lang.org/roulette][Roulette Documentation]]
+
+** Source Code
+- [[file:../../references/neuppl-roulette/][Local Repository]]
+- [[https://github.com/neuppl/roulette][GitHub Repository]]
+
+* Installation
+
+#+BEGIN_SRC bash :eval never
+# Install Roulette package
+raco pkg install roulette
+
+# Or from local submodule
+cd references/neuppl-roulette
+raco pkg install
+#+END_SRC
+
+* Basic Concepts
+
+** Measurable Values
+
+In Roulette, values can be associated with probability measures.
+
+#+BEGIN_SRC racket :eval never
+#lang roulette
+
+;; A simple discrete distribution
+(define coin-flip (flip 0.5))  ; 50% heads, 50% tails
+
+;; Sample from the distribution
+(observe! coin-flip #t)  ; Condition on observing heads
+#+END_SRC
+
+** Discrete Distributions
+
+#+BEGIN_SRC racket :eval never
+#lang roulette
+
+;; Uniform distribution over discrete values
+(define die-roll (uniform-discrete 1 2 3 4 5 6))
+
+;; Weighted discrete distribution
+(define weighted-die
+  (discrete
+   [1 1/10]   ; Loaded die
+   [2 1/10]
+   [3 1/10]
+   [4 1/10]
+   [5 1/10]
+   [6 5/10]))  ; 6 is most likely
+#+END_SRC
+
+* Example 1: Coin Flips
+
+#+BEGIN_SRC racket :eval never
+#lang roulette
+
+;; Define a fair coin flip
+(define (fair-coin)
+  (flip 0.5))
+
+;; Flip three coins
+(define coin1 (fair-coin))
+(define coin2 (fair-coin))
+(define coin3 (fair-coin))
+
+;; How many heads?
+(define num-heads
+  (+ (if coin1 1 0)
+     (if coin2 1 0)
+     (if coin3 1 0)))
+
+;; What's the probability of getting exactly 2 heads?
+(query num-heads
+       #:when (= num-heads 2))
+#+END_SRC
+
+** Expected Result
+3 coins, exactly 2 heads: C(3,2) = 3 ways / 8 total = 37.5%
+
+* Example 2: Conditional Probability
+
+#+BEGIN_SRC racket :eval never
+#lang roulette
+
+;; Bayesian inference example
+;; Prior: coin bias unknown
+(define bias (uniform-discrete 0.1 0.3 0.5 0.7 0.9))
+
+;; Likelihood: flip coin with that bias
+(define (flip-coin b)
+  (flip b))
+
+;; Observe 7 heads out of 10 flips
+(define flips
+  (for/list ([i 10])
+    (flip-coin bias)))
+
+;; Condition on observing 7 heads
+(observe! (= (count identity flips) 7) #t)
+
+;; Posterior distribution over bias
+(query bias)
+#+END_SRC
+
+* Example 3: Dice Rolls
+
+#+BEGIN_SRC racket :eval never
+#lang roulette
+
+;; Roll two dice
+(define die1 (uniform-discrete 1 2 3 4 5 6))
+(define die2 (uniform-discrete 1 2 3 4 5 6))
+
+(define sum (+ die1 die2))
+
+;; What's the distribution of sums?
+(query sum)
+
+;; What if we know the sum is 7?
+(observe! (= sum 7) #t)
+
+;; Now what's the probability die1 = 3?
+(query die1
+       #:when (= die1 3))
+#+END_SRC
+
+** Analysis
+- Sum = 7 can occur 6 ways: (1,6), (2,5), (3,4), (4,3), (5,2), (6,1)
+- Each is equally likely given sum = 7
+- P(die1 = 3 | sum = 7) = 1/6
+
+* Example 4: Monty Hall Problem
+
+Classic probability puzzle solved with Roulette.
+
+#+BEGIN_SRC racket :eval never
+#lang roulette
+
+;; Car is behind one of three doors
+(define car-door (uniform-discrete 1 2 3))
+
+;; Contestant picks door 1
+(define picked-door 1)
+
+;; Host opens a door (not car, not picked)
+(define host-opens
+  (cond
+    [(= car-door 1) (uniform-discrete 2 3)]  ; Can open 2 or 3
+    [(= car-door 2) 3]                        ; Must open 3
+    [(= car-door 3) 2]))                      ; Must open 2
+
+;; Strategy 1: Stay with door 1
+(define stay-wins (= car-door 1))
+
+;; Strategy 2: Switch to unopened door
+(define switch-door
+  (cond
+    [(= host-opens 2) 3]
+    [(= host-opens 3) 2]))
+(define switch-wins (= car-door switch-door))
+
+;; Compare win probabilities
+(query stay-wins)    ; Should be ~33%
+(query switch-wins)  ; Should be ~66%
+#+END_SRC
+
+* Example 5: Inference with Evidence
+
+#+BEGIN_SRC racket :eval never
+#lang roulette
+
+;; Medical diagnosis example
+(define has-disease (flip 0.01))  ; 1% base rate
+
+;; Test accuracy
+(define test-positive
+  (if has-disease
+      (flip 0.99)   ; 99% sensitivity
+      (flip 0.05))) ; 5% false positive rate
+
+;; Observe: test came back positive
+(observe! test-positive #t)
+
+;; What's the posterior probability of disease?
+(query has-disease)
+#+END_SRC
+
+** Expected Result
+Using Bayes' Theorem:
+- P(disease | positive) = P(positive | disease) × P(disease) / P(positive)
+- = 0.99 × 0.01 / (0.99 × 0.01 + 0.05 × 0.99)
+- ≈ 16.6%
+
+* Comparison: Roulette vs. Rosette
+
+| Feature              | Roulette                  | Rosette              |
+|----------------------+---------------------------+----------------------|
+| Backend              | Inference solvers         | SMT solvers          |
+| Values               | Measurable (probabilistic)| Symbolic             |
+| Queries              | Probability distributions | Satisfying solutions |
+| Use Case             | Probabilistic reasoning   | Verification         |
+| Syntax               | Similar #lang             | Similar #lang        |
+
+* Integration with Rosette
+
+Roulette builds on Rosette's foundation:
+
+#+BEGIN_SRC racket :eval never
+#lang roulette
+
+;; Can use symbolic values alongside probabilistic ones
+(require rosette)
+
+(define-symbolic n integer?)
+(define prob-value (flip 0.7))
+
+;; Combine symbolic and probabilistic reasoning
+(query (and prob-value (> n 0)))
+#+END_SRC
+
+* Advanced: Custom Distributions
+
+#+BEGIN_SRC racket :eval never
+#lang roulette
+
+;; Define a geometric distribution
+(define (geometric p)
+  (if (flip p)
+      0
+      (+ 1 (geometric p))))
+
+;; Number of flips until first heads (p=0.5)
+(define num-flips (geometric 0.5))
+
+(query num-flips)
+#+END_SRC
+
+* Exercises
+
+** Exercise 1: Birthday Paradox
+How many people needed for 50% chance of shared birthday?
+
+#+BEGIN_SRC racket :eval never
+;; Your implementation here
+#+END_SRC
+
+** Exercise 2: Random Walk
+Simulate a 1D random walk and find probability of returning to origin.
+
+#+BEGIN_SRC racket :eval never
+;; Your implementation here
+#+END_SRC
+
+** Exercise 3: Bayesian Spam Filter
+Implement a simple spam classifier using probabilistic inference.
+
+#+BEGIN_SRC racket :eval never
+;; Your implementation here
+#+END_SRC
+
+* Results & Observations
+
+** Key Insights
+- [ ] First-class probability distributions
+- [ ] Natural Bayesian inference syntax
+- [ ] Composable probabilistic programs
+- [ ] Integration with Rosette's symbolic values
+
+** Performance Notes
+- Inference complexity depends on:
+  - Number of random choices
+  - Conditional structure
+  - Query complexity
+
+* Related Work
+
+** Church, Anglican, WebPPL
+Other probabilistic programming languages with similar goals.
+
+** Rosette
+Roulette's foundation - symbolic execution framework.
+
+** Probabilistic Programming
+Broader field of combining programming with probabilistic inference.
+
+* Related Experiments
+- [[file:../001-rosette-fundamentals/][Experiment 001]]: Rosette Fundamentals
+- [[file:../088-markov-chains/][Experiment 088]]: Markov Chains
+- [[file:../089-roulette-inference/][Experiment 089]]: Roulette Inference
+
+* References
+- [[file:../../references/neuppl-roulette/][Roulette Repository]]
+- [[file:../../resources/papers/roulette.pdf][Roulette Paper]]
+- [[https://docs.racket-lang.org/roulette][Roulette Documentation]]
+- [[file:../../docs/sessions.org::*Roulette for Racketeers][Session Notes]]
