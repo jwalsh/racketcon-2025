@@ -1,10 +1,9 @@
-#lang roulette
+#lang roulette/example/disrupt
 
 ;; Three Coins Disruption
 ;; Extended example with three independent coins
 
 (require racket/format)
-(provide (all-defined-out))
 
 (module+ main
   (displayln "=== Three Coins Disruption ===\n")
@@ -18,13 +17,17 @@
   (define coin-3 (flip 0.5))
 
   (displayln "\nBefore Observation:")
-  (displayln (~a "  P(coin-1 = #t) = " (probability coin-1)))
-  (displayln (~a "  P(coin-2 = #t) = " (probability coin-2)))
-  (displayln (~a "  P(coin-3 = #t) = " (probability coin-3)))
+  (displayln "  coin-1:")
+  (displayln (~a "    " coin-1))
+  (displayln "  coin-2:")
+  (displayln (~a "    " coin-2))
+  (displayln "  coin-3:")
+  (displayln (~a "    " coin-3))
 
   ;; All heads
   (define all-heads (and coin-1 coin-2 coin-3))
-  (displayln (~a "  P(all heads) = " (probability all-heads)))
+  (displayln "  all-heads:")
+  (displayln (~a "    " all-heads))
 
   ;; Possible outcomes
   (displayln "\nPossible outcomes: 2³ = 8")
@@ -45,10 +48,14 @@
 
   ;; After observation
   (displayln "After Observation:")
-  (displayln (~a "  P(coin-1 = #t) = " (probability coin-1)))
-  (displayln (~a "  P(coin-2 = #t) = " (probability coin-2)))
-  (displayln (~a "  P(coin-3 = #t) = " (probability coin-3)))
-  (displayln (~a "  P(all heads) = " (probability all-heads)))
+  (displayln "  coin-1:")
+  (displayln (~a "    " coin-1))
+  (displayln "  coin-2:")
+  (displayln (~a "    " coin-2))
+  (displayln "  coin-3:")
+  (displayln (~a "    " coin-3))
+  (displayln "  all-heads:")
+  (displayln (~a "    " all-heads))
 
   (displayln "\nRemaining outcomes: 7 (after eliminating HHH)")
   (displayln "  Each outcome: P = 1/7 ≈ 0.143")
@@ -82,9 +89,12 @@
   (observe! any-heads)
 
   (displayln "\nAfter Observation:")
-  (displayln (~a "  P(coin-1 = #t) = " (probability coin-1)))
-  (displayln (~a "  P(coin-2 = #t) = " (probability coin-2)))
-  (displayln (~a "  P(coin-3 = #t) = " (probability coin-3)))
+  (displayln "  coin-1:")
+  (displayln (~a "    " coin-1))
+  (displayln "  coin-2:")
+  (displayln (~a "    " coin-2))
+  (displayln "  coin-3:")
+  (displayln (~a "    " coin-3))
 
   (displayln "\nRemaining outcomes: 7 (after eliminating TTT)")
   (displayln "  Outcomes with coin-1 = H: (H,H,H), (H,H,T), (H,T,H), (H,T,T)")
@@ -118,9 +128,12 @@
   (observe! (= heads-count 2))
 
   (displayln "\nAfter Observation:")
-  (displayln (~a "  P(coin-1 = #t) = " (probability coin-1)))
-  (displayln (~a "  P(coin-2 = #t) = " (probability coin-2)))
-  (displayln (~a "  P(coin-3 = #t) = " (probability coin-3)))
+  (displayln "  coin-1:")
+  (displayln (~a "    " coin-1))
+  (displayln "  coin-2:")
+  (displayln (~a "    " coin-2))
+  (displayln "  coin-3:")
+  (displayln (~a "    " coin-3))
 
   (displayln "\nRemaining outcomes: 3")
   (displayln "  (H,H,T): coin-1=T count = 2/3")
