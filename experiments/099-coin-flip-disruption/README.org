@@ -1,0 +1,201 @@
+#+TITLE: Experiment 099: Coin Flip Disruption
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-05
+#+STARTUP: overview
+#+PROPERTY: header-args:racket :tangle 01-basic-disruption.rkt
+
+* Overview
+
+Explore probabilistic inference with Roulette's ~observe!~ to demonstrate how observations update probability distributions.
+
+* The Coin Flip Disruption Problem
+
+** Initial Setup
+
+Two independent fair coins:
+- P(first-coin = heads) = 0.5
+- P(second-coin = heads) = 0.5
+- P(both heads) = 0.25
+
+** The Observation
+
+We observe that *NOT both coins are heads* (at least one is tails).
+
+This observation *disrupts* the probability distribution!
+
+** Updated Probabilities
+
+After observing ~(not both-heads)~:
+- P(first-coin = heads | observation) = 1/3 ≈ 0.333
+- P(second-coin = heads | observation) = 1/3 ≈ 0.333
+- P(both heads | observation) = 0 (by definition of observation)
+
+* Why Does This Happen?
+
+** Possible Outcomes Before Observation
+
+| First | Second | Both Heads? | Probability |
+|-------+--------+-------------+-------------|
+| H     | H      | ✓           | 0.25        |
+| H     | T      | ✗           | 0.25        |
+| T     | H      | ✗           | 0.25        |
+| T     | T      | ✗           | 0.25        |
+
+** Possible Outcomes After Observation
+
+We eliminate the (H, H) case:
+
+| First | Second | Both Heads? | Probability | Renormalized |
+|-------+--------+-------------+-------------+--------------|
+| H     | T      | ✗           | 0.25        | 1/3          |
+| T     | H      | ✗           | 0.25        | 1/3          |
+| T     | T      | ✗           | 0.25        | 1/3          |
+
+Now only 3 equally likely outcomes remain!
+
+P(first = H) = 1/3 (only one of three cases has first = H)
+
+* Bayesian Inference Formula
+
+Using Bayes' rule:
+
+#+begin_example
+P(first = H | not both H) = P(not both H | first = H) × P(first = H) / P(not both H)
+                          = 0.5 × 0.5 / 0.75
+                          = 0.25 / 0.75
+                          = 1/3
+#+end_example
+
+* Roulette Implementation
+
+** Basic Example
+
+#+begin_src racket
+#lang roulette
+
+;; Two independent fair coins
+(define first-coin (flip 0.5))
+(define second-coin (flip 0.5))
+
+;; Conjunction: both heads
+(define both-heads (and first-coin second-coin))
+
+;; Observe: NOT both heads
+(observe! (not both-heads))
+
+;; Query updated probabilities
+(displayln "=== After Observation ===")
+(displayln (~a "P(first-coin = #t) = " (probability first-coin)))
+(displayln (~a "P(second-coin = #t) = " (probability second-coin)))
+(displayln (~a "P(both-heads = #t) = " (probability both-heads)))
+#+end_src
+
+Expected output:
+#+begin_example
+=== After Observation ===
+P(first-coin = #t) = 0.3333333333333333
+P(second-coin = #t) = 0.3333333333333333
+P(both-heads = #t) = 0
+#+end_example
+
+* File Structure
+
+#+begin_example
+099-coin-flip-disruption/
+├── README.org                    # This file
+├── 01-basic-disruption.rkt      # Basic coin flip with observe!
+├── 02-three-coins.rkt           # Extended to three coins
+├── 03-biased-coins.rkt          # Biased coins with observation
+├── 04-conditional-analysis.rkt  # Deep dive into conditional probability
+└── 05-comparison.rkt            # Compare with/without observation
+#+end_example
+
+* Key Insights
+
+1. **Observations Change Distributions**
+   - ~observe!~ eliminates impossible outcomes
+   - Remaining outcomes are renormalized
+
+2. **Independence Lost**
+   - Before observation: coins are independent
+   - After observation: coins become dependent!
+   - Knowing first-coin tells you something about second-coin
+
+3. **Bayesian Updating**
+   - Classic Bayesian inference
+   - Update beliefs based on evidence
+   - Exact inference via RSDD
+
+4. **Roulette vs Manual Calculation**
+   - Roulette: automatic inference
+   - Manual: enumerate cases, renormalize
+   - Roulette scales to complex scenarios
+
+* Applications
+
+** Medical Diagnosis
+
+#+begin_src racket
+#lang roulette
+
+;; Prior: 1% have disease
+(define has-disease (flip 0.01))
+
+;; Test accuracy
+(define test-positive
+  (if has-disease
+      (flip 0.95)  ; 95% sensitivity
+      (flip 0.05))) ; 5% false positive rate
+
+;; Observe: test came back positive
+(observe! test-positive)
+
+;; Query: What's probability of disease given positive test?
+(probability has-disease)
+;; → ~0.161 (much higher than 1% prior!)
+#+end_src
+
+** Debugging Systems
+
+#+begin_src racket
+#lang roulette
+
+;; Three potential bugs
+(define bug-a (flip 0.1))
+(define bug-b (flip 0.1))
+(define bug-c (flip 0.1))
+
+;; System fails if any bug present
+(define system-fails (or bug-a bug-b bug-c))
+
+;; Observe: system failed
+(observe! system-fails)
+
+;; Query: Which bug is most likely?
+(displayln (~a "P(bug-a) = " (probability bug-a)))
+(displayln (~a "P(bug-b) = " (probability bug-b)))
+(displayln (~a "P(bug-c) = " (probability bug-c)))
+#+end_src
+
+* Connection to RacketCon
+
+** Roulette Talk (Saturday 2:30pm)
+- Cameron Moy's presentation
+- RSDD for exact inference
+- ~observe!~ primitive for conditioning
+- Comparison with other probabilistic languages
+
+** Related Experiments
+- [[file:../089-roulette-deep-dive/][089]]: Roulette deep dive
+- [[file:../093-weightmaps/][093]]: Probability distributions
+- [[file:../098-distributed-callbacks/][098]]: Distributed system analysis
+
+* Resources
+
+- [[https://docs.racket-lang.org/roulette/][Roulette Documentation]]
+- [[https://docs.racket-lang.org/roulette/Examples.html#%28mod-path._roulette%2Fexample%2Fdisrupt%29][Disruption Example]]
+- [[https://ccs.neu.edu/~camoy/pub/roulette.pdf][Roulette Paper]] (Cameron Moy)
+
+* Status
+
+EXPERIMENT ready - Coin flip disruption with Bayesian inference!
