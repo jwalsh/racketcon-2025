@@ -50,7 +50,10 @@ Todd Jonker
 
 Ion Fusion is a customizable programming language that unifies the semantics of persistent data and the code that manipulates it. Oriented around the Amazon Ion data format--the backbone of Amazon's retail systems and even consumer products--Fusion has been the brains of internal analytics, data processing, and workflow systems since 2013. This talk explores Ion Fusion's unique design goals and constraints, its roots in Scheme and Racket, and its vision of sustainable software evolution.
 
-*Links*: [[https://amazon-ion.github.io/ion-docs/][Amazon Ion]] • [[https://github.com/amazon-ion][GitHub]]
+*Links*:
+- [[https://amazon-ion.github.io/ion-docs/][Amazon Ion Documentation]]
+- [[https://github.com/amazon-ion][Amazon Ion GitHub]]
+- [[https://github.com/ion-fusion/ion-semantics][ion-semantics]] - Ion Fusion semantics and implementation
 
 *Experiments*: [[file:experiments/061-ion-format-basics/][061]] [[file:experiments/072-custom-lang-implementation/][072]]
 
