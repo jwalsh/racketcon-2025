@@ -151,7 +151,7 @@ Or manually:
 
 *** Output
 
-Generates: [[file:EXPERIMENT_STATUS.org]]
+Generates: [[file:EXPERIMENT_STATUS.org][Experiment Status]]
 
 Includes:
 - Statistics (total, open, closed, with assignees)
@@ -262,8 +262,8 @@ Racket here-string syntax:
 
 ** Configuration Files
 
-- [[file:experiments/076-geiser-fundamentals/init-geiser.el]]
-- [[file:racketcon-2025-config.el]]
+- [[file:../experiments/076-geiser-fundamentals/init-geiser.el]]
+- [[file:../racketcon-2025-config.el][Racket Emacs Config]]
 
 ** Code Examples
 
@@ -352,7 +352,7 @@ cat EXPERIMENT_STATUS.org
 - [[file:EXPERIMENT_STATUS.org][Experiment Status]] (auto-generated from GitHub)
 - [[file:experiments/999-rhea-framework/README.org][RHEA Framework Documentation]]
 - [[file:experiments/999-rhea-framework/SUMMARY.org][RHEA Implementation Summary]]
-- [[file:scripts/Makefile][Status Utilities]]
+- [[file:../scripts/Makefile][Status Utilities]]
 
 * Next Steps
 

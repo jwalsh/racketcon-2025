@@ -348,8 +348,8 @@ If Racket is not in Emacs's PATH:
 
 - [[https://www.racket-mode.com/][Racket Mode Homepage]]
 - [[https://docs.racket-lang.org/guide/][Racket Guide]]
-- [[file:elisp/racketcon-tools.el][RacketCon Tools]]
-- [[file:.dir-locals.el][Project Configuration]]
+- [[file:../elisp/racketcon-tools.el][RacketCon Tools]]
+- [[file:../.dir-locals.el][Project Configuration]]
 
 * Quick Start Checklist
 

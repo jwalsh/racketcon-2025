@@ -1,0 +1,66 @@
+#+TITLE: RacketCon 2025 - Experiment Status
+#+AUTHOR: Generated from GitHub Issues
+#+DATE: Saturday, October 4th, 2025 11:03:48pm
+#+STARTUP: overview
+
+* Overview
+
+This document is auto-generated from GitHub issues.
+
+* Statistics
+
+- Total Issues: 36
+- Open: 36
+- Closed: 0
+- With Assignees: 5
+
+* All Issues
+
+| Issue | Title | State | Assignees |
+|-------|-------|-------|-----------|
+| #36 | Experiment 061b: Amazon Ion Data Format - Advanced (ION-MODE) | OPEN |  |
+| #35 | Experiment 095: Probabilistic microKanren - Logic + Probability | OPEN |  |
+| #34 | Experiment 094: BDD and Z3 for Formal Verification | OPEN |  |
+| #33 | Experiment 093: Weightmaps - Probability Distribution Visualizations | OPEN |  |
+| #32 | Experiment 092: Continuation-Based Universe Forking - AMB Operator | OPEN |  |
+| #31 | Experiment 091: Probabilistic Chaos Engineering & System Failure Models | OPEN |  |
+| #30 | Experiment 090: Saturday 3:00pm EDT Session Placeholder | OPEN |  |
+| #29 | Experiment 089: Roulette for Racketeers - Deep Dive | OPEN |  |
+| #28 | Experiment 097: Tonart - Music Composition as Racket Programming | OPEN |  |
+| #27 | Experiment 096: Advanced Macro Patterns - syntax-spec | OPEN |  |
+| #26 | Experiment 142: Here Strings - Multi-Line String Literals | OPEN |  |
+| #25 | Experiment 141: Rhombus - Modern Racket-Based Language | OPEN |  |
+| #24 | Experiment 088: Racket Mode Adventures - Greg Hendershott | OPEN |  |
+| #23 | Experiment 087: Java on Truffle (Espresso) & Language Implementation | OPEN |  |
+| #22 | Experiment 086: Roulette - Inference-Aided Programming | OPEN |  |
+| #21 | Experiment 062: Ion Fusion - Unifying Data and Code | OPEN |  |
+| #20 | Experiment 049: Ocular-Patdown Complete Optics Guide | OPEN | @dsp-dr |
+| #19 | Experiment 077: Geiser with Racket Support | OPEN |  |
+| #18 | Experiment 076: Geiser Fundamentals | OPEN |  |
+| #17 | Experiment 999: RHEA Framework Implementation | OPEN |  |
+| #16 | Experiment 043: Lens-based Updates | OPEN | @dsp-dr |
+| #15 | Experiment 041: Deep Immutable Updates | OPEN | @aygp-dr |
+| #14 | Experiment 061: Amazon Ion Format Basics | OPEN |  |
+| #13 | Experiment 008: Rosette String Limitations | OPEN |  |
+| #12 | Experiment 007: Compositional OOP | OPEN |  |
+| #11 | Experiment 006: Topaz-lang Exploration | OPEN |  |
+| #10 | Experiment 005: Cloudflare DNS Setup | OPEN |  |
+| #9 | Experiment 004: DNS Tools (macOS/FreeBSD) | OPEN |  |
+| #8 | Experiment 003: Rosette vs Lean vs TLA+ | OPEN |  |
+| #7 | Experiment 048: Ruby Lenses - Cross-Language Optics Port | OPEN | @aygp-dr |
+| #6 | Experiment 047: Ocular Patdown - Mike Delmonaco's Optics Library | OPEN | @dsp-dr |
+| #5 | Experiment 046: Pattern Matching Fundamentals | OPEN |  |
+| #4 | Experiment 045: Functional Lenses Implementation | OPEN |  |
+| #3 | Experiment 002: Formal Methods Overview | OPEN |  |
+| #2 | Experiment 001: Rosette Fundamentals | OPEN |  |
+| #1 | Experiment 000: Racket and Rosette Setup | OPEN |  |
+
+* In Progress
+
+Issues with assignees:
+
+- [[https://github.com/jwalsh/racketcon-2025/issues/20][#20]]: Experiment 049: Ocular-Patdown Complete Optics Guide (@dsp-dr)
+- [[https://github.com/jwalsh/racketcon-2025/issues/16][#16]]: Experiment 043: Lens-based Updates (@dsp-dr)
+- [[https://github.com/jwalsh/racketcon-2025/issues/15][#15]]: Experiment 041: Deep Immutable Updates (@aygp-dr)
+- [[https://github.com/jwalsh/racketcon-2025/issues/7][#7]]: Experiment 048: Ruby Lenses - Cross-Language Optics Port (@aygp-dr)
+- [[https://github.com/jwalsh/racketcon-2025/issues/6][#6]]: Experiment 047: Ocular Patdown - Mike Delmonaco's Optics Library (@dsp-dr)
