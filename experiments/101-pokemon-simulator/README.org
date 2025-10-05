@@ -1,0 +1,276 @@
+#+TITLE: Experiment 101: Pokémon Battle Simulator with Roulette
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-05
+#+STARTUP: overview
+#+PROPERTY: header-args:racket :eval never
+
+* Overview
+
+A probabilistic Pokémon battle simulator demonstrating game mechanics using Roulette's inference engine. Shows how observations and conditional probability work in turn-based RPG combat.
+
+* Hypothesis
+
+Game mechanics like critical hits, accuracy checks, and speed ties can be modeled as probabilistic events, and Roulette's =observe!= primitive can answer questions like "Given that I won, how likely was it that I got a critical hit?"
+
+* Game Mechanics Modeled
+
+** Critical Hits
+- Base probability: 1/16 (~6.25%)
+- Doubles damage when triggered
+- Can be analyzed conditionally: "If I KO'd the opponent, was it a crit?"
+
+** Move Accuracy
+- Common values: 100%, 90%, 85%
+- Miss probability affects strategy
+- Can chain multiple moves: P(all hit) = accuracy^n
+
+** Speed Priority
+- Higher speed goes first
+- Speed tie: 50/50 random
+- Demonstrates basic coin flip with consequences
+
+** Type Effectiveness
+- Super effective: 2x damage
+- Not very effective: 0.5x damage
+- No effect: 0x damage
+
+** Status Effects
+- Paralysis: 25% chance to skip turn
+- Burn: Damage over time
+- Can compound with other probabilities
+
+* Implementation
+
+** Core Data Structure
+
+#+BEGIN_SRC racket
+(struct pokemon (name hp attack defense speed) #:transparent)
+
+(define pikachu (pokemon "Pikachu" 100 55 40 90))
+(define charmander (pokemon "Charmander" 100 52 43 65))
+(define squirtle (pokemon "Squirtle" 100 48 65 43))
+#+END_SRC
+
+** Probabilistic Functions
+
+#+BEGIN_SRC racket
+;; Critical hit: 1/16 chance
+(define (critical-hit?)
+  (flip (/ 1 16)))
+
+;; Move accuracy
+(define (move-hits? accuracy)
+  (flip accuracy))
+
+;; Paralysis check
+(define (paralysis-check)
+  (flip 0.25))
+#+END_SRC
+
+** Damage Calculation
+
+#+BEGIN_SRC racket
+(define (calculate-damage attacker defender move-power)
+  (define base-damage
+    (/ (* (* 2 50) ; Level 50
+          move-power
+          (/ (pokemon-attack attacker)
+             (pokemon-defense defender)))
+       50))
+
+  (define critical (if (critical-hit?) 2 1))
+  (define random-factor (if (flip 0.5) 1.0 0.85))
+
+  (* base-damage critical random-factor))
+#+END_SRC
+
+* Experiments
+
+** 01: Basic Battle
+=01-basic-battle.rkt= - Pikachu vs Charmander with Thunderbolt
+
+*** Expected Output
+#+BEGIN_EXAMPLE
+=== Pokemon Battle Simulator ===
+
+Pikachu vs Charmander
+
+Pikachu uses Thunderbolt!
+Move hits: x$0
+  P(hit) = 1.0
+
+Critical hit: x$1
+  P(crit) = 0.0625
+
+Damage dealt: (pmf | ... )
+#+END_EXAMPLE
+
+** 02: Conditional Analysis
+What if we know the outcome? Reverse inference.
+
+*** Scenario
+Given Pikachu KO'd Charmander, what's P(critical hit)?
+
+#+BEGIN_SRC racket
+(observe! (won-battle? pikachu charmander))
+(query (critical-hit?))
+#+END_SRC
+
+** 03: Speed Ties
+When Pokémon have equal speed, 50/50 who goes first.
+
+#+BEGIN_SRC racket
+(define (speed-priority p1 p2)
+  (cond
+    [(> (pokemon-speed p1) (pokemon-speed p2)) p1]
+    [(< (pokemon-speed p1) (pokemon-speed p2)) p2]
+    [else (if (flip 0.5) p1 p2)]))
+#+END_SRC
+
+** 04: Multi-Turn Probability
+Landing multiple moves with 85% accuracy:
+- P(3 hits) = 0.85³ ≈ 0.614
+- P(2+ hits) = ?
+- P(3 hits | 2+ hits) = ? ← Use observe!
+
+** 05: Type Effectiveness
+Electric vs Water: 2x damage (super effective)
+Electric vs Ground: 0x damage (no effect)
+
+* Key Insights
+
+1. **Probabilistic Modeling**
+   - Game mechanics = probabilistic events
+   - =flip= for binary outcomes
+   - Compose probabilities with =and=, =or=
+
+2. **Conditional Inference**
+   - =observe!= for "given that X happened"
+   - Answer counterfactuals: "How likely was Y if X occurred?"
+   - Bayesian reasoning in games
+
+3. **Strategy Implications**
+   - Accuracy vs Power tradeoff
+   - Crit fishing strategies
+   - Type matchup optimization
+
+4. **Roulette Features Demonstrated**
+   - =flip= - basic probability
+   - =observe!= - conditioning
+   - =query= - explicit PMF
+   - =with-observe= - scoped observations
+
+* File Structure
+
+#+BEGIN_EXAMPLE
+101-pokemon-simulator/
+├── README.org                    # This file
+├── 01-basic-battle.rkt          # Core battle mechanics
+├── 02-conditional-victory.rkt   # Reverse inference
+├── 03-speed-priority.rkt        # Speed tie analysis
+├── 04-accuracy-chains.rkt       # Multi-move probability
+├── 05-type-chart.rkt            # Type effectiveness
+├── 06-status-effects.rkt        # Paralysis, burn, etc.
+└── Makefile                      # Run all simulations
+#+END_EXAMPLE
+
+* Running the Experiments
+
+** Using Make
+
+#+BEGIN_SRC bash
+# Run all battles
+make run
+
+# Run specific battle
+make run-basic
+make run-conditional
+
+# Test compilation
+make test
+
+# Show help
+make help
+#+END_SRC
+
+** Direct Execution
+
+#+BEGIN_SRC bash
+# Basic battle
+racket 01-basic-battle.rkt
+
+# With submodules
+racket -l racket/base -e '(require (submod "01-basic-battle.rkt" conditional))'
+racket -l racket/base -e '(require (submod "01-basic-battle.rkt" speed-tie))'
+#+END_SRC
+
+* Connection to Game Design
+
+** Pokémon (Nintendo)
+- Critical hits: 1/16 base rate
+- High crit ratio moves: 1/8
+- Gen 1 Speed-based crits (bug)
+
+** Fire Emblem
+- Hit% displayed to player
+- True hit (2 RNG average)
+- Critical hits affect strategy
+
+** D&D / Tabletop
+- d20 rolls for attacks
+- Critical on natural 20
+- Advantage/disadvantage = 2d20 take best/worst
+
+** Roguelikes
+- Procedural generation
+- RNG manipulation (seeded runs)
+- Risk/reward decisions
+
+* Extensions
+
+** Advanced Mechanics
+- Weather effects (Rain boosts Water moves)
+- Abilities (Serene Grace doubles status chance)
+- Items (Scope Lens increases crit rate)
+- Stat stages (±6 multipliers)
+
+** AI Strategy
+#+BEGIN_SRC racket
+;; Expected value calculation
+(define (expected-damage move defender)
+  (for/sum ([(dmg prob) (in-pmf (query (calculate-damage move defender)))])
+    (* dmg prob)))
+
+;; Choose best move
+(define (best-move moves defender)
+  (argmax (λ (m) (expected-damage m defender)) moves))
+#+END_SRC
+
+** Multi-Battle Analysis
+- Best of 3 series
+- Team composition (6 Pokémon)
+- Switch probability
+
+* Connection to RacketCon
+
+** Cameron Moy's Roulette Talk (Saturday 2:30pm)
+- RSDD for exact inference
+- =observe!= primitive
+- Comparison with probabilistic languages
+- This experiment demonstrates practical game use case
+
+** Related Experiments
+- [[file:../089-roulette-deep-dive/][089]]: Roulette deep dive
+- [[file:../099-coin-flip-disruption/][099]]: Coin flip disruption (similar concepts)
+- [[file:../093-weightmaps/][093]]: Probability distributions
+
+* Resources
+
+- [[https://docs.racket-lang.org/roulette/][Roulette Documentation]]
+- [[https://bulbapedia.bulbagarden.net/wiki/Damage][Pokémon Damage Calculation]]
+- [[https://www.smogon.com/][Smogon University]] (Competitive Pokémon)
+- [[https://pokemonshowdown.com/][Pokémon Showdown]] (Battle Simulator)
+
+* Status
+
+EXPERIMENT in progress - Pokémon battle simulator with probabilistic mechanics!
