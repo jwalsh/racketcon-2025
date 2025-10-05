@@ -1,6 +1,6 @@
 #+TITLE: RacketCon 2025 - Experiment Status
 #+AUTHOR: Generated from GitHub Issues
-#+DATE: Saturday, October 4th, 2025 11:03:48pm
+#+DATE: Sunday, October 5th, 2025 2:01:24pm
 #+STARTUP: overview
 
 * Overview
@@ -9,8 +9,8 @@ This document is auto-generated from GitHub issues.
 
 * Statistics
 
-- Total Issues: 36
-- Open: 36
+- Total Issues: 43
+- Open: 43
 - Closed: 0
 - With Assignees: 5
 
@@ -18,6 +18,13 @@ This document is auto-generated from GitHub issues.
 
 | Issue | Title | State | Assignees |
 |-------|-------|-------|-----------|
+| #43 | Experiment 142a: syntax-spec Basics - DSL Metalanguage | OPEN |  |
+| #42 | Experiment 141a: Macro Programming Patterns | OPEN |  |
+| #41 | Experiment 088a: Markov Chains with Roulette | OPEN |  |
+| #40 | Experiment 086a: Discrete Probability with Roulette - Basics | OPEN |  |
+| #39 | Experiment 100: Emacs + Racket Integration - Complete Setup Guide | OPEN |  |
+| #38 | Experiment 099: Coin Flip Disruption - Bayesian Inference with observe! | OPEN |  |
+| #37 | Experiment 098: Distributed Callback Problem - Probabilistic Analysis | OPEN |  |
 | #36 | Experiment 061b: Amazon Ion Data Format - Advanced (ION-MODE) | OPEN |  |
 | #35 | Experiment 095: Probabilistic microKanren - Logic + Probability | OPEN |  |
 | #34 | Experiment 094: BDD and Z3 for Formal Verification | OPEN |  |

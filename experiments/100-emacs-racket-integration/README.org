@@ -1,0 +1,358 @@
+#+TITLE: Experiment 100: Emacs + Racket Integration
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-05
+#+STARTUP: overview
+
+* Overview
+
+Comprehensive guide to integrating Emacs with Racket for maximum productivity, covering major modes, minor modes, org-babel, and REPL integration.
+
+* Major Modes for Racket
+
+** 1. Racket Mode (Recommended)
+
+The most comprehensive option for Racket development.
+
+*** Features
+- DrRacket-style REPL integration
+- Syntax highlighting for all Racket forms
+- Jump to definition
+- Documentation lookup
+- Error navigation
+- Package management
+- Test runner integration
+
+*** Installation
+
+#+begin_src elisp
+;; Via package.el
+(package-install 'racket-mode)
+
+;; Basic configuration
+(require 'racket-mode)
+(add-to-list 'auto-mode-alist '("\\.rkt\\'" . racket-mode))
+
+;; REPL configuration
+(setq racket-program "/usr/local/bin/racket")
+(setq racket-racket-program "/usr/local/bin/racket")
+(setq racket-raco-program "/usr/local/bin/raco")
+#+end_src
+
+*** Key Bindings
+
+| Key       | Command                    | Description              |
+|-----------+----------------------------+--------------------------|
+| ~C-c C-c~ | racket-run                 | Run module               |
+| ~C-c C-z~ | racket-repl                | Start/switch to REPL     |
+| ~C-c C-d~ | racket-describe            | Describe at point        |
+| ~C-c C-e~ | racket-expand-last-sexp    | Macro expand             |
+| ~C-M-.~   | racket-visit-definition    | Jump to definition       |
+| ~C-M-,~   | racket-unvisit             | Jump back                |
+| ~C-c C-t~ | racket-test                | Run tests                |
+
+** 2. Geiser
+
+Tight REPL integration with Scheme/Racket.
+
+*** Features
+- Live evaluation in buffer
+- Inline documentation
+- Auto-completion via company
+- Multiple REPL support
+- Remote REPL connection
+
+*** Installation
+
+#+begin_src elisp
+(package-install 'geiser)
+(package-install 'geiser-racket)
+
+(require 'geiser-racket)
+(setq geiser-active-implementations '(racket))
+(setq geiser-racket-binary "/usr/local/bin/racket")
+#+end_src
+
+*** Key Bindings
+
+| Key       | Command                  | Description            |
+|-----------+--------------------------+------------------------|
+| ~C-c C-z~ | geiser-mode-switch-to-repl | Switch to REPL         |
+| ~C-x C-e~ | geiser-eval-last-sexp    | Eval last sexp         |
+| ~C-c C-r~ | geiser-eval-region       | Eval region            |
+| ~C-c C-b~ | geiser-eval-buffer       | Eval buffer            |
+| ~C-c C-d~ | geiser-doc-symbol-at-point | Documentation          |
+| ~M-.~     | geiser-edit-symbol-at-point | Jump to definition     |
+
+** 3. Quack
+
+Extension of scheme-mode with Racket enhancements.
+
+*** Installation
+
+#+begin_src elisp
+(package-install 'quack)
+(require 'quack)
+#+end_src
+
+* Minor Modes
+
+** Paredit - Structural Editing
+
+#+begin_src elisp
+(package-install 'paredit)
+
+(add-hook 'racket-mode-hook #'enable-paredit-mode)
+(add-hook 'racket-repl-mode-hook #'enable-paredit-mode)
+#+end_src
+
+*** Key Paredit Commands
+
+| Key       | Command              | Description                |
+|-----------+----------------------+----------------------------|
+| ~C-)~     | paredit-forward-slurp-sexp | Slurp next sexp            |
+| ~C-}~     | paredit-forward-barf-sexp | Barf last sexp             |
+| ~M-s~     | paredit-splice-sexp  | Remove surrounding parens  |
+| ~M-S~     | paredit-split-sexp   | Split sexp                 |
+| ~M-J~     | paredit-join-sexps   | Join sexps                 |
+
+** Smartparens - Balanced Parens
+
+Alternative to paredit with more configuration options.
+
+#+begin_src elisp
+(package-install 'smartparens)
+
+(require 'smartparens-config)
+(add-hook 'racket-mode-hook #'smartparens-strict-mode)
+#+end_src
+
+** Rainbow Delimiters
+
+Color-code parentheses by depth.
+
+#+begin_src elisp
+(package-install 'rainbow-delimiters)
+
+(add-hook 'racket-mode-hook #'rainbow-delimiters-mode)
+(add-hook 'racket-repl-mode-hook #'rainbow-delimiters-mode)
+#+end_src
+
+** Company - Auto-completion
+
+#+begin_src elisp
+(package-install 'company)
+
+(add-hook 'racket-mode-hook #'company-mode)
+(setq company-idle-delay 0.2)
+(setq company-minimum-prefix-length 2)
+#+end_src
+
+* Org-Babel Integration
+
+** ob-racket (External Package)
+
+Enhanced org-babel support for Racket.
+
+*** Installation
+
+#+begin_src bash
+# Install from GitHub
+git clone https://github.com/hasu/emacs-ob-racket.git
+#+end_src
+
+#+begin_src elisp
+;; Add to load path
+(add-to-list 'load-path "/path/to/emacs-ob-racket")
+
+;; Load ob-racket
+(require 'ob-racket)
+
+;; Enable Racket in org-babel
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((racket . t)
+   (emacs-lisp . t)))
+
+;; Don't ask for confirmation
+(setq org-confirm-babel-evaluate nil)
+#+end_src
+
+*** Example Org Block
+
+#+begin_example
+#+begin_src racket :results output
+#lang racket
+
+(define (factorial n)
+  (if (zero? n)
+      1
+      (* n (factorial (- n 1)))))
+
+(displayln (factorial 5))
+#+end_src
+
+#+RESULTS:
+: 120
+#+end_example
+
+** Built-in ob-scheme
+
+Fallback using ob-scheme with Racket.
+
+#+begin_src elisp
+(setq org-babel-scheme-cmd "racket")
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((scheme . t)))
+#+end_src
+
+* File Structure
+
+#+begin_example
+100-emacs-racket-integration/
+├── README.org                    # This file
+├── emacs-config.el              # Complete Emacs configuration
+├── example-workflow.org         # Org-babel workflow example
+├── paredit-cheatsheet.org       # Paredit commands reference
+├── racket-mode-setup.el         # Racket-mode specific config
+├── geiser-setup.el              # Geiser specific config
+└── integration-tests.el         # Test configuration
+#+end_example
+
+* Recommended Setup
+
+** Minimal Configuration
+
+#+begin_src elisp
+;; Package setup
+(require 'package)
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/") t)
+(package-initialize)
+
+;; Install packages
+(unless (package-installed-p 'racket-mode)
+  (package-refresh-contents)
+  (package-install 'racket-mode))
+
+(unless (package-installed-p 'paredit)
+  (package-install 'paredit))
+
+(unless (package-installed-p 'rainbow-delimiters)
+  (package-install 'rainbow-delimiters))
+
+;; Racket mode
+(require 'racket-mode)
+(add-hook 'racket-mode-hook #'enable-paredit-mode)
+(add-hook 'racket-mode-hook #'rainbow-delimiters-mode)
+(add-hook 'racket-repl-mode-hook #'enable-paredit-mode)
+
+;; Key bindings
+(define-key racket-mode-map (kbd "C-c C-d") 'racket-describe)
+(define-key racket-mode-map (kbd "C-c C-c") 'racket-run)
+#+end_src
+
+** Full Configuration
+
+See [[file:emacs-config.el][emacs-config.el]] for complete setup including:
+- All major and minor modes
+- Custom key bindings
+- Theme configuration
+- REPL customization
+- Org-babel integration
+
+* Workflows
+
+** 1. Interactive Development (Racket Mode)
+
+1. Open .rkt file
+2. ~C-c C-z~ to start REPL
+3. ~C-c C-c~ to run module
+4. Edit code
+5. ~C-c C-c~ to re-run
+6. Use ~C-c C-d~ for documentation
+
+** 2. REPL-Driven Development (Geiser)
+
+1. Open .rkt file
+2. ~M-x geiser~
+3. ~C-x C-e~ to eval sexps incrementally
+4. ~C-c C-r~ to eval region
+5. ~M-.~ to jump to definitions
+6. ~C-c C-d~ for inline docs
+
+** 3. Literate Programming (Org-Babel)
+
+1. Create .org file
+2. Add Racket code blocks
+3. ~C-c C-c~ to execute blocks
+4. ~C-c C-v t~ to tangle to .rkt files
+5. View results inline
+6. Export to PDF/HTML
+
+* Troubleshooting
+
+** REPL Won't Start
+
+#+begin_src elisp
+;; Check Racket paths
+(executable-find "racket")
+
+;; Set explicitly
+(setq racket-program "/usr/local/bin/racket")
+#+end_src
+
+** Paredit Conflicts
+
+#+begin_src elisp
+;; Disable if problematic
+(remove-hook 'racket-mode-hook #'enable-paredit-mode)
+
+;; Or configure key bindings
+(define-key paredit-mode-map (kbd "M-s") nil)
+#+end_src
+
+** Org-Babel Not Working
+
+#+begin_src elisp
+;; Verify Racket is loaded
+(assoc 'racket org-babel-load-languages)
+
+;; Reload
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ (cons '(racket . t) org-babel-load-languages))
+#+end_src
+
+* Resources
+
+** Official Documentation
+- [[https://docs.racket-lang.org/guide/Emacs.html][Racket Guide: Emacs]]
+- [[https://www.racket-mode.com/][Racket Mode Homepage]]
+- [[https://www.nongnu.org/geiser/][Geiser Homepage]]
+
+** Packages
+- [[https://github.com/greghendershott/racket-mode][racket-mode]]
+- [[https://github.com/emacs-geiser/geiser][geiser]]
+- [[https://github.com/hasu/emacs-ob-racket][ob-racket]]
+- [[https://paredit.org/][paredit]]
+- [[https://github.com/Fuco1/smartparens][smartparens]]
+
+** Related Experiments
+- [[file:../076-geiser-fundamentals/][076]]: Geiser fundamentals
+- [[file:../077-geiser-racket/][077]]: Geiser with Racket
+- [[file:../088-racket-mode-adventures/][088]]: Racket Mode deep dive
+
+* Connection to RacketCon
+
+** Greg Hendershott (Saturday 2:00pm)
+- "'It Works': More Adventures with Racket and Emacs"
+- Evolution of racket-mode
+- Multi-backend support
+- Lossless REPL
+- Enhanced debugger
+
+* Status
+
+EXPERIMENT ready - Complete Emacs + Racket integration guide!

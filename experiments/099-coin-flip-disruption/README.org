@@ -196,6 +196,42 @@ P(both-heads = #t) = 0
 - [[https://docs.racket-lang.org/roulette/Examples.html#%28mod-path._roulette%2Fexample%2Fdisrupt%29][Disruption Example]]
 - [[https://ccs.neu.edu/~camoy/pub/roulette.pdf][Roulette Paper]] (Cameron Moy)
 
+* Running the Experiments
+
+** Using Make
+
+#+BEGIN_SRC bash :eval never
+# Run all examples
+make run
+
+# Run specific example
+make run-basic
+make run-three-coins
+
+# Test that files compile
+make test
+
+# Verify org-mode file
+make verify-org
+
+# Show all targets
+make help
+#+END_SRC
+
+** Direct Execution
+
+#+BEGIN_SRC bash :eval never
+# Basic disruption
+racket 01-basic-disruption.rkt
+
+# Three coins (main module)
+racket 02-three-coins.rkt
+
+# Three coins (submodules)
+racket -l racket/base -e '(require (submod "02-three-coins.rkt" at-least-one))'
+racket -l racket/base -e '(require (submod "02-three-coins.rkt" exactly-two))'
+#+END_SRC
+
 * Status
 
 EXPERIMENT ready - Coin flip disruption with Bayesian inference!
