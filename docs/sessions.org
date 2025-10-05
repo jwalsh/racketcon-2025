@@ -62,7 +62,13 @@ Greg Hendershott
 
 Evolution of the Emacs "racket-mode" package.
 
-*Links*: [[https://github.com/greghendershott/racket-mode][racket-mode]]
+*Links*:
+- [[https://github.com/greghendershott/racket-mode][racket-mode GitHub]]
+- [[https://www.racket-mode.com/][racket-mode Documentation]]
+- [[file:../references/greghendershott-racket-mode/][Local copy]] (submodule)
+- [[https://github.com/greghendershott][GitHub: @greghendershott]]
+
+*Talk Materials*: [[file:../references/greghendershott-racket-mode/][racket-mode source code]]
 
 *Experiments*: [[file:experiments/076-racket-mode-basics/][076]]
 

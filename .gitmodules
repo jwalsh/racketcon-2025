@@ -1,3 +1,6 @@
 [submodule "references/michaelballantyne-racketcon-2025"]
 	path = references/michaelballantyne-racketcon-2025
 	url = https://github.com/michaelballantyne/racketcon-2025
+[submodule "references/greghendershott-racket-mode"]
+	path = references/greghendershott-racket-mode
+	url = https://github.com/greghendershott/racket-mode
