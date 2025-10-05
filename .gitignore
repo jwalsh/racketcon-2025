@@ -44,3 +44,4 @@ resources/
 
 # But allow resources directory structure
 !resources/.gitkeep
+.venv/

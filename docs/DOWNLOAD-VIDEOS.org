@@ -1,0 +1,79 @@
+#+TITLE: Downloading RacketCon 2025 Videos
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-05
+
+* Overview
+
+BoxCast videos from RacketCon 2025 are protected and cannot be directly downloaded with yt-dlp due to authentication requirements.
+
+* URLs
+
+** Day 1 (October 4, 2025)
+- View URL: https://boxcast.tv/view/xtihxdvdmgttkttsp2gj?b=ejnw5z0iuv4ugpz2fy9n
+- Broadcast ID: =ejnw5z0iuv4ugpz2fy9n=
+- HLS Stream: https://play.boxcast.com/p/pkxuhmheh4ukiykilvxc/v/all-byteranges.m3u8
+
+** Day 2 (October 5, 2025)
+- View URL: https://boxcast.tv/view-embed/xtihxdvdmgttkttsp2gj
+- HLS Stream: https://play.boxcast.com/p/nvuqmccijubjianwzgp6/v/all-byteranges-ext.m3u8
+
+* Issue: Protected Streams
+
+The HLS streams return =403 Forbidden= when accessed directly. BoxCast requires:
+1. Valid session cookies
+2. Proper referrer headers
+3. Possibly signed URLs with expiration
+
+* Alternative Download Methods
+
+** Method 1: Browser Recording
+1. Open video in browser (Firefox/Chrome)
+2. Use browser extension like "Video DownloadHelper"
+3. Or use browser DevTools to find authenticated stream URL
+
+** Method 2: Screen/Audio Recording
+#+BEGIN_SRC bash
+# Using ffmpeg to record system audio (macOS)
+ffmpeg -f avfoundation -i ":BlackHole 2ch" \
+  -c:a libmp3lame -b:a 192k racketcon-day1.mp3
+#+END_SRC
+
+** Method 3: YouTube Upload
+Check if RacketCon organizers upload to YouTube:
+- Search: "RacketCon 2025"
+- Official channel may have recordings
+
+** Method 4: Contact Organizers
+Email RacketCon organizers to request direct download links or ask about YouTube uploads.
+
+* Tools Setup
+
+** UV Environment
+#+BEGIN_SRC bash
+# Install yt-dlp via uv
+uv add yt-dlp
+
+# Try download (will likely fail with 403)
+uv run yt-dlp -x --audio-format mp3 <URL> -o "output.%(ext)s"
+#+END_SRC
+
+* Failed Attempts Log
+
+** 2025-10-05: yt-dlp with various options
+- BoxCast extractor broken (no video formats found)
+- Direct HLS URLs return 403 Forbidden
+- Added headers (Referer, Origin) - still 403
+- Tried both Day 1 and Day 2 URLs
+
+Error:
+#+BEGIN_EXAMPLE
+ERROR: [BoxCastVideo] a4he0hwzawgcoyotxmkn: No video formats found!
+ERROR: [generic] Unable to download webpage: HTTP Error 403: Forbidden
+#+END_EXAMPLE
+
+* Next Steps
+
+1. Check if videos are available on YouTube
+2. Contact RacketCon organizers for download permission
+3. Wait for official recordings to be published
+4. Use browser-based download tools as fallback
