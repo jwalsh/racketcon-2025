@@ -1,0 +1,391 @@
+#+TITLE: Experiment 142: syntax-spec Basics
+#+AUTHOR: RacketCon 2025
+#+DATE: [2025-10-05 Sat]
+#+PROPERTY: header-args:racket :session *racket-142* :results output
+
+* Experiment Overview
+
+Learning syntax-spec fundamentals from Michael Ballantyne's talk materials.
+
+* Context
+
+syntax-spec is a metalanguage for creating DSLs in Racket that abstracts over common macro programming patterns.
+
+From [[https://docs.racket-lang.org/syntax-spec/][syntax-spec documentation]]:
+- Declarative DSL specification
+- Automatic binding implementation
+- Static checking support
+- Compiler optimization hooks
+
+* Installation
+
+#+BEGIN_SRC bash :eval never
+raco pkg install syntax-spec
+#+END_SRC
+
+* Basic Structure
+
+A syntax-spec DSL definition has three key components:
+
+1. *Binding Classes* - Types of bindings (variables, functions, etc.)
+2. *Nonterminals* - Syntactic forms in the DSL
+3. *Host Interface* - How to embed DSL in Racket
+
+** Template
+
+#+BEGIN_SRC racket :eval never
+(require syntax-spec)
+
+(syntax-spec
+  ;; 1. Binding classes
+  (binding-class var-binding)
+
+  ;; 2. Nonterminals (grammar)
+  (nonterminal dsl-expr
+    ;; Productions here
+    )
+
+  ;; 3. Host interface
+  (host-interface/expression
+   (my-dsl e:dsl-expr)))
+#+END_SRC
+
+* Example 1: Simple Expression Language
+
+** Goal
+Create a minimal expression language with:
+- Variables
+- Let bindings
+- Arithmetic
+
+** Implementation
+
+#+BEGIN_SRC racket :eval never
+#lang racket
+(require syntax-spec)
+
+(syntax-spec
+  (binding-class var)
+
+  (nonterminal expr
+    ;; Variable reference
+    (x:id
+     #:binding (import var))
+
+    ;; Let binding
+    ((let ([x:id e:expr]) body:expr)
+     #:binding (scope (bind x) body))
+
+    ;; Arithmetic
+    ((+ e1:expr e2:expr))
+    ((- e1:expr e2:expr))
+    ((* e1:expr e2:expr))
+
+    ;; Literals
+    (n:number))
+
+  (host-interface/expression
+   (calc e:expr)))
+#+END_SRC
+
+** Usage
+
+#+BEGIN_SRC racket :eval never
+(calc (let ([x 5])
+        (+ x 10)))
+;; => 15
+
+(calc (let ([x 3])
+        (let ([y 4])
+          (+ (* x x) (* y y)))))
+;; => 25
+#+END_SRC
+
+* Example 2: Query Language (from talk materials)
+
+Based on the LINQ examples in the talk repository.
+
+#+BEGIN_SRC racket :eval never
+(syntax-spec
+  (binding-class row-var)
+
+  (nonterminal query
+    ;; From clause - binds variable
+    ((from x:id in src:expr body:query)
+     #:binding (scope (bind x) body))
+
+    ;; Where clause - filters
+    ((where condition:expr body:query)
+     #:binding (re-export body))
+
+    ;; Select clause - projection
+    ((select e:expr)))
+
+  (nonterminal expr
+    (x:id #:binding (import row-var))
+    ((dot e:expr field:id))
+    (n:number)
+    (s:string))
+
+  (host-interface/expression
+   (query q:query)))
+#+END_SRC
+
+** Example Usage
+
+#+BEGIN_SRC racket :eval never
+(query
+  (from flight in flights
+    (where (> flight.distance 1000)
+      (select flight.destination))))
+#+END_SRC
+
+* Key Features
+
+** Automatic Binding Management
+
+syntax-spec handles:
+- ✓ Scope tracking
+- ✓ Hygiene
+- ✓ Reference resolution
+- ✓ Error reporting
+
+** Binding Specifications
+
+| Form              | Purpose                          |
+|-------------------+----------------------------------|
+| ~(import class)~  | Reference binding from class     |
+| ~(bind x)~        | Create new binding               |
+| ~(scope forms)~   | Create lexical scope             |
+| ~(re-export x)~   | Pass binding through             |
+| ~(export x)~      | Make binding available           |
+
+** Nonterminal Patterns
+
+#+BEGIN_SRC racket :eval never
+(nonterminal expr
+  ;; Pattern: (form-name arg:type ...)
+  ;; Annotation: #:binding (binding-spec)
+
+  ;; Simple form
+  (x:id #:binding (import var))
+
+  ;; Form with scope
+  ((let ([x:id e:expr]) body:expr)
+   #:binding (scope (bind x) body))
+
+  ;; Multiple bindings
+  ((let* ([x:id e:expr] ...) body:expr)
+   #:binding (scope (bind x) ... body)))
+#+END_SRC
+
+* Example 3: Typed Expression Language
+
+Add type checking to the expression language.
+
+#+BEGIN_SRC racket :eval never
+(syntax-spec
+  (binding-class var #:reference-compiler reference-compiler)
+
+  (nonterminal/two-pass expr
+    #:binding-space dsl
+
+    ;; Variable with type annotation
+    (x:id
+     #:binding (import var)
+     (~> (get-type x) ...))
+
+    ;; Typed let
+    ((let ([x:id : t:type e:expr]) body:expr)
+     #:binding (scope (bind x) body)
+     (~> () (check-type e t)
+         (do-type-inference)))
+
+    ;; Operations
+    ((+ e1:expr e2:expr)
+     (~> (τ1 τ2) (unify-types 'number τ1 τ2)))
+
+    (n:number
+     (~> () 'number)))
+
+  (nonterminal type
+    number
+    string
+    boolean
+    (-> t1:type t2:type))
+
+  (host-interface/expression
+   (typed-calc e:expr)))
+#+END_SRC
+
+* Compiler Hooks
+
+syntax-spec provides hooks for optimization and code generation:
+
+#+BEGIN_SRC racket :eval never
+(define-syntax-class optimizable-expr
+  #:attributes (optimized)
+  (pattern e:expr
+    #:do [(define opt (optimize-expr #'e))]
+    #:attr optimized opt))
+
+(nonterminal expr
+  ((opt e:optimizable-expr)
+   (~> #'e.optimized)))
+#+END_SRC
+
+* Comparison with Manual Implementation
+
+** Manual Macro (from Experiment 141)
+- ~100+ lines of code
+- Complex error handling
+- Manual binding management
+- Fragile to changes
+
+** syntax-spec Version
+- ~25 lines of spec
+- Automatic error messages
+- Declarative binding
+- Easy to extend
+
+* Extension Example
+
+Adding macro support to the DSL:
+
+#+BEGIN_SRC racket :eval never
+(syntax-spec
+  (extension-class expr-macro)
+
+  (nonterminal expr
+    ;; ... existing forms ...
+
+    ;; Macro extension point
+    (m:expr-macro))
+
+  ;; Define macros
+  (define-dsl-syntax square
+    (syntax-parser
+      [(_ x:id)
+       #'(* x x)])))
+#+END_SRC
+
+* Exercises
+
+** Exercise 1: Add Boolean Operations
+Add ~and~, ~or~, ~not~ to the expression language.
+
+#+BEGIN_SRC racket :eval never
+;; Your implementation here
+#+END_SRC
+
+** Exercise 2: Function Definitions
+Add lambda and function application.
+
+#+BEGIN_SRC racket :eval never
+;; Your implementation here
+#+END_SRC
+
+** Exercise 3: Pattern Matching
+Implement a simple pattern matcher.
+
+#+BEGIN_SRC racket :eval never
+;; Your implementation here
+#+END_SRC
+
+* Debugging
+
+** Expansion Tracing
+
+#+BEGIN_SRC racket :eval never
+(require syntax-spec/debug)
+
+(trace-syntax-spec
+  (calc (let ([x 5]) (+ x 10))))
+#+END_SRC
+
+** Error Messages
+
+syntax-spec automatically generates helpful error messages:
+
+#+BEGIN_SRC racket :eval never
+(calc (let ([x 5]) (+ x y)))
+;; => calc: unbound identifier
+;;    at: y
+;;    in: (+ x y)
+#+END_SRC
+
+* Talk Materials Analysis
+
+From [[file:../../references/michaelballantyne-racketcon-2025/][michaelballantyne-racketcon-2025]]:
+
+** LINQ Examples (~linq/~)
+Query language implementation demonstrating:
+- Complex binding structure
+- Multi-clause queries
+- Type-safe compilation
+
+** OpenFlights Demo (~openflights/~)
+Real-world application using the query DSL:
+- Flight database queries
+- Performance optimization
+- Practical DSL design
+
+** Query Examples (~queries/~)
+Additional query patterns and use cases.
+
+* Advanced Topics
+
+** Two-Pass Expansion
+For type checking and optimization:
+
+#+BEGIN_SRC racket :eval never
+(nonterminal/two-pass expr
+  ;; First pass: collect type info
+  ;; Second pass: generate code with optimizations
+  )
+#+END_SRC
+
+** Binding Spaces
+Separate namespaces for different binding kinds:
+
+#+BEGIN_SRC racket :eval never
+(nonterminal expr
+  #:binding-space my-dsl
+  ;; Forms here use my-dsl namespace
+  )
+#+END_SRC
+
+** Reference Compilers
+Custom compilation for bound references:
+
+#+BEGIN_SRC racket :eval never
+(binding-class var
+  #:reference-compiler ref-compiler)
+
+(define-reference-compiler (ref-compiler ref)
+  ;; Custom code generation for variable references
+  )
+#+END_SRC
+
+* Results
+
+** Observations
+- [ ] Ease of implementation
+- [ ] Error message quality
+- [ ] Performance characteristics
+- [ ] Extensibility
+
+** Key Insights
+- Declarative > Imperative for DSLs
+- Pattern abstraction eliminates boilerplate
+- Type-safe by construction
+
+* Related Experiments
+- [[file:../141-macro-patterns/][Experiment 141]]: Macro Programming Patterns
+- [[file:../046-pattern-matching/][Experiment 046]]: Pattern Matching
+
+* References
+- [[https://docs.racket-lang.org/syntax-spec/][syntax-spec Documentation]]
+- [[file:../../references/michaelballantyne-racketcon-2025/][Talk Materials]]
+- [[https://github.com/michaelballantyne/syntax-spec][syntax-spec GitHub]]
+- [[file:../../docs/sessions.org::*Advanced Macrology][Session Notes]]

@@ -37,6 +37,10 @@ Mike Delmonaco
 
 *Bio*: Software Engineer at Amazon Web Services with hobby interest in Programming Languages and Racket. Enjoys rock climbing, video games, creating interactive math visualizations, programming language research, and teaching.
 
+*Links*:
+- [[https://github.com/quasarbright/ocular-patdown][ocular-patdown]] - The DSL implementation
+- [[https://github.com/quasarbright][GitHub: @quasarbright]]
+
 *Experiments*: [[file:experiments/041-deep-immutable-updates/][041]] [[file:experiments/043-lens-based-updates/][043]] [[file:experiments/045-functional-lenses/][045]]
 
 ** 11:45am EDT Lunch (Provided)
@@ -113,6 +117,10 @@ Racket's macros make creating small extensions to the language remarkably simple
 *Experiments*: [[file:experiments/141-macro-patterns/][141]] [[file:experiments/142-syntax-spec-basics/][142]]
 
 *Video*: https://boxcast.tv/view-embed/xtihxdvdmgttkttsp2gj (Day 2 stream)
+
+*Live Chat*: https://www6.cbox.ws/box/?boxid=846185&boxtag=7afys&tid=127&tkey=b25da2af9627c97d
+
+*Talk Materials*: [[file:../references/michaelballantyne-racketcon-2025/][Local copy]] • [[https://github.com/michaelballantyne/racketcon-2025][GitHub]]
 
 *Transcription*: See [[file:../TRANSCRIPTION.org][TRANSCRIPTION.org]] for how to transcribe this talk
 

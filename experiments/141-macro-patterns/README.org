@@ -1,0 +1,236 @@
+#+TITLE: Experiment 141: Macro Programming Patterns
+#+AUTHOR: RacketCon 2025
+#+DATE: [2025-10-05 Sat]
+#+PROPERTY: header-args:racket :session *racket-141* :results output
+
+* Experiment Overview
+
+Based on Michael Ballantyne's talk "Advanced Macrology: 5 Macro Programming Patterns You (No Longer) Need to Know"
+
+* Context
+
+From the talk materials at [[file:../../references/michaelballantyne-racketcon-2025/README.md][michaelballantyne-racketcon-2025]]:
+
+Our goal: create a macro layer over a DSL that goes beyond syntactic sugar. It will:
+- Enforce a grammar
+- Check name binding
+- Perform a compiler optimization
+- (Prepare to) support macro extensions
+
+* Four Strategies
+
+** 1. Macro Embedding
+Individual macros abstract over syntactic patterns, but can't implement complex binding structure or optimizations.
+
+#+BEGIN_SRC racket :eval never
+;; Example: Simple syntactic abstraction
+(define-syntax-rule (when-debug expr ...)
+  (when (debug-mode?)
+    expr ...))
+#+END_SRC
+
+** 2. Recursive Rewriting
+A recursive macro can check grammar and realize DSL binding structure with macro bindings, but doesn't get the opportunity to optimize after.
+
+#+BEGIN_SRC racket :eval never
+;; Example: Pattern-based rewriting
+(define-syntax dsl-expr
+  (syntax-rules (let bind)
+    [(dsl-expr (let ([x e]) body))
+     (dsl-expr (bind x (dsl-expr e) (dsl-expr body)))]
+    [(dsl-expr atom)
+     (compile-atom atom)]))
+#+END_SRC
+
+** 3. DSL Macro Expander
+A DSL-specific macro expander can reuse the elements of Racket's expander, but you have to combine them correctly---a major challenge.
+
+#+BEGIN_SRC racket :eval never
+;; Example: Custom expander
+(define (dsl-expand stx)
+  (syntax-parse stx
+    #:literal-sets (dsl-literals)
+    [(~and form (head:dsl-keyword arg ...))
+     (local-expand #'form
+                   'expression
+                   (list #'head))]
+    [_ (error "Invalid DSL syntax")]))
+#+END_SRC
+
+** 4. syntax-spec
+25 lines of high-level spec replaces 100 lines of DSL expander code, and provides tools for your compiler to ask questions about DSL syntax.
+
+#+BEGIN_SRC racket :eval never
+;; Example: syntax-spec definition
+(syntax-spec
+  (binding-class var)
+
+  (extension-class dsl-macro)
+
+  (nonterminal dsl-expr
+    #:binding-space dsl
+
+    (var:id
+     #:binding (import var))
+
+    ((let ([x:id e:dsl-expr]) body:dsl-expr)
+     #:binding (scope (bind x) body))
+
+    ((+ e1:dsl-expr e2:dsl-expr))
+
+    (n:number)
+
+    (m:dsl-macro)))
+#+END_SRC
+
+* The Five Patterns
+
+** Pattern 1: Grammar Validation
+Enforcing DSL syntax rules during macro expansion.
+
+** Pattern 2: Binding Structure
+Managing variable scopes and binding contexts.
+
+** Pattern 3: Static Information
+Communicating type information or properties between macro phases.
+
+** Pattern 4: Compiler Integration
+Optimization passes and code generation.
+
+** Pattern 5: DrRacket Integration
+IDE support for syntax checking and navigation.
+
+* Hypothesis
+
+syntax-spec abstracts all five patterns, making DSL implementation declarative rather than procedural.
+
+* Experiments
+
+** Setup
+
+#+BEGIN_SRC racket :eval never
+#lang racket
+(require syntax/parse
+         syntax/parse/define
+         (for-syntax racket/base syntax/parse))
+#+END_SRC
+
+** Pattern 1: Grammar Validation with syntax-parse
+
+#+BEGIN_SRC racket :eval never
+(begin-for-syntax
+  (define-syntax-class valid-dsl-expr
+    (pattern n:number)
+    (pattern x:id)
+    (pattern (+ e1:valid-dsl-expr e2:valid-dsl-expr))))
+
+(define-syntax dsl-validate
+  (syntax-parser
+    [(_ e:valid-dsl-expr) #'e]
+    [(_ e) (raise-syntax-error 'dsl-validate "invalid DSL expression" #'e)]))
+#+END_SRC
+
+** Pattern 2: Binding with local-expand
+
+#+BEGIN_SRC racket :eval never
+(define-syntax dsl-let
+  (lambda (stx)
+    (syntax-parse stx
+      [(_ ([x:id e:expr]) body:expr)
+       #`(let ([x e])
+           #,(local-expand #'body 'expression (list #'x)))])))
+#+END_SRC
+
+** Pattern 3: Static Information with syntax properties
+
+#+BEGIN_SRC racket :eval never
+(define-for-syntax (add-type-info stx type)
+  (syntax-property stx 'dsl-type type))
+
+(define-for-syntax (get-type-info stx)
+  (syntax-property stx 'dsl-type))
+#+END_SRC
+
+** Pattern 4: Optimization Pass
+
+#+BEGIN_SRC racket :eval never
+(define-syntax dsl-optimize
+  (lambda (stx)
+    (syntax-parse stx
+      ;; Constant folding
+      [(_ (+ n1:number n2:number))
+       #`#,(+ (syntax-e #'n1) (syntax-e #'n2))]
+      ;; Identity optimization
+      [(_ (+ e 0)) #'e]
+      [(_ (+ 0 e)) #'e]
+      ;; Default
+      [(_ e) #'e])))
+#+END_SRC
+
+** Pattern 5: DrRacket Integration with syntax/id-table
+
+#+BEGIN_SRC racket :eval never
+(begin-for-syntax
+  (define dsl-id-table (make-free-id-table))
+
+  (define (register-dsl-binding! id info)
+    (free-id-table-set! dsl-id-table id info))
+
+  (define (lookup-dsl-binding id)
+    (free-id-table-ref dsl-id-table id #f)))
+#+END_SRC
+
+* Comparison: Manual vs syntax-spec
+
+** Manual Implementation (100+ lines)
+
+#+BEGIN_SRC racket :eval never
+;; Requires careful coordination of:
+;; - syntax-parse patterns
+;; - local-expand calls
+;; - syntax properties
+;; - binding tables
+;; - optimization passes
+#+END_SRC
+
+** syntax-spec Implementation (25 lines)
+
+#+BEGIN_SRC racket :eval never
+(require syntax-spec)
+
+(syntax-spec
+  (binding-class var)
+
+  (nonterminal expr
+    (x:id #:binding (import var))
+    ((let ([x:id e:expr]) body:expr)
+     #:binding (scope (bind x) body))
+    ((+ e1:expr e2:expr))
+    (n:number))
+
+  (host-interface/expression
+   (my-dsl e:expr)))
+#+END_SRC
+
+* Results
+
+** Observations
+- [ ] Pattern implementation complexity
+- [ ] Error message quality
+- [ ] IDE integration support
+- [ ] Extensibility
+
+** Key Insights
+- Design patterns indicate missing abstractions
+- syntax-spec provides the abstraction layer
+- Declarative specs are easier to maintain
+
+* Related Experiments
+- [[file:../142-syntax-spec-basics/][Experiment 142]]: syntax-spec Basics
+- [[file:../046-pattern-matching/][Experiment 046]]: Pattern Matching
+
+* References
+- [[file:../../references/michaelballantyne-racketcon-2025/][Talk Materials]]
+- [[https://docs.racket-lang.org/syntax-spec/][syntax-spec Documentation]]
+- [[https://docs.racket-lang.org/syntax/][syntax/parse Documentation]]
+- [[file:../../docs/sessions.org::*Advanced Macrology][Session Notes]]
