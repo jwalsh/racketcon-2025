@@ -23,11 +23,11 @@ This repository contains experiments, notes, and code examples related to [[http
 * Structure
 
 ** Sessions
-- [[file:sessions.org][sessions.org]] - Complete schedule
+- [[file:docs/sessions.org][sessions.org]] - Complete schedule
 
 ** Experiments
 
-See [[file:EXPERIMENTS.org][EXPERIMENTS.org]] for complete catalog.
+See [[file:docs/EXPERIMENTS.org][EXPERIMENTS.org]] for complete catalog.
 
 *** Completed Experiments (38)
 
