@@ -7,11 +7,13 @@
 [[https://github.com/jwalsh/racketcon-2025/blob/main/LICENSE][https://img.shields.io/badge/License-MIT-green.svg]]
 [[https://racket-lang.org/][https://img.shields.io/badge/Made%20with-Racket-red.svg]]
 [[https://docs.racket-lang.org/rosette-guide/][https://img.shields.io/badge/Rosette-Verification-orange.svg]]
-[[https://github.com/jwalsh/racketcon-2025/tree/main/experiments][https://img.shields.io/badge/Experiments-310-purple.svg]]
+[[https://github.com/jwalsh/racketcon-2025/tree/main/experiments][https://img.shields.io/badge/Experiments-38%2F310-purple.svg]]
 
 * Overview
 
 This repository contains experiments, notes, and code examples related to [[https://con.racket-lang.org/][RacketCon 2025]] sessions.
+
+*Status*: Repository is public. Working tree is clean. 38 experiments completed.
 
 ** Conference Details
 - *Dates*: October 4-5, 2025
@@ -25,9 +27,9 @@ This repository contains experiments, notes, and code examples related to [[http
 
 ** Experiments
 
-See [[file:EXPERIMENTS.org][EXPERIMENTS.org]] for complete catalog of 310 planned experiments.
+See [[file:EXPERIMENTS.org][EXPERIMENTS.org]] for complete catalog.
 
-*** Current Experiments
+*** Completed Experiments (38)
 
 | # | Topic | Related Session |
 |---+-------+-----------------|
@@ -39,6 +41,34 @@ See [[file:EXPERIMENTS.org][EXPERIMENTS.org]] for complete catalog of 310 planne
 | [[file:experiments/005-cloudflare-dns-setup/][005]] | Cloudflare DNS Setup | Keynote: Cloudflare |
 | [[file:experiments/006-topaz-lang-exploration/][006]] | Topaz-lang Exploration | Keynote: Cloudflare |
 | [[file:experiments/007-compositional-oop/][007]] | Compositional OOP | Rideau: OO Prototypes |
+| [[file:experiments/008-rosette-string-limitations/][008]] | Rosette String Limitations | Technical Analysis |
+| [[file:experiments/041-deep-immutable-updates/][041]] | Deep Immutable Updates | Lenses & Optics |
+| [[file:experiments/043-lens-based-updates/][043]] | Lens-Based Updates | Lenses & Optics |
+| [[file:experiments/045-functional-lenses/][045]] | Functional Lenses | Lenses & Optics |
+| [[file:experiments/046-pattern-matching/][046]] | Pattern Matching | Lenses & Optics |
+| [[file:experiments/047-ocular-patdown/][047]] | Ocular Patdown Basics | Lenses & Optics |
+| [[file:experiments/048-ruby-lenses/][048]] | Ruby Lenses Comparison | Lenses & Optics |
+| [[file:experiments/049-ocular-optics-guide/][049]] | Ocular Optics Complete Guide | Lenses & Optics |
+| [[file:experiments/061-ion-data-format/][061]] | Ion Data Format | Ion Fusion |
+| [[file:experiments/062-ion-fusion/][062]] | Ion Fusion DSL | Ion Fusion |
+| [[file:experiments/076-geiser-fundamentals/][076]] | Geiser Fundamentals | Editor Integration |
+| [[file:experiments/077-geiser-racket/][077]] | Geiser with Racket | Editor Integration |
+| [[file:experiments/086-roulette-tutorial/][086]] | Roulette Tutorial | Probabilistic Programming |
+| [[file:experiments/087-truffle-espresso/][087]] | Truffle & Espresso | Language Implementation |
+| [[file:experiments/088-racket-mode-adventures/][088]] | Racket Mode Adventures | Editor Integration |
+| [[file:experiments/089-roulette-deep-dive/][089]] | Roulette Deep Dive | Probabilistic Programming |
+| [[file:experiments/091-chaos-engineering/][091]] | Chaos Engineering | Probabilistic Verification |
+| [[file:experiments/092-continuation-forking/][092]] | Continuation Forking | Universe Exploration |
+| [[file:experiments/093-weightmaps/][093]] | Weightmaps & Distributions | Probabilistic Programming |
+| [[file:experiments/094-bdd-z3/][094]] | BDD & Z3 Integration | Formal Verification |
+| [[file:experiments/095-probabilistic-microkanren/][095]] | Probabilistic microKanren | Logic + Probability |
+| [[file:experiments/096-macro-patterns/][096]] | Advanced Macro Patterns | Sunday: Ballantyne |
+| [[file:experiments/097-tonart/][097]] | Tonart Music Composition | Sunday: Gentner |
+| [[file:experiments/141-rhombus-tutorial/][141]] | Rhombus Tutorial | Modern Racket |
+| [[file:experiments/142-here-strings/][142]] | Here Strings | Literals |
+| [[file:experiments/143-at-expressions/][143]] | At-Expressions | Literals |
+| [[file:experiments/144-template-dsl/][144]] | Template DSL | Macros |
+| [[file:experiments/999-rhea-framework/][999]] | RHEA Framework | Research Platform |
 
 *** Experiment Tracks (310 total)
 
