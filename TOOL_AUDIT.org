@@ -199,12 +199,33 @@ gmake -C experiments/099-coin-flip-disruption test
 - Status: clean
 - Recent experiments: 101 (Pokemon Simulator)
 
+* Additional Racket Tools Investigated
+
+** Code Quality Tools
+| Tool | Purpose | Status | Notes |
+|------+---------+--------+-------|
+| Resyntax | Automated refactoring | ✗ | Installation blocked by dependency conflicts |
+| Review | Code review tool | ⚠ | Not tested |
+| fmt | Code formatter | ⚠ | Not tested |
+
+See [[file:RACKET_TOOLS.org][RACKET_TOOLS.org]] for comprehensive Racket ecosystem documentation.
+
+** Available raco Commands
+- docs: Search and view documentation ✓
+- make: Compile source to bytecode ✓
+- setup: Install and build libraries ⚠ (needs sudo)
+- pkg: Manage packages ✓
+- exe: Create executable ✓
+- test: Run tests ✓
+
 * Recommendations
 
 1. *Python Upgrade*: Consider upgrading to Python 3.13 when available on FreeBSD
 2. *Racket Consistency*: Monitor Racket version consistency between system and compiled packages
 3. *Regular Updates*: Run ~gh api user/repos --paginate -q '.[].full_name' | xargs -n1 -P16 ghq get -u~ periodically
 4. *Package Verification*: After installing rosette, run ~gmake -C experiments/001-rosette-fundamentals test~
+5. *Code Quality*: Install resyntax after version mismatch resolved for automated refactoring
+6. *Tool Reference*: See RACKET_TOOLS.org for complete tool ecosystem documentation
 
 * Last Updated
-2025-10-05 22:09 UTC
+2025-10-05 22:17 UTC

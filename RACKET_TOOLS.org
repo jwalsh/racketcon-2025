@@ -1,0 +1,307 @@
+#+TITLE: Racket Ecosystem - Core Tools and Packages
+#+AUTHOR: RacketCon 2025
+#+DATE: 2025-10-05
+#+STARTUP: overview
+
+* Overview
+
+Comprehensive listing of essential Racket development tools, quality assurance
+tools, and ecosystem packages for the RacketCon 2025 experiments.
+
+* Core Racket Tools
+
+** Package Management
+| Tool | Command | Purpose | Status |
+|------+---------+---------+--------|
+| raco pkg | ~raco pkg~ | Package manager | ✓ |
+| Catalog | ~raco pkg catalog~ | Package catalog operations | ✓ |
+| Planet | legacy | Old package system (deprecated) | - |
+
+** Build and Setup
+| Tool | Command | Purpose | Status |
+|------+---------+---------+--------|
+| raco setup | ~raco setup~ | Compile and setup packages | ⚠ Needs sudo |
+| raco make | ~raco make~ | Compile single file | ✓ |
+| raco exe | ~raco exe~ | Create standalone executable | ✓ |
+| raco distribute | ~raco distribute~ | Create distribution | ✓ |
+
+** Testing
+| Tool | Command | Purpose | Status |
+|------+---------+---------+--------|
+| raco test | ~raco test~ | Run RackUnit tests | ✓ |
+| RackUnit | library | Unit testing framework | ✓ |
+| rackunit-lib | package | RackUnit library | ✓ |
+
+** Documentation
+| Tool | Command | Purpose | Status |
+|------+---------+---------+--------|
+| raco scribble | ~raco scribble~ | Documentation generation | ⚠ Conflict |
+| Scribble | language | Documentation language | ⚠ |
+| raco docs | ~raco docs~ | Open documentation | ✓ |
+
+** Code Quality and Analysis
+| Tool | Package/Repo | Purpose | Status |
+|------+--------------+---------+--------|
+| Resyntax | [[https://github.com/jackfirth/resyntax][jackfirth/resyntax]] | Automated refactoring | ✗ Not installed |
+| Errortrace | errortrace-lib | Enhanced error messages | ✓ |
+| Review | [[https://github.com/Bogdanp/racket-review][Bogdanp/racket-review]] | Code review tool | ⚠ Unknown |
+| Optimization Coach | raco optimization-coach | Performance analysis | ⚠ Unknown |
+
+* Essential Packages for Development
+
+** Language Tools
+| Package | Purpose | Status | Notes |
+|---------+---------+--------+-------|
+| syntax-parse | Pattern matching for syntax | ✓ | Built-in |
+| syntax/parse | Alternative import | ✓ | Built-in |
+| syntax-spec | DSL creation | ⚠ | Need to check |
+| br-parser-tools | Beautiful Racket tools | ⚠ | Unknown |
+
+** Data Structures
+| Package | Purpose | Status |
+|---------+---------+--------|
+| data/hash | Hash utilities | ✓ |
+| data/queue | Queue data structure | ✓ |
+| data/heap | Heap/priority queue | ✓ |
+| data/gvector | Growable vectors | ✓ |
+
+** Formal Methods (Critical for Experiments)
+| Package | Purpose | Status | Experiments Using |
+|---------+---------+--------+-------------------|
+| rosette | Solver-aided programming | ✗ | 000-001, 006, 008, 094 |
+| roulette | Probabilistic programming | ✗ | 086, 089, 099, 101 |
+| z3 | SMT solver | ⚠ | 094 |
+
+** Functional Programming
+| Package | Purpose | Status | Experiments Using |
+|---------+---------+--------+-------------------|
+| [[https://github.com/quasarbright/ocular-patdown][ocular-patdown]] | Lenses and optics | ✗ | 045-049 |
+| lens | Alternative lens library | ⚠ | 043 |
+| algebraic | Algebraic data types | ⚠ | Unknown |
+| functional | FP utilities | ⚠ | Unknown |
+
+** Web and Network
+| Package | Purpose | Status |
+|---------+---------+--------|
+| web-server | HTTP server | ✓ |
+| web-server-lib | Web server library | ✓ |
+| net-lib | Network protocols | ✓ |
+| http | HTTP client | ✓ |
+
+** Database
+| Package | Purpose | Status |
+|---------+---------+--------|
+| db | Database connectivity | ✓ |
+| sql | SQL utilities | ✓ |
+| deta | ORM-like library | ⚠ |
+
+* Editor Integration Tools
+
+** Emacs
+| Tool | Package | Purpose | Status |
+|------+---------+---------+--------|
+| Racket Mode | racket-mode | Full IDE in Emacs | ✓ |
+| Geiser | geiser, geiser-racket | REPL integration | ✓ |
+| SLIME | (for Common Lisp) | Alternative | - |
+
+** VS Code
+| Tool | Extension | Purpose | Status |
+|------+-----------+---------+--------|
+| Magic Racket | vscode-racket | Syntax and REPL | ⚠ |
+| Racket LSP | racket-langserver | Language Server | ⚠ |
+
+** DrRacket
+| Feature | Status | Notes |
+|---------+--------+-------|
+| IDE | ✓ | Built-in with Racket |
+| Debugger | ✓ | Graphical debugger |
+| REPL | ✓ | Integrated |
+
+* Language Server Protocol (LSP)
+
+** Racket LSP
+| Tool | Repo | Purpose | Status |
+|------+------+---------+--------|
+| racket-langserver | [[https://github.com/jeapostrophe/racket-langserver][jeapostrophe/racket-langserver]] | LSP server | ⚠ |
+
+* Performance and Profiling
+
+** Tools
+| Tool | Command | Purpose | Status |
+|------+---------+---------+--------|
+| Errortrace | ~raco errortrace~ | Profiling | ✓ |
+| Profile | ~raco profile~ | Statistical profiler | ✓ |
+| Optimization Coach | ~raco optimization-coach~ | Suggest optimizations | ⚠ |
+
+* CI/CD and Automation
+
+** GitHub Actions
+#+begin_src yaml
+# Example Racket CI workflow
+- uses: Bogdanp/setup-racket@v1.11
+  with:
+    architecture: 'x64'
+    distribution: 'full'
+    variant: 'CS'
+    version: '8.11.1'
+#+end_src
+
+** Tools
+| Tool | Purpose | Status |
+|------+---------+--------|
+| setup-racket | GitHub Action for Racket | Available |
+| raco test | Run tests in CI | ✓ |
+| raco pkg install | Install deps in CI | ✓ |
+
+* Code Formatting and Style
+
+** Tools
+| Tool | Repo/Package | Purpose | Status |
+|------+--------------+---------+--------|
+| fmt | [[https://github.com/sorawee/fmt][sorawee/fmt]] | Code formatter | ⚠ |
+| Resyntax | [[https://github.com/jackfirth/resyntax][jackfirth/resyntax]] | Refactoring | ✗ |
+| Racket Style Guide | Documentation | Style conventions | Docs |
+
+* Static Analysis
+
+** Tools
+| Tool | Purpose | Status |
+|------+---------+--------|
+| Typed Racket | Gradual typing | ✓ Built-in |
+| Contract Profiler | Contract performance | ✓ |
+| Review | Code review | ⚠ |
+
+* Experimental and Research Tools
+
+** Relevant to RacketCon 2025
+| Tool | Purpose | Related Experiments |
+|------+---------+---------------------|
+| Rosette | Solver-aided lang | 000-001, 006, 008 |
+| Roulette | Probabilistic prog | 086, 089, 099, 101 |
+| Turnstile | Type system DSL | Advanced typing |
+| Cur | Dependently typed | Formal verification |
+
+* Security and Sandboxing
+
+** Tools
+| Tool | Package | Purpose | Status |
+|------+---------+---------+--------|
+| Sandbox | sandbox-lib | Safe code execution | ✓ |
+| Racket Jail | - | Containerization | ⚠ |
+
+* Package Repositories and Discovery
+
+** Official
+- PKG Racket: https://pkgs.racket-lang.org/
+- GitHub: https://github.com/racket/
+- Racket Catalog: https://download.racket-lang.org/
+
+** Community
+- Awesome Racket: https://github.com/avelino/awesome-racket
+- Planet Racket: https://planet.racket-lang.org/ (blog aggregator)
+
+* Recommended Tool Stack for RacketCon 2025
+
+** Minimal Setup
+1. Racket 8.11.1 (or 8.12+)
+2. raco (package manager)
+3. Emacs 30+ with racket-mode
+4. Basic packages: rackunit, scribble
+
+** Full Development Setup
+1. All minimal tools
+2. rosette (solver-aided programming)
+3. roulette (probabilistic programming)
+4. ocular-patdown (lenses/optics)
+5. resyntax (code quality)
+6. racket-langserver (LSP support)
+7. DrRacket (graphical IDE)
+
+** Quality Assurance Stack
+1. raco test (unit tests)
+2. errortrace (debugging)
+3. resyntax (refactoring)
+4. typed/racket (type checking)
+5. contract system (runtime checks)
+
+* Installation Commands
+
+** Critical Packages (Currently Blocked)
+#+begin_src bash
+# These fail due to version mismatch (8.11.1 vs 8.12)
+raco pkg install --auto rosette
+raco pkg install --auto roulette
+raco pkg install --auto ocular-patdown
+raco pkg install --auto resyntax
+#+end_src
+
+** Working Packages
+#+begin_src bash
+# These should work if version issue resolved
+raco pkg install --auto syntax-parse
+raco pkg install --auto rackunit
+raco pkg install --auto web-server
+raco pkg install --auto db
+#+end_src
+
+** Editor Integration
+#+begin_src bash
+# Emacs
+# Install via package.el: racket-mode, geiser, geiser-racket
+
+# VS Code
+# Install extension: Magic Racket
+#+end_src
+
+* Tool Priority Matrix
+
+** Priority 1 (Blocking Experiments)
+- [ ] rosette - Required for 8 experiments
+- [ ] roulette - Required for 6 experiments
+- [ ] ocular-patdown - Required for 5 experiments
+
+** Priority 2 (Quality Assurance)
+- [ ] resyntax - Code quality
+- [ ] racket-review - Code review
+- [ ] fmt - Formatting
+
+** Priority 3 (Nice to Have)
+- [ ] optimization-coach - Performance
+- [ ] racket-langserver - IDE support
+- [ ] typed-racket - Type safety
+
+* Status Summary
+
+** Working (✓)
+- Core Racket runtime
+- Basic raco commands (make, test, docs)
+- Built-in libraries (syntax-parse, data structures)
+- Standard library packages
+
+** Blocked (✗)
+- rosette (version mismatch)
+- roulette (version mismatch)
+- ocular-patdown (version mismatch)
+- resyntax (dependency conflict)
+
+** Unknown (⚠)
+- Many community packages not tested
+- LSP server status unclear
+- Some editor integrations unverified
+
+* Next Steps
+
+1. Resolve Racket version mismatch (sudo raco setup OR upgrade to 8.12+)
+2. Install blocked packages once version resolved
+3. Test resyntax on codebase
+4. Set up CI/CD with raco test
+5. Document code style guidelines
+6. Create development environment setup script
+
+* References
+
+- Racket Package Catalog: https://pkgs.racket-lang.org/
+- Racket Documentation: https://docs.racket-lang.org/
+- Resyntax: https://github.com/jackfirth/resyntax
+- Awesome Racket: https://github.com/avelino/awesome-racket
+- Racket Style Guide: https://docs.racket-lang.org/style/
