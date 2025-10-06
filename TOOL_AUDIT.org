@@ -1,0 +1,210 @@
+#+TITLE: RacketCon 2025 - Tool Audit and Dependencies
+#+AUTHOR: System Audit
+#+DATE: 2025-10-05
+#+STARTUP: overview
+
+* Overview
+
+Comprehensive audit of all tools and dependencies for RacketCon 2025 experiments.
+
+* System Information
+
+- OS: FreeBSD 14.3-RELEASE
+- Architecture: amd64
+- Repository: /home/jwalsh/ghq/github.com/jwalsh/racketcon-2025
+
+* Core Build Tools Status
+
+** ✓ GNU Make
+- Version: 4.4.1
+- Command: gmake
+- Status: INSTALLED
+
+** ✓ Git Tools
+| Tool | Version | Status |
+|------+---------+--------|
+| git  | 2.50.1  | ✓      |
+| gh   | 2.74.1  | ✓      |
+| ghq  | 1.8.0   | ✓      |
+
+* Language Ecosystems
+
+** Racket (Primary)
+*** Core Tools
+| Tool   | Version | Status | Notes |
+|--------+---------+--------+-------|
+| racket | 8.11.1  | ✓      | CS    |
+| raco   | 8.11.1  | ⚠      | Version mismatch warnings |
+
+*** Packages
+| Package        | Status | Notes |
+|----------------+--------+-------|
+| rosette        | ⚠      | Being reinstalled for user |
+| roulette       | ✓      | Installed |
+| ocular-patdown | ✓      | Installed |
+
+*** Issues Found
+**** Critical: Racket Version Mismatch
+- Current Racket: 8.11.1
+- Compiled packages: 8.12
+- Impact: Cannot load rosette package
+- Error: ~collection not found for module path: rosette~
+
+**** Package Installation Conflicts
+- Attempting user-space installation of rosette fails
+- Conflict: scribble-lib exe conflicts with system installation
+- Root cause: Mixed system/user package installation not working
+
+**** Workarounds
+1. *Recommended*: Ask system admin to run ~sudo raco setup~ to recompile system packages
+2. *Alternative*: Upgrade Racket to match compiled packages (8.12+)
+3. *Temporary*: Some experiments (099, 101) use roulette which IS working
+
+**** Package Status (Tested)
+- rosette: ✗ NOT WORKING (collection not found)
+- roulette: ✗ NOT WORKING (collection not found)
+- ocular-patdown: ⚠ NOT TESTED (likely same issue)
+
+**** Impact on Experiments
+- experiments/000-racket-setup: ✓ Basic Racket works
+- experiments/001-rosette-fundamentals: ✗ Requires rosette
+- experiments/045-047 (Lenses): ✗ Require ocular-patdown
+- experiments/048 (Ruby): ✓ Should work (uses Ruby)
+- experiments/076 (Geiser): ✓ Should work (uses Guile)
+- experiments/099 (Coin flip): ✗ Requires roulette
+- experiments/101 (Pokemon): ✗ Requires roulette
+
+** Python
+*** Core Tools
+| Tool    | Version | Required | Status |
+|---------+---------+----------+--------|
+| python3 | 3.11.11 | >=3.13   | ⚠      |
+| uv      | 0.6.4   | -        | ✓      |
+
+*** Packages (via uv)
+| Package | Version    | Status |
+|---------+------------+--------|
+| yt-dlp  | 2025.9.26  | ✓      |
+
+*** Issues Found
+- Python 3.11.11 installed but pyproject.toml requires >=3.13
+- Recommendation: Upgrade to Python 3.13 when available
+
+** Ruby
+- Version: 3.3.8
+- Status: ✓ INSTALLED
+- Used in: experiments/048-ruby-lenses
+
+** Guile/Scheme
+- Version: 2.2.7
+- Status: ✓ INSTALLED
+- Used in: experiments/076-geiser-fundamentals
+
+* Editor Tools
+
+** Emacs
+- Version: 31.0.50
+- Required: >=30.0
+- Status: ✓ REQUIREMENT MET
+
+* Download Tools
+
+** curl
+- Version: 8.14.1
+- Features: OpenSSL, zlib, brotli, zstd, libidn2, libpsl, libssh2, nghttp2
+- Status: ✓ INSTALLED
+- Used for: Downloading research papers
+
+* Optional Tools
+
+** direnv
+- Version: 2.35.0
+- Status: ✓ INSTALLED
+- Purpose: Environment management
+
+* Experiment-Specific Dependencies
+
+** By Experiment Number
+| Exp | Name | Primary Tool | Additional Tools |
+|-----+------+--------------+------------------|
+| 000 | Racket Setup | racket, raco | - |
+| 001 | Rosette Fundamentals | racket, rosette | - |
+| 045 | Functional Lenses | racket, ocular-patdown | - |
+| 046 | Pattern Matching | racket | - |
+| 047 | Ocular Patdown | racket, ocular-patdown | - |
+| 048 | Ruby Lenses | ruby | - |
+| 061 | Ion Format Basics | racket | - |
+| 076 | Geiser Fundamentals | guile, emacs | - |
+| 099 | Coin Flip Disruption | racket, roulette | - |
+| 101 | Pokemon Simulator | racket, roulette | - |
+
+* Makefile Targets Audit
+
+** Main Makefile Targets
+#+begin_src makefile
+help            - Show available targets
+setup           - Check deps and download resources
+check-deps      - Check racket, emacs, direnv
+resources       - Download papers
+test            - Run ERT tests
+lint-org        - Lint org files
+#+end_src
+
+** Common Experiment Targets
+Most experiment Makefiles provide:
+- ~make help~ - Show experiment info
+- ~make test~ - Run experiment tests
+- ~make run~ - Execute experiment
+- ~make clean~ - Remove compiled files
+- ~make info~ - Display detailed experiment information
+
+* Actions Taken
+
+** ✓ Completed
+1. Installed yt-dlp (2025.9.26) via uv
+2. Updated all ghq repositories in parallel (via ~gh api~ + ~ghq get -u~)
+3. Initiated user-space installation of rosette package
+
+** ⚠ Issues Requiring Attention
+1. Python version: 3.11.11 < 3.13 (required by pyproject.toml)
+   - Recommendation: ~pkg install python313~ when available
+2. Racket version mismatch warnings
+   - Fix in progress: installing packages in user space
+
+* Quick Start Verification
+
+To verify all core tools:
+#+begin_src bash
+# Run main dependency check
+gmake check-deps
+
+# Download resources
+gmake resources
+
+# Test specific experiments
+gmake -C experiments/000-racket-setup test
+gmake -C experiments/001-rosette-fundamentals test
+gmake -C experiments/099-coin-flip-disruption test
+#+end_src
+
+* Repository Status
+
+** GitHub Repositories
+- All user repositories updated via ghq
+- Total repositories: 100+ (across aygp-dr and jwalsh organizations)
+- Update method: Parallel fetch with 16 workers
+
+** Current Repository
+- Branch: main
+- Status: clean
+- Recent experiments: 101 (Pokemon Simulator)
+
+* Recommendations
+
+1. *Python Upgrade*: Consider upgrading to Python 3.13 when available on FreeBSD
+2. *Racket Consistency*: Monitor Racket version consistency between system and compiled packages
+3. *Regular Updates*: Run ~gh api user/repos --paginate -q '.[].full_name' | xargs -n1 -P16 ghq get -u~ periodically
+4. *Package Verification*: After installing rosette, run ~gmake -C experiments/001-rosette-fundamentals test~
+
+* Last Updated
+2025-10-05 22:09 UTC
